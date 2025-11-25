@@ -1,0 +1,138 @@
+/* Kontrollitud.ee/frontend/src/CompanyList.css */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.controls-bar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    align-items: center;
+    flex-wrap: wrap; /* Для небольших экранов */
+}
+
+.add-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.add-button:hover {
+    background-color: #0056b3;
+}
+
+.search-input, .filter-select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    flex-grow: 1; /* Позволяет им занимать доступное место */
+    min-width: 150px;
+}
+
+.reset-button {
+    background-color: #dc3545;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.reset-button:hover {
+    background-color: #c82333;
+}
+
+/* Стили карточек */
+.company-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.company-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.company-card:hover {
+    transform: translateY(-3px);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.company-name {
+    margin: 0;
+    color: #172a3a;
+    font-size: 1.5em;
+}
+
+.verified-badge {
+    color: gold;
+    font-size: 1.5em;
+    margin-left: 10px;
+}
+
+.pending-badge {
+    color: orange;
+    font-size: 1.5em;
+    margin-left: 10px;
+}
+
+.company-category-tag {
+    display: inline-block;
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    margin-bottom: 10px;
+}
+
+.company-description {
+    color: #6c757d;
+    flex-grow: 1; 
+}
+
+.details-button {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.details-button:hover {
+    background-color: #0056b3;
+}
+
+.no-results {
+    grid-column: 1 / -1; 
+    text-align: center;
+    padding: 50px;
+    color: #6c757d;
+    font-size: 1.2em;
+}
