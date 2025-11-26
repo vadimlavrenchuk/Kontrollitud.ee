@@ -1,19 +1,31 @@
 // Kontrollitud.ee/backend/server.js
 
+// 1. ИМПОРТЫ
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
-
+const cors = require('cors'); 
 const app = express();
 const PORT = 5000;
 
-// Middleware
-app.use(cors());
+// 2. MIDDLEWARE (Настройки приложения)
+app.use(cors()); 
 app.use(express.json());
 
-const cors = require('cors'); // Убедись, что импортирован
-app.use(cors()); // Это должно разрешить запросы с других портов
-app.use(express.json()); // Это должно парсить входящие JSON данные
+app.get('/test', (req, res) => {
+    res.send('Бэкенд работает!');
+});
+
+app.post('/api/companies', async (req, res) => {
+    try {
+        const company = new Company(req.body);
+        await company.save();
+        // Успешный ответ: 201 Created
+        res.status(201).send(company); 
+    } catch (error) {
+        // Ответ с ошибкой: 400 Bad Request
+        res.status(400).send({ error: 'Не удалось добавить компанию.' });
+    }
+});
 
 // 1. ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ
 // !!! ВАЖНО: Укажи здесь адрес своей MongoDB. Локальный или Atlas.
@@ -37,24 +49,7 @@ const Company = mongoose.model('Company', companySchema);
 
 // 3. API-МАРШРУТЫ
 
-app.post('/api/companies', async (req, res) => {
-    try {
-        const company = new Company(req.body);
-        await company.save();
-        // Успешный ответ: 201 Created
-        res.status(201).send(company); 
-    } catch (error) {
-        // Ответ с ошибкой: 400 Bad Request
-        res.status(400).send({ error: 'Не удалось добавить компанию.' });
-    }
-});
 
-// GET /api/companies - Получить все компании
-// Kontrollitud.ee/backend/server.js
-
-// ... (где-то после схемы Company и перед app.post)
-
-// GET /api/companies - Получить все компании с фильтрацией
 app.get('/api/companies', async (req, res) => {
     try {
         // 1. Создаем объект фильтра на основе параметров запроса (req.query)
@@ -62,10 +57,7 @@ app.get('/api/companies', async (req, res) => {
         
         // 2. Добавляем фильтр по поисковому запросу (search)
         if (req.query.search) {
-            // Ищем совпадения по названию (name) или описанию (description)
-            // $or: позволяет искать по нескольким полям
-            // $regex: позволяет искать часть строки (нечеткий поиск)
-            // $options: 'i' делает поиск нечувствительным к регистру
+            
             filter.$or = [
                 { name: { $regex: req.query.search, $options: 'i' } },
                 { description: { $regex: req.query.search, $options: 'i' } }

@@ -1,9 +1,9 @@
 // Kontrollitud.ee/frontend/src/CompanyForm.jsx
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'
 
-const API_URL = 'http://localhost:5000/api/companies';
+const API_BASE_URL = 'http://localhost:5000/api/companies';
 
 function CompanyForm() {
   const [name, setName] = useState('');
@@ -19,7 +19,7 @@ function CompanyForm() {
     setMessage('');
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
