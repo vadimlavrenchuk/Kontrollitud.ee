@@ -1,4 +1,5 @@
 /* Kontrollitud.ee/frontend/src/CompanyList.css */
+@import './variables';
 
 .container {
     max-width: 1200px;
@@ -94,6 +95,12 @@
 
 .pending-badge {
     color: orange;
+    font-size: 1.5em;
+    margin-left: 10px;
+}
+
+.rejected-badge {
+    color: #dc3545;
     font-size: 1.5em;
     margin-left: 10px;
 }

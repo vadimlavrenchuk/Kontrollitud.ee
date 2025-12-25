@@ -1,0 +1,81 @@
+// Kontrollitud.ee/frontend/src/ReviewForm.scss
+
+@use "sass:color";
+@import './variables'; // Импортируем переменные
+
+.review-form-section {
+    padding: $spacing-base * 1.5;
+    background-color: color.adjust($color-background, $lightness: 2%);
+    border-radius: 8px;
+    margin-top: $spacing-base * 2;
+    border: 1px solid $color-border;
+    
+    .review-form-title {
+        color: $color-primary;
+        margin-bottom: $spacing-base;
+    }
+
+    .review-form {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-base;
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+
+            label {
+                font-weight: bold;
+                margin-bottom: 5px;
+                color: $color-text;
+            }
+
+            .form-input, .form-select, .form-textarea {
+                padding: 10px;
+                border: 1px solid $color-border;
+                border-radius: 4px;
+                transition: border-color 0.3s;
+                
+                &:focus {
+                    border-color: $color-primary;
+                    outline: none;
+                }
+            }
+
+            .form-textarea {
+                resize: vertical;
+            }
+        }
+
+        .submit-button {
+            padding: 12px 20px;
+            background-color: $color-primary;
+            color: $color-card-bg;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+
+            &:hover:not(:disabled) {
+                background-color: color.adjust($color-primary, $lightness: -10%);
+            }
+
+            &:disabled {
+                background-color: color.adjust($color-primary, $lightness: 20%);
+                cursor: not-allowed;
+            }
+        }
+    }
+    
+    .review-error-message {
+        color: $color-danger;
+        margin-top: $spacing-base;
+    }
+
+    .review-success-message {
+        color: $color-secondary;
+        margin-top: $spacing-base;
+        font-weight: bold;
+    }
+}

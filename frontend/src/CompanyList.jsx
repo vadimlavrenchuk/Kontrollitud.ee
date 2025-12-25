@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import './CompanyList.css'; 
+import { useTranslation } from 'react-i18next';
+import './styles/CompanyList.scss';
 
 const API_BASE_URL = 'http://localhost:5000/api/companies';
 
@@ -10,11 +11,12 @@ function CompanyList() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { t } = useTranslation(); 
 
   // Состояния для хранения фильтров и поиска
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('Все');
-  const [verificationStatus, setVerificationStatus] = useState('Все');
+  const [status, setStatus] = useState('Все');
 
   // Функция для получения данных с учетом текущих фильтров
   const fetchCompanies = useCallback(async () => {
@@ -32,9 +34,9 @@ function CompanyList() {
       params.append('category', category);
     }
     
-    if (verificationStatus !== 'Все') {
-      // Преобразуем текст 'Проверено'/'Ожидает' в булевы строки 'true'/'false' для бэкенда
-      params.append('isVerified', verificationStatus === 'Проверено' ? 'true' : 'false');
+    if (status !== 'Все') {
+      // Отправляем статус напрямую: 'pending', 'verified', 'rejected'
+      params.append('status', status);
     }
 
     // Собираем полный URL: http://localhost:5000/api/companies?search=...&category=...
@@ -42,18 +44,33 @@ function CompanyList() {
 
     try {
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Не удалось получить данные с сервера.');
-      }
-      const data = await response.json();
-      setCompanies(data);
+
+        if (!response.ok) {
+            let errorMessage = `${t('fetch_error')}: ${response.statusText}`;
+            
+            // 🟢 БЕЗОПАСНАЯ ПОПЫТКА ЧТЕНИЯ JSON
+            try {
+                const data = await response.json();
+                // Используем сообщение из бэкенда, если оно есть
+                errorMessage = data.error || errorMessage; 
+            } catch (jsonError) {
+                // Игнорируем ошибку парсинга, если ответ не был JSON
+                console.warn("Ответ сервера не был JSON, используя статус-текст.");
+            }
+            
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        setCompanies(data);
+
     } catch (err) {
-      console.error("Fetch error:", err);
-      setError(err.message);
+        setError(err.message);
+        setCompanies([]); // Очищаем список при ошибке
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  }, [search, category, verificationStatus]); 
+  }, [search, category, status, t]);
 
   // Запускаем запрос при первом рендере и при изменении любого фильтра
   useEffect(() => {
@@ -61,21 +78,28 @@ function CompanyList() {
   }, [fetchCompanies]); 
 
   const categories = ['Все', 'Услуги', 'Магазин', 'Спа', 'Ресторан'];
-  const verificationOptions = ['Все', 'Проверено', 'Ожидает'];
+  
+  // 🟢 СТАТУСЫ ВЕРИФИКАЦИИ: значение -> ключ для перевода
+  const statusOptions = [
+    { value: 'Все', label: t('all') },
+    { value: 'verified', label: t('status_verified') },
+    { value: 'pending', label: t('status_pending') },
+    { value: 'rejected', label: t('status_rejected') }
+  ];
 
   // Обработчик сброса фильтров
   const handleResetFilters = () => {
     setSearch('');
     setCategory('Все');
-    setVerificationStatus('Все');
+    setStatus('Все');
   };
 
   if (loading) {
-    return <div className="container">Загрузка каталога...</div>;
+    return <div className="container">{t('loading')}</div>;
   }
 
   if (error) {
-    return <div className="container error-message">Ошибка: {error}</div>;
+    return <div className="container error-message">{t('error')} {error}</div>;
   }
   
   // Отдельный компонент карточки
@@ -83,35 +107,37 @@ function CompanyList() {
     <div className="company-card">
       <div className="card-header">
         <h3 className="company-name">{company.name}</h3>
-        {/* Отображаем значок в зависимости от статуса верификации */}
-        {company.isVerified ? (
-          <span className="verified-badge">🌟</span>
+        {/* Отображаем значок и текст статуса в зависимости от status */}
+        {company.status === 'verified' ? (
+          <span className="verified-badge" title={t('verified')}>🌟 {t('verified')}</span>
+        ) : company.status === 'rejected' ? (
+          <span className="rejected-badge" title={t('rejected')}>🚫 {t('rejected')}</span>
         ) : (
-          <span className="pending-badge">⏳</span>
+          <span className="pending-badge" title={t('pending')}>⏳ {t('pending')}</span>
         )}
       </div>
       <p className="company-category-tag">{company.category}</p>
       <p className="company-description">{company.description}</p>
-      <Link to={`/company/${company._id}`} className="details-button">
-        Подробнее
+      <Link to={`/companies/${company._id}`} className="details-button">
+        {t('details_button')}
       </Link>
     </div>
   );
 
   return (
     <div className="container">
-      <h2>Каталог компаний ({companies.length})</h2>
+      <h2>{t('company_catalog_title')}...</h2>
 
       {/* Панель управления (Поиск и Фильтры) */}
       <div className="controls-bar">
         
         <Link to="/add" className="add-button">
-          + Добавить компанию
+          {t('add_company')}
         </Link>
         
         <input
           type="text"
-          placeholder="Поиск по названию или описанию..."
+          placeholder={t('search_placeholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="search-input"
@@ -123,21 +149,26 @@ function CompanyList() {
           ))}
         </select>
         
-        <select value={verificationStatus} onChange={(e) => setVerificationStatus(e.target.value)} className="filter-select">
-          {verificationOptions.map(status => (
-            <option key={status} value={status}>{status}</option>
+        <select 
+          value={status} 
+          onChange={(e) => setStatus(e.target.value)} 
+          className="filter-select"
+          title={t('status_filter_label')}
+        >
+          {statusOptions.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
 
-        <button onClick={handleResetFilters} className="reset-button">
-          Сброс
+        <button onClick={handleResetFilters} className="reset-button" title={t('reset_filters_tooltip')}>
+          {t('reset_button')}
         </button>
 
       </div>
       
       {/* Список компаний */}
       <div className="company-list">
-        {companies.length > 0 ? (
+        {companies && companies.length > 0 ? (
           companies.map(company => (
             <CompanyCard key={company._id} company={company} />
           ))

@@ -1,97 +1,144 @@
 // Kontrollitud.ee/frontend/src/CompanyForm.jsx
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import './styles/CompanyList.scss';
 
 const API_BASE_URL = 'http://localhost:5000/api/companies';
 
 function CompanyForm() {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('Услуги');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const navigate = useNavigate();
+    const { t } = useTranslation();
+    const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage('');
+    const [form, setForm] = useState({
+        name: '',
+        contactEmail: '',
+        category: 'Услуги',
+        description: '',
+        status: 'pending',
+    });
 
-    try {
-      const response = await fetch(API_BASE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, category, description }),
-      });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(false);
 
-      if (!response.ok) {
-        throw new Error('Ошибка при добавлении компании.');
-      }
+    const handleChange = (field) => (e) => {
+        const value = field === 'status' ? e.target.value : e.target.value;
+        setForm((prev) => ({ ...prev, [field]: value }));
+    };
 
-      setMessage('Компания успешно добавлена!');
-      setTimeout(() => {
-        navigate('/'); // Перенаправляем на главную страницу
-      }, 1500);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setSuccess(false);
 
-    } catch (error) {
-      setMessage(`Ошибка: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+        try {
+            const response = await fetch(API_BASE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form),
+            });
 
-  return (
-    <div className="container">
-      <h2>Добавить новую компанию</h2>
-      <form onSubmit={handleSubmit} className="company-form">
+            const data = await response.json();
 
-        <div className="form-group">
-          <label htmlFor="name">Название компании:</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+            if (!response.ok) {
+                throw new Error(data.error || t('submit_error'));
+            }
+
+            setSuccess(true);
+            setTimeout(() => navigate('/'), 400);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const categories = ['Услуги', 'Магазин', 'Спа', 'Ресторан'];
+
+    return (
+        <div className="container">
+            <div className="controls-bar" style={{ marginBottom: '20px' }}>
+                <Link to="/" className="add-button">{t('back_to_list')}</Link>
+            </div>
+
+            <h2>{t('add_company')}</h2>
+            <form onSubmit={handleSubmit} className="company-form">
+                <div className="form-group">
+                    <label htmlFor="name">{t('company_name')}:</label>
+                    <input
+                        id="name"
+                        type="text"
+                        value={form.name}
+                        onChange={handleChange('name')}
+                        required
+                        disabled={loading}
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="email">{t('contact_email')}:</label>
+                    <input
+                        id="email"
+                        type="email"
+                        value={form.contactEmail}
+                        onChange={handleChange('contactEmail')}
+                        required
+                        disabled={loading}
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="category">{t('category')}:</label>
+                    <select
+                        id="category"
+                        value={form.category}
+                        onChange={handleChange('category')}
+                        disabled={loading}
+                    >
+                        {categories.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="description">{t('description')}:</label>
+                    <textarea
+                        id="description"
+                        value={form.description}
+                        onChange={handleChange('description')}
+                        rows="4"
+                        required
+                        disabled={loading}
+                    />
+                </div>
+
+                <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+                    <label htmlFor="status">{t('verification_status')}:</label>
+                    <select
+                        id="status"
+                        value={form.status}
+                        onChange={handleChange('status')}
+                        disabled={loading}
+                    >
+                        <option value="pending">{t('pending')}</option>
+                        <option value="verified">{t('verified')}</option>
+                        <option value="rejected">{t('rejected')}</option>
+                    </select>
+                </div>
+
+                <button type="submit" className="add-button" disabled={loading}>
+                    {loading ? t('submitting') : t('add_company')}
+                </button>
+
+                {error && <p className="error-message" style={{ marginTop: '10px' }}>{error}</p>}
+                {success && <p className="success-message" style={{ marginTop: '10px' }}>{t('company_added')}</p>}
+            </form>
         </div>
-
-        <div className="form-group">
-          <label htmlFor="category">Категория:</label>
-          <select
-            id="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          >
-            <option value="Услуги">Услуги</option>
-            <option value="Магазин">Магазин</option>
-            <option value="Спа">Спа</option>
-            <option value="Ресторан">Ресторан</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="description">Описание:</label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-          ></textarea>
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? 'Отправка...' : 'Добавить'}
-        </button>
-
-        {message && <p className="message-status">{message}</p>}
-      </form>
-    </div>
-  );
+    );
 }
 
 export default CompanyForm;
