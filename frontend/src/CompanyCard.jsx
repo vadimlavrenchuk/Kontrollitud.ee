@@ -4,6 +4,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedContent, getLocaleFromLanguage } from './utils/localization';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faShieldAlt, faStar, faStarHalfAlt } from '@fortawesome/free-solid-svg-icons';
+import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 
 // Star rating component
 const StarRating = ({ rating }) => {
@@ -13,11 +16,11 @@ const StarRating = ({ rating }) => {
   
   for (let i = 1; i <= 5; i++) {
     if (i <= fullStars) {
-      stars.push(<i key={i} className="fas fa-star" style={{ color: '#ffc107' }}></i>);
+      stars.push(<FontAwesomeIcon key={i} icon={faStar} className="star-icon filled" />);
     } else if (i === fullStars + 1 && hasHalfStar) {
-      stars.push(<i key={i} className="fas fa-star-half-alt" style={{ color: '#ffc107' }}></i>);
+      stars.push(<FontAwesomeIcon key={i} icon={faStarHalfAlt} className="star-icon filled" />);
     } else {
-      stars.push(<i key={i} className="far fa-star" style={{ color: '#ffc107' }}></i>);
+      stars.push(<FontAwesomeIcon key={i} icon={faStarRegular} className="star-icon empty" />);
     }
   }
   return <span className="star-rating">{stars}</span>;
@@ -43,7 +46,8 @@ const CompanyCard = ({ company }) => {
         {/* Verified badge overlay */}
         {company.isVerified && (
           <div className="verified-badge-overlay">
-            <i className="fas fa-check-circle"></i> {t('verified')}
+            <FontAwesomeIcon icon={faShieldAlt} className="shield-icon" />
+            <span>{t('verified')}</span>
           </div>
         )}
       </div>

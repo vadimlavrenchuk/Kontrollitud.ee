@@ -48,6 +48,12 @@ const resources = {
       "stars": "звезд",
       "comment": "Комментарий",
       "submit_review": "Отправить отзыв",
+      
+      // 🟢 HERO SECTION
+      "hero_title": "Найдите проверенные компании в Эстонии",
+      "hero_subtitle": "Откройте для себя лучшие услуги, основанные на реальных отзывах клиентов",
+      "search_button": "Поиск",
+      "popular_categories": "Популярные категории",
       "submitting": "Отправка...",
       "review_submit_error": "Не удалось отправить отзыв",
       "review_submitted_success": "Спасибо! Ваш отзыв отправлен.",
@@ -131,6 +137,12 @@ const resources = {
       "stars": "tähte",
       "comment": "Kommentaar",
       "submit_review": "Saada arvustus",
+      
+      // 🟢 HERO SECTION
+      "hero_title": "Leia usaldusväärset ettevõtteid Eestis",
+      "hero_subtitle": "Avasta parimad teenused põhinedes tõelistel klientide hinnangutel",
+      "search_button": "Otsi",
+      "popular_categories": "Populaarsed kategooriad",
       "submitting": "Saatmine...",
       "review_submit_error": "Arvustust ei õnnestunud saata",
       "review_submitted_success": "Aitäh! Arvustus saadetud.",
@@ -223,6 +235,12 @@ const resources = {
       "stars": "stars",
       "comment": "Comment",
       "submit_review": "Submit review",
+      
+      // 🟢 HERO SECTION
+      "hero_title": "Find Trusted Businesses in Estonia",
+      "hero_subtitle": "Discover the best services based on real customer reviews",
+      "search_button": "Search",
+      "popular_categories": "Popular Categories",
       "submitting": "Submitting...",
       "review_submit_error": "Could not submit review",
       "review_submitted_success": "Thanks! Your review was sent.",

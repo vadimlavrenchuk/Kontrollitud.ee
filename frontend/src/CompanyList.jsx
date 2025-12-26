@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import CompanyCard from './CompanyCard';
 import './styles/CompanyList.scss';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch, faSpa, faUtensils, faShoppingBag, faChild, faPlane, faCar, faCogs } from '@fortawesome/free-solid-svg-icons';
 
 const API_BASE_URL = 'http://localhost:5000/api/companies';
 
@@ -95,12 +97,28 @@ function CompanyList() {
   const categories = ['Все', 'SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services'];
   const cities = ['Все', 'Tallinn', 'Tartu', 'Pärnu', 'Narva'];
 
+  // Category icons mapping
+  const categoryIcons = {
+    'SPA': faSpa,
+    'Restaurants': faUtensils,
+    'Shops': faShoppingBag,
+    'Kids': faChild,
+    'Travel': faPlane,
+    'Auto': faCar,
+    'Services': faCogs
+  };
+
   // Обработчик сброса фильтров
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedCategory('Все');
     setSelectedCity('Все');
     setIsVerifiedOnly(false);
+  };
+
+  // Handle category quick filter
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
   };
 
   if (loading) {
@@ -112,62 +130,90 @@ function CompanyList() {
   }
 
   return (
-    <div className="container">
-      <h2>{t('company_catalog_title')}...</h2>
+    <>
+      {/* Hero Section */}
+      <div className="hero-section">
+        <div className="hero-content">
+          <h1 className="hero-title fade-in">{t('hero_title')}</h1>
+          <p className="hero-subtitle fade-in-delay">{t('hero_subtitle')}</p>
+          
+          {/* Large Search Bar */}
+          <div className="hero-search fade-in-delay-2">
+            <div className="search-wrapper">
+              <FontAwesomeIcon icon={faSearch} className="search-icon" />
+              <input
+                type="text"
+                placeholder={t('search_placeholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="hero-search-input"
+              />
+              <button className="search-button">
+                <FontAwesomeIcon icon={faSearch} />
+                {t('search_button')}
+              </button>
+            </div>
+          </div>
 
-      {/* Панель управления (Поиск и Фильтры) */}
-      <div className="controls-bar">
-        
-        <Link to="/add" className="add-button">
-          {t('add_company')}
-        </Link>
-        
-        <input
-          type="text"
-          placeholder={t('search_placeholder')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
-        />
-
-        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="filter-select">
-          {categories.map(cat => (
-            <option key={cat} value={cat}>{t(cat)}</option>
-          ))}
-        </select>
-
-        <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="filter-select">
-          {cities.map(city => (
-            <option key={city} value={city}>{t(city)}</option>
-          ))}
-        </select>
-
-        <label className="verified-filter">
-          <input
-            type="checkbox"
-            checked={isVerifiedOnly}
-            onChange={(e) => setIsVerifiedOnly(e.target.checked)}
-          />
-          <span>{t('verified_only')}</span>
-        </label>
-
-        <button onClick={handleResetFilters} className="reset-button" title={t('reset_filters_tooltip')}>
-          {t('reset_button')}
-        </button>
-
+          {/* Quick Category Pills */}
+          <div className="category-pills fade-in-delay-3">
+            <p className="pills-label">{t('popular_categories')}</p>
+            <div className="pills-container">
+              {categories.filter(cat => cat !== 'Все').map(category => (
+                <button
+                  key={category}
+                  className={`category-pill ${selectedCategory === category ? 'active' : ''}`}
+                  onClick={() => handleCategoryClick(category)}
+                >
+                  <FontAwesomeIcon icon={categoryIcons[category]} />
+                  <span>{t(category)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-      
-      {/* Список компаний */}
-      <div className="company-list">
-        {companies && companies.length > 0 ? (
-          companies.map(company => (
-            <CompanyCard key={company._id} company={company} />
-          ))
-        ) : (
-          <p className="no-results">{t('no_companies_found')}</p>
-        )}
+
+      {/* Main Content */}
+      <div className="container">
+        {/* Secondary Filters */}
+        <div className="controls-bar">
+          <Link to="/add" className="add-button">
+            {t('add_company')}
+          </Link>
+
+          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="filter-select">
+            {cities.map(city => (
+              <option key={city} value={city}>{t(city)}</option>
+            ))}
+          </select>
+
+          <label className="verified-filter">
+            <input
+              type="checkbox"
+              checked={isVerifiedOnly}
+              onChange={(e) => setIsVerifiedOnly(e.target.checked)}
+            />
+            <span>{t('verified_only')}</span>
+          </label>
+
+          <button onClick={handleResetFilters} className="reset-button" title={t('reset_filters_tooltip')}>
+            {t('reset_button')}
+          </button>
+        </div>
+        
+          {/* Список компаний */}
+        <div className="company-list">
+          {companies && companies.length > 0 ? (
+            companies.map(company => (
+              <CompanyCard key={company._id} company={company} />
+            ))
+          ) : (
+            <p className="no-results">{t('no_companies_found')}</p>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

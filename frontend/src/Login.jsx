@@ -33,6 +33,9 @@ function Login() {
             // Store token in localStorage
             localStorage.setItem('adminToken', data.token);
             
+            // Dispatch custom event to notify App component
+            window.dispatchEvent(new Event('authChange'));
+            
             // Redirect to admin dashboard
             navigate('/admin');
 

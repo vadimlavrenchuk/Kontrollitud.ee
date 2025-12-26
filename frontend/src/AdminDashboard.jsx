@@ -53,6 +53,10 @@ function AdminDashboard() {
 
     const handleLogout = () => {
         localStorage.removeItem('adminToken');
+        
+        // Dispatch custom event to notify App component
+        window.dispatchEvent(new Event('authChange'));
+        
         toast.info('👋 Logged out successfully');
         navigate('/login');
     };

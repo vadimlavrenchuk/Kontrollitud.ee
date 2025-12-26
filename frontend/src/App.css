@@ -1,42 +1,233 @@
 #root {
-  max-width: 1280px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ========================================
+   STICKY NAVBAR
+   ======================================== */
+.sticky-navbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(17, 24, 39, 0.5); /* Dark semi-transparent */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sticky-navbar.scrolled {
+  background: rgba(0, 0, 0, 0.8); /* Darker when scrolled */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.navbar-container {
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Logo/Brand Section */
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.logo-link {
+  text-decoration: none;
+  color: white;
+  transition: opacity 0.2s ease;
+}
+
+.logo-link:hover {
+  opacity: 0.8;
+}
+
+.logo-text {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Right Side Container: Admin Link + Language Switcher */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+/* Admin Link - Outlined Style */
+.admin-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: transparent;
+  color: #3b82f6; /* blue-500 */
+  border: 2px solid #3b82f6; /* blue-500 */
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-link:hover {
+  background: rgba(59, 130, 246, 0.1); /* light blue background on hover */
+  border-color: #2563eb; /* blue-600 */
+  color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.admin-icon {
+  font-size: 1rem;
+}
+
+.admin-text {
+  display: inline;
+}
+
+/* Responsive navbar */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 12px 16px;
+    gap: 12px;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .logo-text {
+    font-size: 1.125rem;
+  }
+  
+  .navbar-right {
+    gap: 12px;
+  }
+  
+  .admin-link {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+  
+  /* Hide admin text on small screens, keep only icon */
+  .admin-text {
+    display: none;
+  }
+  
+  .admin-icon {
+    font-size: 1.25rem;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+/* ========================================
+   LANGUAGE SWITCHER (Updated positioning for sticky navbar)
+   ======================================== */
+
+/* Main app container */
+.app-main {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* Language Switcher Styling */
+.language-switcher {
+  display: flex;
+  gap: 8px;
+  z-index: 1001;
+}
+
+.language-button {
+  /* Glassmorphism effect */
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  /* Border and styling */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  
+  /* Text styling */
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  
+  /* Spacing */
+  padding: 10px 16px;
+  
+  /* Interaction */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  /* Remove default button styling */
+  outline: none;
+}
+
+.language-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.language-button.active {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #2563eb;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.language-button.active:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-2px);
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+  .language-switcher {
+    gap: 6px;
+  }
+  
+  .language-button {
+    padding: 8px 10px;
+    font-size: 0.75rem;
   }
 }
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+/* Extra small screens */
+@media (max-width: 480px) {
+  .navbar-container {
+    padding: 10px 12px;
+  }
+  
+  .logo-text {
+    font-size: 1rem;
+  }
+  
+  .navbar-right {
+    gap: 8px;
+  }
+  
+  .language-button {
+    padding: 6px 8px;
+    font-size: 0.7rem;
+  }
+  
+  .admin-link {
+    padding: 8px;
+  }
 }

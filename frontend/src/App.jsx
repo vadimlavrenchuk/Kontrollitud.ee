@@ -1,9 +1,10 @@
 // Kontrollitud.ee/frontend/src/App.jsx
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
+import './App.css';
 
 // 🟢 ОБЯЗАТЕЛЬНО ПРОВЕРЬ, ЧТО ЭТИ ИМПОРТЫ ЕСТЬ:
 import CompanyList from './CompanyList.jsx'; 
@@ -24,10 +25,48 @@ function App() {
         localStorage.setItem('language', lng);
     };
 
+    // Track scroll position for navbar styling
+    const [isScrolled, setIsScrolled] = useState(false);
+    
+    // Track authentication state
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
     // Update html lang attribute when language changes
     useEffect(() => {
         document.documentElement.lang = i18n.language;
     }, [i18n.language]);
+    
+    // Check authentication status
+    useEffect(() => {
+        const checkAuth = () => {
+            const token = localStorage.getItem('adminToken');
+            setIsLoggedIn(!!token);
+        };
+        
+        // Check on mount
+        checkAuth();
+        
+        // Listen for storage changes (e.g., login/logout in another tab)
+        window.addEventListener('storage', checkAuth);
+        
+        // Custom event for same-tab login/logout
+        window.addEventListener('authChange', checkAuth);
+        
+        return () => {
+            window.removeEventListener('storage', checkAuth);
+            window.removeEventListener('authChange', checkAuth);
+        };
+    }, []);
+
+    // Scroll detection for navbar styling
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
         <BrowserRouter> 
@@ -43,35 +82,47 @@ function App() {
                     <meta property="og:type" content="website" />
                 </Helmet>
                 
-                <header>
-                    <h1>
-                        <Link to="/" style={{ textDecoration: 'none', color: '#333' }}>
-                            {t('app_title')} {/* 🟢 ИСПОЛЬЗОВАНИЕ ПЕРЕВОДА */}
-                        </Link>
-                    </h1>
-                    <p>{t('slogan')}</p> {/* 🟢 ИСПОЛЬЗОВАНИЕ ПЕРЕВОДА */}
+                <header className={`sticky-navbar ${isScrolled ? 'scrolled' : ''}`}>
+                    <div className="navbar-container">
+                        {/* Left: Logo/Brand */}
+                        <div className="navbar-brand">
+                            <Link to="/" className="logo-link">
+                                <h1 className="logo-text">{t('app_title')}</h1>
+                            </Link>
+                        </div>
 
-                    {/* Navigation Links */}
-                    <nav style={{ marginTop: '15px' }}>
-                        <Link to="/admin" style={{ 
-                            marginRight: '15px', 
-                            padding: '8px 16px', 
-                            background: '#667eea',
-                            color: 'white',
-                            borderRadius: '6px',
-                            textDecoration: 'none',
-                            fontWeight: 'bold',
-                            fontSize: '0.9em'
-                        }}>
-                            🔐 Admin Dashboard
-                        </Link>
-                    </nav>
+                        {/* Right: Admin Link + Language Switcher */}
+                        <div className="navbar-right">
+                            {/* Only show Admin button if logged in */}
+                            {isLoggedIn && (
+                                <Link to="/admin" className="admin-link">
+                                    <span className="admin-icon">🔐</span>
+                                    <span className="admin-text">Admin Dashboard</span>
+                                </Link>
+                            )}
 
-                    {/* 🟢 ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА */}
-                    <div style={{ position: 'absolute', top: 10, right: 10 }}>
-                        <button onClick={() => changeLanguage('et')} style={{ fontWeight: i18n.language === 'et' ? 'bold' : 'normal' }}>ET</button>
-                        <button onClick={() => changeLanguage('en')} style={{ fontWeight: i18n.language === 'en' ? 'bold' : 'normal' }}>EN</button>
-                        <button onClick={() => changeLanguage('ru')} style={{ fontWeight: i18n.language === 'ru' ? 'bold' : 'normal' }}>RU</button>
+                            {/* Language Switcher */}
+                            <div className="language-switcher">
+                                <button 
+                                    onClick={() => changeLanguage('et')} 
+                                    className={`language-button ${i18n.language === 'et' ? 'active' : ''}`}
+                                >
+                                    ET
+                                </button>
+                                <button 
+                                    onClick={() => changeLanguage('en')} 
+                                    className={`language-button ${i18n.language === 'en' ? 'active' : ''}`}
+                                >
+                                    EN
+                                </button>
+                                <button 
+                                    onClick={() => changeLanguage('ru')} 
+                                    className={`language-button ${i18n.language === 'ru' ? 'active' : ''}`}
+                                >
+                                    RU
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </header>
 
