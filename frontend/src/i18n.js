@@ -53,7 +53,40 @@ const resources = {
       "review_submitted_success": "Спасибо! Ваш отзыв отправлен.",
       "reviews_load_error": "Не удалось загрузить отзывы.",
       "no_reviews_yet": "Отзывов пока нет. Будьте первым!",
-      "category": "Категория" // Добавляем, если не было
+      "category": "Категория",
+      "city": "Город",
+      "verified_only": "Только проверенные",
+      "no_companies_found": "По вашему запросу компаний не найдено",
+      
+      // Cities
+      "Tallinn": "Таллин",
+      "Tartu": "Тарту",
+      "Pärnu": "Пярну",
+      "Narva": "Нарва",
+      "Все": "Все",
+      
+      // Categories
+      "SPA": "СПА",
+      "Restaurants": "Рестораны",
+      "Shops": "Магазины",
+      "Kids": "Детям",
+      "Travel": "Путешествия",
+      "Auto": "Авто",
+      "Services": "Услуги",
+      
+      // Business Details
+      "contact_info": "Контактная информация",
+      "working_hours": "Часы работы",
+      "quick_stats": "Быстрая статистика",
+      "verified_business": "Проверенный бизнес",
+      "visit_website": "Посетить сайт",
+      "Monday": "Понедельник",
+      "Tuesday": "Вторник",
+      "Wednesday": "Среда",
+      "Thursday": "Четверг",
+      "Friday": "Пятница",
+      "Saturday": "Суббота",
+      "Sunday": "Воскресенье"
     }
   },
   et: { // Эстонский
@@ -105,7 +138,45 @@ const resources = {
       "no_reviews_yet": "Arvustusi veel pole. Ole esimene!",
       "company_not_found": "Ettevõtet ei leitud",
       "no_company_data": "Andmeid pole",
-      "reviews": "arvustust"
+      "reviews": "arvustust",
+      "category": "Kategooria",
+      "city": "Linn",
+      "verified_only": "Ainult kontrollitud",
+      "no_companies_found": "Päringu järgi ettevõtteid ei leitud",
+      
+      // Cities
+      "Tallinn": "Tallinn",
+      "Tartu": "Tartu",
+      "Pärnu": "Pärnu",
+      "Narva": "Narva",
+      "Все": "Kõik",
+      
+      // Categories
+      "SPA": "SPA",
+      "Restaurants": "Restoranid",
+      "Shops": "Poed",
+      "Kids": "Lapsed",
+      "Travel": "Reisimine",
+      "Auto": "Auto",
+      "Services": "Teenused",
+      "services": "Teenused",
+      "rating": "Hinnang",
+      "write_review": "Kirjuta arvustus",
+      "submit_review": "Saada",
+      
+      // Business Details
+      "contact_info": "Kontaktinfo",
+      "working_hours": "Lahtiolekuajad",
+      "quick_stats": "Kiirstatistika",
+      "verified_business": "Kontrollitud ettevõte",
+      "visit_website": "Külasta veebilehte",
+      "Monday": "Esmaspäev",
+      "Tuesday": "Teisipäev",
+      "Wednesday": "Kolmapäev",
+      "Thursday": "Neljapäev",
+      "Friday": "Reede",
+      "Saturday": "Laupäev",
+      "Sunday": "Pühapäev"
     }
   },
   // ... (английский)
@@ -156,7 +227,41 @@ const resources = {
       "review_submit_error": "Could not submit review",
       "review_submitted_success": "Thanks! Your review was sent.",
       "reviews_load_error": "Could not load reviews.",
-      "no_reviews_yet": "No reviews yet. Be the first!"
+      "no_reviews_yet": "No reviews yet. Be the first!",
+      "category": "Category",
+      "city": "City",
+      "verified_only": "Verified only",
+      "no_companies_found": "No companies found for your search",
+      
+      // Cities
+      "Tallinn": "Tallinn",
+      "Tartu": "Tartu",
+      "Pärnu": "Pärnu",
+      "Narva": "Narva",
+      "Все": "All",
+      
+      // Categories
+      "SPA": "SPA",
+      "Restaurants": "Restaurants",
+      "Shops": "Shops",
+      "Kids": "Kids",
+      "Travel": "Travel",
+      "Auto": "Auto",
+      "Services": "Services",
+      
+      // Business Details
+      "contact_info": "Contact Information",
+      "working_hours": "Working Hours",
+      "quick_stats": "Quick Stats",
+      "verified_business": "Verified Business",
+      "visit_website": "Visit Website",
+      "Monday": "Monday",
+      "Tuesday": "Tuesday",
+      "Wednesday": "Wednesday",
+      "Thursday": "Thursday",
+      "Friday": "Friday",
+      "Saturday": "Saturday",
+      "Sunday": "Sunday"
       }
     }
 };
@@ -166,7 +271,7 @@ i18n
   .use(initReactI18next) // Передает i18n в React
   .init({
     resources,
-    // fallbackLng: 'et', // Язык по умолчанию, если выбранный не найден
+    fallbackLng: 'en', // Fallback to English if selected language not found
     detection: {
       order: ['localStorage', 'navigator'], // Приоритет обнаружения: сначала localStorage, потом браузер
       caches: ['localStorage'],

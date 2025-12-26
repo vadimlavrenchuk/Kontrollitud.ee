@@ -1,0 +1,422 @@
+// Kontrollitud.ee/frontend/src/styles/AdminDashboard.scss
+
+@use 'sass:color';
+@use './variables' as *;
+
+.admin-dashboard {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+    padding: 40px 20px;
+}
+
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+}
+
+.btn-logout {
+    background: #fc8181;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+        background: #f56565;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(252, 129, 129, 0.4);
+    }
+
+    i {
+        font-size: 1.1em;
+    }
+}
+
+.admin-title {
+    font-size: 2.5em;
+    color: #2d3748;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.admin-subtitle {
+    color: #718096;
+    font-size: 1.1em;
+    margin-bottom: 40px;
+}
+
+// Card styling
+.admin-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    transition: box-shadow 0.3s;
+
+    &:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.section-title {
+    font-size: 1.5em;
+    color: #2d3748;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+// Alerts
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+
+    &.alert-error {
+        background: #fed7d7;
+        color: #c53030;
+        border: 1px solid #fc8181;
+    }
+
+    &.alert-success {
+        background: #c6f6d5;
+        color: #22543d;
+        border: 1px solid #68d391;
+    }
+}
+
+// Form styling
+.admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+
+    label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 8px;
+        font-size: 0.95em;
+    }
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: all 0.3s;
+    font-family: inherit;
+
+    &:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    &::placeholder {
+        color: #a0aec0;
+    }
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+// Image upload styling
+.image-upload-container {
+    margin-bottom: 15px;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    i {
+        font-size: 1.3em;
+    }
+}
+
+.image-preview {
+    position: relative;
+    margin-top: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 400px;
+    border: 2px solid #e2e8f0;
+
+    img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .btn-remove-image {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(252, 129, 129, 0.95);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+
+        &:hover {
+            background: #f56565;
+            transform: scale(1.1);
+        }
+
+        i {
+            font-size: 1em;
+        }
+    }
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #2d3748;
+
+    .form-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+}
+
+// Buttons
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+
+    &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+}
+
+.btn-delete {
+    background: #fc8181;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+        background: #f56565;
+        transform: scale(1.05);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+// Table styling
+.companies-table {
+    overflow-x: auto;
+    margin-top: 20px;
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+
+            th {
+                padding: 14px 16px;
+                text-align: left;
+                font-weight: 600;
+                font-size: 0.95em;
+                letter-spacing: 0.5px;
+
+                &:first-child {
+                    border-radius: 8px 0 0 0;
+                }
+
+                &:last-child {
+                    border-radius: 0 8px 0 0;
+                }
+            }
+        }
+
+        tbody {
+            tr {
+                border-bottom: 1px solid #e2e8f0;
+                transition: background 0.2s;
+
+                &:hover {
+                    background: #f7fafc;
+                }
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                td {
+                    padding: 14px 16px;
+                    color: #2d3748;
+                    font-size: 0.95em;
+
+                    &.company-name {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        font-weight: 600;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.company-thumb {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+}
+
+// Badges
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+
+    &.badge-verified {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    &.badge-pending {
+        background: #feebc8;
+        color: #744210;
+    }
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: #a0aec0;
+    font-size: 1.1em;
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .admin-dashboard {
+        padding: 20px 10px;
+    }
+
+    .admin-card {
+        padding: 20px;
+    }
+
+    .admin-title {
+        font-size: 2em;
+    }
+
+    .companies-table {
+        table {
+            font-size: 0.85em;
+        }
+
+        .company-thumb {
+            width: 40px;
+            height: 40px;
+        }
+    }
+}

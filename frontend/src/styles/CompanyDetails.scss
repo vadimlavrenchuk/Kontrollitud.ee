@@ -1,6 +1,394 @@
 // Kontrollitud.ee/frontend/src/styles/CompanyDetails.scss
 
-@import './variables';
+@use 'sass:color';
+@use 'sass:math';
+@use './variables' as *;
+
+/* ===== BUSINESS DETAILS PAGE ===== */
+
+.business-details-page {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Back Navigation */
+.back-navigation {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s;
+
+        &:hover {
+            color: #764ba2;
+        }
+
+        i {
+            font-size: 0.9em;
+        }
+    }
+}
+
+/* Hero Section */
+.hero-section {
+    width: 100%;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    .hero-image-container {
+        position: relative;
+        max-width: 1400px;
+        margin: 0 auto;
+        height: 400px;
+        overflow: hidden;
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .verified-badge-hero {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+            i {
+                font-size: 1.3em;
+            }
+        }
+    }
+}
+
+/* Content Grid Layout */
+.content-grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 40px;
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+        
+        .sidebar {
+            order: -1;
+        }
+    }
+}
+
+/* Main Content */
+.main-content {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    .company-header {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 24px;
+        margin-bottom: 32px;
+
+        .company-title {
+            font-size: 2.5em;
+            margin: 0 0 16px 0;
+            color: #172a3a;
+            font-weight: 700;
+        }
+
+        .company-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+
+            .category-badge {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 0.9em;
+                font-weight: 600;
+            }
+
+            .city-badge {
+                background-color: #e9ecef;
+                color: #495057;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 0.9em;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                i {
+                    color: #667eea;
+                }
+            }
+        }
+
+        .rating-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            .rating-stars {
+                display: flex;
+                gap: 4px;
+                font-size: 1.3em;
+            }
+
+            .rating-value {
+                font-size: 1.2em;
+                font-weight: 700;
+                color: #172a3a;
+            }
+
+            .rating-count {
+                color: #6c757d;
+                font-size: 0.95em;
+            }
+        }
+    }
+
+    .description-section {
+        margin-bottom: 40px;
+
+        h2 {
+            font-size: 1.8em;
+            color: #172a3a;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .description-text {
+            line-height: 1.8;
+            color: #495057;
+            font-size: 1.05em;
+        }
+    }
+
+    .reviews-section {
+        margin-top: 40px;
+
+        .section-title {
+            font-size: 1.8em;
+            color: #172a3a;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .reviews-list {
+            margin-top: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+
+            .review-item {
+                background-color: #f8f9fa;
+                padding: 24px;
+                border-radius: 12px;
+                border-left: 4px solid #667eea;
+
+                .review-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+
+                    .review-user-info {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+
+                        .review-user {
+                            font-weight: 700;
+                            color: #172a3a;
+                            font-size: 1.1em;
+                        }
+
+                        .review-rating-inline {
+                            display: flex;
+                            gap: 3px;
+                        }
+                    }
+
+                    .review-date {
+                        font-size: 0.85em;
+                        color: #6c757d;
+                    }
+                }
+
+                .review-comment {
+                    line-height: 1.6;
+                    color: #495057;
+                    margin: 0;
+                }
+            }
+
+            .no-reviews-message {
+                text-align: center;
+                padding: 40px;
+                color: #6c757d;
+                font-size: 1.1em;
+                background-color: #f8f9fa;
+                border-radius: 12px;
+            }
+        }
+    }
+}
+
+/* Sidebar */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+        .info-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3em;
+            margin: 0 0 20px 0;
+            color: #172a3a;
+            font-weight: 600;
+
+            i {
+                color: #667eea;
+                font-size: 1.1em;
+            }
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .info-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                color: #495057;
+                font-size: 0.95em;
+
+                i {
+                    color: #667eea;
+                    width: 20px;
+                    text-align: center;
+                }
+
+                a {
+                    color: #667eea;
+                    text-decoration: none;
+                    transition: color 0.3s;
+
+                    &:hover {
+                        color: #764ba2;
+                        text-decoration: underline;
+                    }
+                }
+            }
+        }
+
+        .working-hours {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .hours-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid #f0f0f0;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                .day {
+                    font-weight: 600;
+                    color: #172a3a;
+                }
+
+                .time {
+                    color: #495057;
+                }
+            }
+        }
+
+        &.stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+
+            .info-card-title {
+                color: white;
+
+                i {
+                    color: white;
+                }
+            }
+
+            .stats-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+
+                .stat-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 8px;
+
+                    .stat-label {
+                        font-weight: 500;
+                    }
+
+                    .stat-value {
+                        font-weight: 700;
+                        font-size: 1.2em;
+                    }
+
+                    &.verified-stat {
+                        justify-content: center;
+                        gap: 10px;
+                        background: rgba(255, 255, 255, 0.2);
+
+                        i {
+                            font-size: 1.3em;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 .details-container {
     max-width: 900px;
@@ -48,7 +436,7 @@
     
     .details-separator {
         border: none;
-        border-top: 1px solid lighten($color-border, 5%);
+        border-top: 1px solid color.adjust($color-border, $lightness: 5%);
         margin: $spacing-base * 2 0;
     }
 
@@ -56,7 +444,7 @@
         .details-category {
             font-weight: bold;
             color: $color-secondary;
-            margin-bottom: $spacing-base / 2;
+            margin-bottom: math.div($spacing-base, 2);
         }
         .details-description {
             line-height: 1.6;
@@ -84,7 +472,7 @@
                 padding: $spacing-base;
                 border: 1px solid $color-border;
                 border-radius: 6px;
-                background-color: lighten($color-background, 3%);
+                background-color: color.adjust($color-background, $lightness: 3%);
 
                 .review-header {
                     display: flex;

@@ -14,7 +14,7 @@ function CompanyForm() {
     const [form, setForm] = useState({
         name: '',
         contactEmail: '',
-        category: 'Услуги',
+        category: 'Services',
         description: '',
         status: 'pending',
     });
@@ -56,7 +56,7 @@ function CompanyForm() {
         }
     };
 
-    const categories = ['Услуги', 'Магазин', 'Спа', 'Ресторан'];
+    const categories = ['SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services'];
 
     return (
         <div className="container">
@@ -99,7 +99,7 @@ function CompanyForm() {
                         disabled={loading}
                     >
                         {categories.map((cat) => (
-                            <option key={cat} value={cat}>{cat}</option>
+                            <option key={cat} value={cat}>{t(cat)}</option>
                         ))}
                     </select>
                 </div>

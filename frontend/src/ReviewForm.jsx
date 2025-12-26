@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import './styles/ReviewForm.scss'; // Будем использовать этот файл для стилей
+import './styles/ReviewForm.scss';
 
 const API_BASE_URL = 'http://localhost:5000/api/reviews';
 
 function ReviewForm({ companyId, onReviewAdded }) {
     const { t } = useTranslation();
     const [userName, setUserName] = useState('');
-    const [rating, setRating] = useState(5); // Начинаем с 5 звезд
+    const [rating, setRating] = useState(5);
+    const [hoveredRating, setHoveredRating] = useState(0);
     const [comment, setComment] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -35,12 +36,12 @@ function ReviewForm({ companyId, onReviewAdded }) {
             }
 
             setSuccess(true);
-            // Очищаем форму
+            // Clear the form
             setUserName('');
             setRating(5);
             setComment('');
 
-            // Вызываем функцию обратного вызова для обновления списка отзывов
+            // Call the callback function to update the reviews list
             onReviewAdded(data); 
 
         } catch (err) {
@@ -48,6 +49,32 @@ function ReviewForm({ companyId, onReviewAdded }) {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Star Rating Component
+    const StarRatingSelector = () => {
+        return (
+            <div className="star-rating-selector">
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                        key={star}
+                        type="button"
+                        className="star-button"
+                        onClick={() => setRating(star)}
+                        onMouseEnter={() => setHoveredRating(star)}
+                        onMouseLeave={() => setHoveredRating(0)}
+                        disabled={loading}
+                    >
+                        <i 
+                            className={`fas fa-star ${
+                                star <= (hoveredRating || rating) ? 'star-filled' : 'star-empty'
+                            }`}
+                        />
+                    </button>
+                ))}
+                <span className="rating-label">{rating} {t('stars')}</span>
+            </div>
+        );
     };
 
     return (
@@ -70,19 +97,8 @@ function ReviewForm({ companyId, onReviewAdded }) {
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="rating">{t('rating')}:</label>
-                    <select
-                        id="rating"
-                        className="form-select"
-                        value={rating}
-                        onChange={(e) => setRating(e.target.value)}
-                        required
-                        disabled={loading}
-                    >
-                        {[5, 4, 3, 2, 1].map(r => (
-                            <option key={r} value={r}>{r} {t('stars')}</option>
-                        ))}
-                    </select>
+                    <label>{t('rating')}:</label>
+                    <StarRatingSelector />
                 </div>
 
                 <div className="form-group">

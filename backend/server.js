@@ -1,11 +1,28 @@
 // Kontrollitud.ee/backend/server.js
 
 // 1. ИМПОРТЫ
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors'); 
+const cors = require('cors');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const app = express();
 const PORT = 5000;
+
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Multer for memory storage
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 // 2. MIDDLEWARE (Настройки приложения)
 app.use(cors()); 
@@ -16,8 +33,7 @@ app.get('/test', (req, res) => {
 });
 
 // 1. ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ
-// !!! ВАЖНО: Укажи здесь адрес своей MongoDB. Локальный или Atlas.
-const DB_URI = 'mongodb+srv://Kontrollitud:6MXhF8u4qfK5qBUs@kontrollituddbcluster.bxlehah.mongodb.net/?appName=KontrollitudDBCluster';
+const DB_URI = process.env.DB_URI || 'mongodb+srv://Kontrollitud:6MXhF8u4qfK5qBUs@kontrollituddbcluster.bxlehah.mongodb.net/?appName=KontrollitudDBCluster';
 
 
 mongoose.connect(DB_URI)
@@ -26,19 +42,46 @@ mongoose.connect(DB_URI)
 
 // 2. СХЕМА ДАННЫХ (Определяем, как выглядит компания)
 const companySchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true },
-    description: { type: String, required: true },
-    category: { type: String, required: true }, 
-    contactEmail: { type: String, required: true },
-    status: { 
+    name: { 
         type: String, 
-        enum: ['pending', 'verified', 'rejected'], 
-        default: 'pending',
-        required: true
+        required: true 
     },
-    // 🟢 РЕЙТИНГ И ОТЗЫВЫ
-    averageRating: { type: Number, default: 0, min: 0, max: 5 },
-    reviewCount: { type: Number, default: 0, min: 0 }
+    category: { 
+        type: String, 
+        enum: ['SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services'],
+        required: true 
+    },
+    city: { 
+        type: String, 
+        enum: ['Tallinn', 'Tartu', 'Pärnu', 'Narva'],
+        required: true 
+    },
+    isVerified: { 
+        type: Boolean, 
+        default: false 
+    },
+    rating: { 
+        type: Number, 
+        default: 0,
+        min: 0,
+        max: 5 
+    },
+    reviewsCount: { 
+        type: Number, 
+        default: 0,
+        min: 0 
+    },
+    description: {
+        et: { type: String },
+        en: { type: String },
+        ru: { type: String }
+    },
+    image: { 
+        type: String 
+    },
+    workingHours: {
+        type: Object
+    }
 });
 
 const Company = mongoose.model('Company', companySchema);
@@ -74,6 +117,50 @@ const reviewSchema = new mongoose.Schema({
         type: Date, 
         default: Date.now 
     }
+});
+
+// Static method to calculate average rating for a company
+reviewSchema.statics.getAverageRating = async function(companyId) {
+    try {
+        const stats = await this.aggregate([
+            {
+                $match: { companyId: companyId }
+            },
+            {
+                $group: {
+                    _id: '$companyId',
+                    averageRating: { $avg: '$rating' },
+                    reviewsCount: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Update the Company document with new rating and count
+        if (stats.length > 0) {
+            await mongoose.model('Company').findByIdAndUpdate(companyId, {
+                rating: Math.round(stats[0].averageRating * 10) / 10, // Round to 1 decimal
+                reviewsCount: stats[0].reviewsCount
+            });
+        } else {
+            // No reviews, reset to defaults
+            await mongoose.model('Company').findByIdAndUpdate(companyId, {
+                rating: 0,
+                reviewsCount: 0
+            });
+        }
+    } catch (error) {
+        console.error('Error calculating average rating:', error);
+    }
+};
+
+// Post-save hook to automatically update company rating after each review
+reviewSchema.post('save', async function() {
+    await this.constructor.getAverageRating(this.companyId);
+});
+
+// Post-remove hook to update rating when a review is deleted
+reviewSchema.post('remove', async function() {
+    await this.constructor.getAverageRating(this.companyId);
 });
 
 // Создаем модель Review
@@ -117,7 +204,17 @@ app.get('/api/companies', async (req, res) => {
             filter.category = req.query.category;
         }
 
-        // 4. Добавляем фильтр по статусу верификации
+        // 4. Добавляем фильтр по городу
+        if (req.query.city && req.query.city !== 'Все') {
+            filter.city = req.query.city;
+        }
+
+        // 5. Добавляем фильтр по верификации
+        if (req.query.isVerified === 'true') {
+            filter.isVerified = true;
+        }
+
+        // 6. Добавляем фильтр по статусу верификации (legacy support)
         if (req.query.status) {
             // Позволяем фильтровать по статусу: 'pending', 'verified', 'rejected'
             if (['pending', 'verified', 'rejected'].includes(req.query.status)) {
@@ -166,9 +263,167 @@ app.get('/api/seed', async (req, res) => {
     try {
         await Company.deleteMany({});
         const companies = [
-            { name: 'Kontrollitud Spa', description: 'Лучший СПА-салон, проверен.', category: 'Спа', status: 'verified', contactEmail: 'spa@test.ee' },
-            { name: 'Быстрый Магазин', description: 'Онлайн-магазин электроники.', category: 'Магазин', status: 'verified', contactEmail: 'shop@test.ee' },
-            { name: 'Местный Сервис', description: 'Ремонт техники. Ожидает проверки.', category: 'Услуги', status: 'pending', contactEmail: 'service@test.ee' }
+            { 
+                name: 'Tallinn Luxury SPA', 
+                category: 'SPA', 
+                city: 'Tallinn',
+                isVerified: true,
+                rating: 4.8,
+                reviewsCount: 127,
+                description: {
+                    et: 'Parim SPA-keskus Tallinnas. Professionaalne teenindus ja lõõgastav atmosfäär.',
+                    en: 'Best SPA center in Tallinn. Professional service and relaxing atmosphere.',
+                    ru: 'Лучший СПА-центр в Таллинне. Профессиональное обслуживание и расслабляющая атмосфера.'
+                },
+                image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&h=250&fit=crop',
+                workingHours: {
+                    monday: '10:00-20:00',
+                    tuesday: '10:00-20:00',
+                    wednesday: '10:00-20:00',
+                    thursday: '10:00-20:00',
+                    friday: '10:00-22:00',
+                    saturday: '10:00-22:00',
+                    sunday: '10:00-18:00'
+                }
+            },
+            { 
+                name: 'Tartu Family Restaurant', 
+                category: 'Restaurants', 
+                city: 'Tartu',
+                isVerified: true,
+                rating: 4.5,
+                reviewsCount: 89,
+                description: {
+                    et: 'Peresõbralik restoran Tartu südames. Maitsvad toidud ja sõbralik teenindus.',
+                    en: 'Family-friendly restaurant in the heart of Tartu. Delicious food and friendly service.',
+                    ru: 'Семейный ресторан в центре Тарту. Вкусная еда и дружелюбное обслуживание.'
+                },
+                image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=250&fit=crop',
+                workingHours: {
+                    monday: '11:00-22:00',
+                    tuesday: '11:00-22:00',
+                    wednesday: '11:00-22:00',
+                    thursday: '11:00-22:00',
+                    friday: '11:00-23:00',
+                    saturday: '11:00-23:00',
+                    sunday: '11:00-21:00'
+                }
+            },
+            { 
+                name: 'TechnoShop Electronics', 
+                category: 'Shops', 
+                city: 'Tallinn',
+                isVerified: false,
+                rating: 3.9,
+                reviewsCount: 45,
+                description: {
+                    et: 'Elektroonika- ja nutiseadmete pood. Lai valik ja konkurentsivõimelised hinnad.',
+                    en: 'Electronics and smart devices store. Wide selection and competitive prices.',
+                    ru: 'Магазин электроники и умных устройств. Широкий ассортимент и конкурентные цены.'
+                },
+                image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=250&fit=crop',
+                workingHours: {
+                    monday: '09:00-19:00',
+                    tuesday: '09:00-19:00',
+                    wednesday: '09:00-19:00',
+                    thursday: '09:00-19:00',
+                    friday: '09:00-19:00',
+                    saturday: '10:00-17:00',
+                    sunday: 'Closed'
+                }
+            },
+            { 
+                name: 'Kids Paradise', 
+                category: 'Kids', 
+                city: 'Pärnu',
+                isVerified: true,
+                rating: 4.9,
+                reviewsCount: 156,
+                description: {
+                    et: 'Laste mängukeskus Pärnus. Turvaline ja lõbus keskkond lastele.',
+                    en: 'Children\'s play center in Pärnu. Safe and fun environment for kids.',
+                    ru: 'Детский игровой центр в Пярну. Безопасная и веселая среда для детей.'
+                },
+                image: 'https://images.unsplash.com/photo-1544041144-5f0f51d73bb6?w=400&h=250&fit=crop',
+                workingHours: {
+                    monday: '10:00-20:00',
+                    tuesday: '10:00-20:00',
+                    wednesday: '10:00-20:00',
+                    thursday: '10:00-20:00',
+                    friday: '10:00-21:00',
+                    saturday: '10:00-21:00',
+                    sunday: '10:00-19:00'
+                }
+            },
+            { 
+                name: 'Baltic Travel Agency', 
+                category: 'Travel', 
+                city: 'Tallinn',
+                isVerified: true,
+                rating: 4.6,
+                reviewsCount: 203,
+                description: {
+                    et: 'Reisibüroo, mis pakub parimaid puhkusepakette ja reisiteenuseid.',
+                    en: 'Travel agency offering the best vacation packages and travel services.',
+                    ru: 'Туристическое агентство, предлагающее лучшие туристические пакеты и услуги.'
+                },
+                image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop',
+                workingHours: {
+                    monday: '09:00-18:00',
+                    tuesday: '09:00-18:00',
+                    wednesday: '09:00-18:00',
+                    thursday: '09:00-18:00',
+                    friday: '09:00-18:00',
+                    saturday: '10:00-14:00',
+                    sunday: 'Closed'
+                }
+            },
+            { 
+                name: 'AutoService Pro', 
+                category: 'Auto', 
+                city: 'Narva',
+                isVerified: false,
+                rating: 4.2,
+                reviewsCount: 67,
+                description: {
+                    et: 'Autoremont ja hooldus. Professionaalsed mehaaniikud ja kvaliteetne teenindus.',
+                    en: 'Car repair and maintenance. Professional mechanics and quality service.',
+                    ru: 'Ремонт и обслуживание автомобилей. Профессиональные механики и качественный сервис.'
+                },
+                image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=250&fit=crop',
+                workingHours: {
+                    monday: '08:00-18:00',
+                    tuesday: '08:00-18:00',
+                    wednesday: '08:00-18:00',
+                    thursday: '08:00-18:00',
+                    friday: '08:00-18:00',
+                    saturday: '09:00-14:00',
+                    sunday: 'Closed'
+                }
+            },
+            { 
+                name: 'Home Cleaning Experts', 
+                category: 'Services', 
+                city: 'Tartu',
+                isVerified: true,
+                rating: 4.7,
+                reviewsCount: 94,
+                description: {
+                    et: 'Professionaalne kodukoristusteenus. Kiire, usaldusväärne ja taskukohane.',
+                    en: 'Professional home cleaning service. Fast, reliable and affordable.',
+                    ru: 'Профессиональная служба уборки. Быстро, надежно и доступно.'
+                },
+                image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=250&fit=crop',
+                workingHours: {
+                    monday: '08:00-20:00',
+                    tuesday: '08:00-20:00',
+                    wednesday: '08:00-20:00',
+                    thursday: '08:00-20:00',
+                    friday: '08:00-20:00',
+                    saturday: '09:00-17:00',
+                    sunday: 'Closed'
+                }
+            }
         ];
         await Company.insertMany(companies);
         res.json({ message: 'Тестовые данные успешно добавлены!' });
@@ -219,36 +474,160 @@ app.post('/api/reviews/:companyId', async (req, res) => {
         const { userName, comment, rating } = req.body;
         const companyId = req.params.companyId;
 
-        // 1. Создаем новый отзыв
-        const newReview = new Review({ 
-            companyId, 
-            userName, 
-            comment, 
-            rating 
-        });
-        const savedReview = await newReview.save();
-
-        // 2. Обновляем статистику компании (средний рейтинг и счетчик)
+        // Validate that company exists
         const company = await Company.findById(companyId);
         if (!company) {
             return res.status(404).json({ error: 'Компания не найдена.' });
         }
+
+        // Create new review with numeric rating (ensure type safety)
+        const newReview = new Review({ 
+            companyId, 
+            userName: userName || 'Анонимный пользователь', 
+            comment, 
+            rating: Number(rating) // Ensure numeric type
+        });
         
-        // Пересчет среднего рейтинга
-        const newReviewCount = company.reviewCount + 1;
-        const newAverageRating = 
-            (company.averageRating * company.reviewCount + rating) / newReviewCount;
+        // Save review - post-save hook will automatically update company rating
+        const savedReview = await newReview.save();
 
-        company.reviewCount = newReviewCount;
-        company.averageRating = newAverageRating;
-        await company.save();
-
-        // 3. Отправляем новый отзыв
+        // Return the saved review
         res.status(201).json(savedReview);
 
     } catch (error) {
         console.error("Ошибка при добавлении отзыва:", error);
         res.status(400).json({ error: error.message });
+    }
+});
+
+// POST /api/admin/login - Simple admin authentication
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    
+    if (password === adminPassword) {
+        // Generate a simple token (in production, use JWT)
+        const token = Buffer.from(`admin:${Date.now()}`).toString('base64');
+        res.json({ 
+            success: true, 
+            token,
+            message: 'Login successful' 
+        });
+    } else {
+        res.status(401).json({ 
+            error: 'Invalid password' 
+        });
+    }
+});
+
+// POST /api/upload - Upload image to Cloudinary
+app.post('/api/upload', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        // Check if Cloudinary is configured
+        if (!process.env.CLOUDINARY_CLOUD_NAME) {
+            return res.status(500).json({ 
+                error: 'Cloudinary not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in .env file' 
+            });
+        }
+
+        // Upload to Cloudinary using upload_stream
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'kontrollitud',
+                transformation: [
+                    { width: 800, height: 500, crop: 'limit' },
+                    { quality: 'auto' }
+                ]
+            },
+            (error, result) => {
+                if (error) {
+                    console.error('Cloudinary upload error:', error);
+                    return res.status(500).json({ error: 'Upload failed' });
+                }
+                res.json({ 
+                    url: result.secure_url,
+                    public_id: result.public_id 
+                });
+            }
+        );
+
+        // Pipe the buffer to Cloudinary
+        const { Readable } = require('stream');
+        const bufferStream = new Readable();
+        bufferStream.push(req.file.buffer);
+        bufferStream.push(null);
+        bufferStream.pipe(uploadStream);
+
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DELETE /api/companies/:id - Delete a company
+app.delete('/api/companies/:id', async (req, res) => {
+    try {
+        const companyId = req.params.id;
+        
+        // Find and delete the company
+        const deletedCompany = await Company.findByIdAndDelete(companyId);
+        
+        if (!deletedCompany) {
+            return res.status(404).json({ error: 'Company not found.' });
+        }
+        
+        // Also delete all reviews associated with this company
+        await Review.deleteMany({ companyId: companyId });
+        
+        res.json({ 
+            message: 'Company and associated reviews deleted successfully',
+            company: deletedCompany 
+        });
+
+    } catch (error) {
+        console.error("Error deleting company:", error);
+        res.status(500).json({ error: 'Failed to delete company.' });
+    }
+});
+
+// GET /sitemap.xml - Generate dynamic sitemap for SEO
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        const companies = await Company.find({});
+        const baseUrl = 'https://kontrollitud.ee'; // Change to your production domain
+        
+        // Build XML sitemap
+        let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+        
+        // Homepage
+        sitemap += '  <url>\n';
+        sitemap += `    <loc>${baseUrl}/</loc>\n`;
+        sitemap += '    <changefreq>daily</changefreq>\n';
+        sitemap += '    <priority>1.0</priority>\n';
+        sitemap += '  </url>\n';
+        
+        // Company pages
+        companies.forEach(company => {
+            sitemap += '  <url>\n';
+            sitemap += `    <loc>${baseUrl}/companies/${company._id}</loc>\n`;
+            sitemap += '    <changefreq>weekly</changefreq>\n';
+            sitemap += '    <priority>0.8</priority>\n';
+            sitemap += '  </url>\n';
+        });
+        
+        sitemap += '</urlset>';
+        
+        res.header('Content-Type', 'application/xml');
+        res.send(sitemap);
+        
+    } catch (error) {
+        console.error('Error generating sitemap:', error);
+        res.status(500).send('Error generating sitemap');
     }
 });
 

@@ -1,7 +1,7 @@
 // Kontrollitud.ee/frontend/src/ReviewForm.scss
 
-@use "sass:color";
-@import './variables'; // Импортируем переменные
+@use 'sass:color';
+@use './variables' as *;
 
 .review-form-section {
     padding: $spacing-base * 1.5;
@@ -44,6 +44,45 @@
 
             .form-textarea {
                 resize: vertical;
+            }
+        }
+
+        .star-rating-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+            
+            .star-button {
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 4px;
+                font-size: 1.5em;
+                transition: transform 0.2s;
+                
+                &:hover:not(:disabled) {
+                    transform: scale(1.2);
+                }
+                
+                &:disabled {
+                    cursor: not-allowed;
+                    opacity: 0.5;
+                }
+                
+                .star-filled {
+                    color: #ffc107;
+                }
+                
+                .star-empty {
+                    color: #ddd;
+                }
+            }
+            
+            .rating-label {
+                margin-left: 8px;
+                font-weight: 500;
+                color: $color-text;
             }
         }
 
