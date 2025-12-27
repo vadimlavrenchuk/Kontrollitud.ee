@@ -5,58 +5,39 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import './App.css';
+import logo from './assets/logokontroll.jpg';
 
 // 🟢 ОБЯЗАТЕЛЬНО ПРОВЕРЬ, ЧТО ЭТИ ИМПОРТЫ ЕСТЬ:
 import CompanyList from './CompanyList.jsx'; 
 import CompanyDetails from './CompanyDetails.jsx';
-import CompanyForm from './CompanyForm.jsx'; // 👈 Должен быть здесь!
+import AddBusiness from './AddBusiness.jsx'; // Business submission form (public)
 import AdminDashboard from './AdminDashboard.jsx';
+import UserDashboard from './UserDashboard.jsx';
+import AuthPage from './AuthPage.jsx';
 import Login from './Login.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
+import RequireAuth from './RequireAuth.jsx';
+import { AuthProvider, useAuth } from './AuthContext.jsx';
+import Footer from './Footer.jsx';
 
-function App() {
-    // 🟢 ИСПОЛЬЗУЕМ: t (для перевода) и i18n (для смены языка)
-    const { t, i18n } = useTranslation(); 
+function AppContent() {
+    const { t, i18n } = useTranslation();
+    const { user, logout, isAuthenticated } = useAuth();
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
     
-    // Функция для смены языка
+    // Admin email - replace with your actual admin email
+    const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@kontrollitud.ee';
+    const isAdmin = user && user.email === ADMIN_EMAIL;
+    
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);
-        // Save language preference to localStorage for persistence
         localStorage.setItem('language', lng);
     };
 
-    // Track scroll position for navbar styling
-    const [isScrolled, setIsScrolled] = useState(false);
-    
-    // Track authentication state
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-    // Update html lang attribute when language changes
     useEffect(() => {
         document.documentElement.lang = i18n.language;
     }, [i18n.language]);
-    
-    // Check authentication status
-    useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem('adminToken');
-            setIsLoggedIn(!!token);
-        };
-        
-        // Check on mount
-        checkAuth();
-        
-        // Listen for storage changes (e.g., login/logout in another tab)
-        window.addEventListener('storage', checkAuth);
-        
-        // Custom event for same-tab login/logout
-        window.addEventListener('authChange', checkAuth);
-        
-        return () => {
-            window.removeEventListener('storage', checkAuth);
-            window.removeEventListener('authChange', checkAuth);
-        };
-    }, []);
 
     // Scroll detection for navbar styling
     useEffect(() => {
@@ -87,18 +68,66 @@ function App() {
                         {/* Left: Logo/Brand */}
                         <div className="navbar-brand">
                             <Link to="/" className="logo-link">
+                                <img src={logo} alt="Kontrollitud.ee Logo" className="logo-image" />
                                 <h1 className="logo-text">{t('app_title')}</h1>
                             </Link>
                         </div>
 
-                        {/* Right: Admin Link + Language Switcher */}
+                        {/* Right: User Menu + Language Switcher */}
                         <div className="navbar-right">
-                            {/* Only show Admin button if logged in */}
-                            {isLoggedIn && (
-                                <Link to="/admin" className="admin-link">
-                                    <span className="admin-icon">🔐</span>
-                                    <span className="admin-text">Admin Dashboard</span>
+                            {/* Add Business Link */}
+                            <Link to="/add-business" className="add-business-link">
+                                <i className="fas fa-plus-circle"></i>
+                                <span>{t('add_business')}</span>
+                            </Link>
+
+                            {/* User Authentication */}
+                            {!isAuthenticated ? (
+                                <Link to="/auth" className="login-link">
+                                    <i className="fas fa-sign-in-alt"></i>
+                                    <span>{t('login')}</span>
                                 </Link>
+                            ) : (
+                                <div className="user-menu-container">
+                                    <button 
+                                        className="user-profile-button"
+                                        onClick={() => setShowUserMenu(!showUserMenu)}
+                                    >
+                                        {user.photoURL ? (
+                                            <img src={user.photoURL} alt={user.displayName} className="user-avatar" />
+                                        ) : (
+                                            <div className="user-avatar-placeholder">
+                                                {(user.displayName || user.email)?.[0]?.toUpperCase()}
+                                            </div>
+                                        )}
+                                        <span className="user-name">{user.displayName || user.email?.split('@')[0]}</span>
+                                        <i className={`fas fa-chevron-down ${showUserMenu ? 'rotated' : ''}`}></i>
+                                    </button>
+                                    
+                                    {showUserMenu && (
+                                        <div className="user-dropdown">
+                                            <div className="dropdown-header">
+                                                <p className="user-email">{user.email}</p>
+                                            </div>
+                                            <div className="dropdown-divider"></div>
+                                            {isAdmin && (
+                                                <Link to="/admin" className="dropdown-item" onClick={() => setShowUserMenu(false)}>
+                                                    <i className="fas fa-shield-alt"></i>
+                                                    <span>Admin Dashboard</span>
+                                                </Link>
+                                            )}
+                                            <Link to="/dashboard" className="dropdown-item" onClick={() => setShowUserMenu(false)}>
+                                                <i className="fas fa-clipboard-list"></i>
+                                                <span>{t('my_dashboard')}</span>
+                                            </Link>
+                                            <div className="dropdown-divider"></div>
+                                            <button onClick={() => { logout(); setShowUserMenu(false); }} className="dropdown-item logout-item">
+                                                <i className="fas fa-sign-out-alt"></i>
+                                                <span>{t('logout')}</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             )}
 
                             {/* Language Switcher */}
@@ -128,8 +157,23 @@ function App() {
 
                 <Routes>
                     <Route path="/" element={<CompanyList />} />
-                    <Route path="/add" element={<CompanyForm />} /> 
-                    <Route path="/login" element={<Login />} />
+                    <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/login" element={<AuthPage />} />
+                    <Route path="/add" element={
+                        <RequireAuth>
+                            <AddBusiness />
+                        </RequireAuth>
+                    } />
+                    <Route path="/add-business" element={
+                        <RequireAuth>
+                            <AddBusiness />
+                        </RequireAuth>
+                    } />
+                    <Route path="/dashboard" element={
+                        <RequireAuth>
+                            <UserDashboard />
+                        </RequireAuth>
+                    } />
                     <Route path="/admin" element={
                         <ProtectedRoute>
                             <AdminDashboard />
@@ -144,8 +188,18 @@ function App() {
                         </div>
                     } />
                 </Routes>
+                
+                <Footer />
             </div>
         </BrowserRouter>
+    );
+}
+
+function App() {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 }
 

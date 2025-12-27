@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
+const { verifyToken, optionalAuth } = require('./middleware/authMiddleware');
 const app = express();
 const PORT = 5000;
 
@@ -53,7 +54,9 @@ const companySchema = new mongoose.Schema({
     },
     city: { 
         type: String, 
-        enum: ['Tallinn', 'Tartu', 'Pärnu', 'Narva'],
+        enum: ['Tallinn', 'Tartu', 'Narva', 'Pärnu', 'Kohtla-Järve', 'Viljandi', 
+               'Maardu', 'Rakvere', 'Kuressaare', 'Sillamäe', 'Valga', 'Võru', 
+               'Jõhvi', 'Haapsalu', 'Keila', 'Paide'],
         required: true 
     },
     isVerified: { 
@@ -81,6 +84,62 @@ const companySchema = new mongoose.Schema({
     },
     workingHours: {
         type: Object
+    },
+    // Social media URLs
+    tiktokUrl: {
+        type: String
+    },
+    instagramUrl: {
+        type: String
+    },
+    youtubeUrl: {
+        type: String
+    },
+    // Reviewer information
+    reviewerName: {
+        type: String
+    },
+    // Subscription and approval
+    subscriptionLevel: {
+        type: String,
+        enum: ['free', 'lite', 'medium', 'strong'],
+        default: 'free'
+    },
+    approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+    // Additional fields for map and sorting
+    latitude: {
+        type: Number
+    },
+    longitude: {
+        type: Number
+    },
+    priority: {
+        type: Number,
+        default: 0
+    },
+    email: {
+        type: String
+    },
+    phone: {
+        type: String
+    },
+    website: {
+        type: String
+    },
+    // User tracking for submissions
+    userId: {
+        type: String // Firebase UID
+    },
+    userEmail: {
+        type: String // User's email for reference
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
 });
 
@@ -189,6 +248,11 @@ app.get('/api/companies', async (req, res) => {
     try {
         // 1. Создаем объект фильтра на основе параметров запроса (req.query)
         const filter = {};
+        
+        // Only show approved companies by default (unless admin requests otherwise)
+        if (req.query.includeUnapproved !== 'true') {
+            filter.approvalStatus = 'approved';
+        }
         
         // 2. Добавляем фильтр по поисковому запросу (search)
         if (req.query.search) {
@@ -497,6 +561,135 @@ app.post('/api/reviews/:companyId', async (req, res) => {
     } catch (error) {
         console.error("Ошибка при добавлении отзыва:", error);
         res.status(400).json({ error: error.message });
+    }
+});
+
+// POST /api/business-submission - Protected route for authenticated users to submit their business
+app.post('/api/business-submission', verifyToken, async (req, res) => {
+    try {
+        const businessData = {
+            ...req.body,
+            userId: req.user.uid, // Add authenticated user's ID
+            userEmail: req.user.email, // Add user's email for reference
+            approvalStatus: 'pending',
+            subscriptionLevel: 'free',
+            isVerified: false
+        };
+        
+        const newBusiness = new Company(businessData);
+        const savedBusiness = await newBusiness.save();
+        
+        res.status(201).json({ 
+            success: true,
+            message: 'Business submitted successfully. It will appear after admin approval.',
+            business: savedBusiness
+        });
+    } catch (error) {
+        console.error("Error submitting business:", error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// GET /api/admin/pending-requests - Get all pending business submissions
+app.get('/api/admin/pending-requests', async (req, res) => {
+    try {
+        const pendingBusinesses = await Company.find({ approvalStatus: 'pending' })
+            .sort({ createdAt: -1 });
+        res.json(pendingBusinesses);
+    } catch (error) {
+        console.error("Error fetching pending requests:", error);
+        res.status(500).json({ error: 'Failed to fetch pending requests' });
+    }
+});
+
+// PUT /api/admin/approve/:id - Approve a business submission
+app.put('/api/admin/approve/:id', async (req, res) => {
+    try {
+        const { subscriptionLevel } = req.body;
+        const companyId = req.params.id;
+        
+        const updateData = {
+            approvalStatus: 'approved',
+            subscriptionLevel: subscriptionLevel || 'free'
+        };
+        
+        // If upgrading to medium or strong, mark as verified
+        if (subscriptionLevel === 'medium' || subscriptionLevel === 'strong') {
+            updateData.isVerified = true;
+        }
+        
+        const updatedCompany = await Company.findByIdAndUpdate(
+            companyId,
+            updateData,
+            { new: true }
+        );
+        
+        if (!updatedCompany) {
+            return res.status(404).json({ error: 'Business not found' });
+        }
+        
+        res.json({ 
+            success: true,
+            message: `Business approved as ${subscriptionLevel}`,
+            company: updatedCompany
+        });
+    } catch (error) {
+        console.error("Error approving business:", error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// DELETE /api/admin/reject/:id - Reject/delete a business submission
+app.delete('/api/admin/reject/:id', async (req, res) => {
+    try {
+        const companyId = req.params.id;
+        const deletedCompany = await Company.findByIdAndDelete(companyId);
+        
+        if (!deletedCompany) {
+            return res.status(404).json({ error: 'Business not found' });
+        }
+        
+        res.json({ 
+            success: true,
+            message: 'Business submission deleted',
+            company: deletedCompany
+        });
+    } catch (error) {
+        console.error("Error deleting business:", error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// GET /api/user/submissions - Get user's business submissions by userId
+app.get('/api/user/submissions', verifyToken, async (req, res) => {
+    try {
+        const { userId } = req.query;
+        
+        // If userId query param provided, use it (for backward compatibility)
+        // Otherwise use the authenticated user's ID from token
+        const searchUserId = userId || req.user.uid;
+        
+        if (!searchUserId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        // Security: Regular users can only see their own submissions
+        // Allow if: userId matches token OR no userId param provided (defaults to token user)
+        if (userId && userId !== req.user.uid) {
+            // Check if requesting user is admin (implement your admin logic here)
+            // For now, only allow users to see their own submissions
+            return res.status(403).json({ error: 'You can only view your own submissions' });
+        }
+        
+        // Find all businesses submitted by this user
+        const userSubmissions = await Company.find({ userId: searchUserId })
+            .sort({ createdAt: -1 })
+            .select('-__v'); // Exclude version field
+        
+        res.json(userSubmissions);
+    } catch (error) {
+        console.error("Error fetching user submissions:", error);
+        res.status(500).json({ error: 'Failed to fetch user submissions' });
     }
 });
 

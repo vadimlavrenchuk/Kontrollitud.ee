@@ -387,6 +387,90 @@
                 }
             }
         }
+
+        // Social Media Card
+        .social-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            
+            .info-card-title {
+                color: white;
+                
+                i {
+                    color: white;
+                }
+            }
+        }
+
+        .social-media-links-details {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .social-link {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                color: white;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                
+                &:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: translateX(4px);
+                }
+                
+                svg {
+                    font-size: 1.5rem;
+                }
+                
+                &.instagram {
+                    border-left: 4px solid #fd1d1d;
+                }
+                
+                &.tiktok {
+                    border-left: 4px solid #000000;
+                }
+                
+                &.youtube {
+                    border-left: 4px solid #ff0000;
+                }
+            }
+        }
+
+        // Reviewer Card
+        .reviewer-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 20px;
+            
+            .reviewer-badge-details {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                
+                .reviewer-icon {
+                    font-size: 2.5rem;
+                    opacity: 0.9;
+                }
+                
+                .reviewer-label {
+                    font-size: 0.875rem;
+                    opacity: 0.9;
+                    margin: 0 0 4px 0;
+                }
+                
+                .reviewer-name {
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    margin: 0;
+                }
+            }
+        }
     }
 }
 

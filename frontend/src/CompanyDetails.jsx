@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import ReviewForm from './ReviewForm.jsx';
 import { getLocalizedContent, formatDate, formatRelativeTime, getLocaleFromLanguage } from './utils/localization';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
+import { faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import './styles/CompanyDetails.scss';
 
 const API_COMPANY_BASE = 'http://localhost:5000/api/companies';
@@ -97,8 +100,8 @@ function CompanyDetails() {
     const description = getLocalizedContent(company.description, i18n.language);
     
     // Prepare SEO metadata
-    const pageTitle = `${company.name} - Kontrollitud.ee`;
-    const metaDescription = description ? description.substring(0, 160) : `${company.name} in ${company.city}`;
+    const pageTitle = `${company.name} | Kontrollitud.ee`;
+    const metaDescription = description ? description.substring(0, 150) : `${company.name} in ${company.city} - ${t('verified')} business on Kontrollitud.ee`;
     const ogImage = company.image || 'https://via.placeholder.com/1200x630?text=Kontrollitud.ee';
     
     // Format working hours if available
@@ -352,6 +355,66 @@ function CompanyDetails() {
                             )}
                         </div>
                     </div>
+
+                    {/* Social Media Links Card */}
+                    {(company.instagramUrl || company.tiktokUrl || company.youtubeUrl) && (
+                        <div className="info-card social-card">
+                            <h3 className="info-card-title">
+                                <i className="fas fa-share-alt"></i> Social Media
+                            </h3>
+                            <div className="social-media-links-details">
+                                {company.instagramUrl && (
+                                    <a 
+                                        href={company.instagramUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="social-link instagram"
+                                        title="Instagram"
+                                    >
+                                        <FontAwesomeIcon icon={faInstagram} />
+                                        <span>Instagram</span>
+                                    </a>
+                                )}
+                                {company.tiktokUrl && (
+                                    <a 
+                                        href={company.tiktokUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="social-link tiktok"
+                                        title="TikTok"
+                                    >
+                                        <FontAwesomeIcon icon={faTiktok} />
+                                        <span>TikTok</span>
+                                    </a>
+                                )}
+                                {company.youtubeUrl && (
+                                    <a 
+                                        href={company.youtubeUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="social-link youtube"
+                                        title="YouTube"
+                                    >
+                                        <FontAwesomeIcon icon={faYoutube} />
+                                        <span>YouTube</span>
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Reviewer Badge Card */}
+                    {company.reviewerName && (
+                        <div className="info-card reviewer-card">
+                            <div className="reviewer-badge-details">
+                                <FontAwesomeIcon icon={faUserCheck} className="reviewer-icon" />
+                                <div>
+                                    <p className="reviewer-label">Verified by</p>
+                                    <p className="reviewer-name">{company.reviewerName}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </aside>
             </div>
         </div>

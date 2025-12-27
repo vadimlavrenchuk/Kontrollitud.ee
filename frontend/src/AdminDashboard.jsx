@@ -23,7 +23,11 @@ function AdminDashboard() {
         descriptionEn: '',
         descriptionRu: '',
         image: '',
-        isVerified: false
+        isVerified: false,
+        tiktokUrl: '',
+        instagramUrl: '',
+        youtubeUrl: '',
+        reviewerName: ''
     });
     
     // Image upload state
@@ -34,10 +38,13 @@ function AdminDashboard() {
     // Companies list state
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('add'); // 'add' or 'requests'
+    const [pendingRequests, setPendingRequests] = useState([]);
 
     // Fetch all companies on component mount
     useEffect(() => {
         fetchCompanies();
+        fetchPendingRequests();
     }, []);
 
     const fetchCompanies = async () => {
@@ -48,6 +55,17 @@ function AdminDashboard() {
         } catch (err) {
             console.error('Error fetching companies:', err);
             toast.error('Failed to fetch companies');
+        }
+    };
+
+    const fetchPendingRequests = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/admin/pending-requests');
+            const data = await response.json();
+            setPendingRequests(data);
+        } catch (err) {
+            console.error('Error fetching pending requests:', err);
+            toast.error('Failed to fetch pending requests');
         }
     };
 
@@ -161,7 +179,11 @@ function AdminDashboard() {
                 descriptionEn: '',
                 descriptionRu: '',
                 image: '',
-                isVerified: false
+                isVerified: false,
+                tiktokUrl: '',
+                instagramUrl: '',
+                youtubeUrl: '',
+                reviewerName: ''
             });
             setImageFile(null);
             setImagePreview(null);
@@ -198,6 +220,55 @@ function AdminDashboard() {
         }
     };
 
+    const handleApproveRequest = async (companyId, subscriptionLevel) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/admin/approve/${companyId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriptionLevel })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to approve business');
+            }
+
+            toast.success(`✅ Business approved as ${subscriptionLevel}!`);
+            fetchPendingRequests();
+            fetchCompanies();
+
+        } catch (err) {
+            toast.error(`❌ ${err.message}`);
+        }
+    };
+
+    const handleRejectRequest = async (companyId) => {
+        if (!window.confirm('Are you sure you want to reject and delete this business submission?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/admin/reject/${companyId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to reject business');
+            }
+
+            toast.success('🗑️ Business submission rejected and deleted');
+            fetchPendingRequests();
+
+        } catch (err) {
+            toast.error(`❌ ${err.message}`);
+        }
+    };
+
     const cities = ['Tallinn', 'Tartu', 'Pärnu', 'Narva'];
     const categories = ['SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services'];
 
@@ -226,7 +297,28 @@ function AdminDashboard() {
                     </button>
                 </div>
 
+                {/* Tab Navigation */}
+                <div className="admin-tabs">
+                    <button 
+                        className={`tab-button ${activeTab === 'add' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('add')}
+                    >
+                        <i className="fas fa-plus-circle"></i> Add Company
+                    </button>
+                    <button 
+                        className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('requests')}
+                    >
+                        <i className="fas fa-inbox"></i> Pending Requests
+                        {pendingRequests.length > 0 && (
+                            <span className="badge">{pendingRequests.length}</span>
+                        )}
+                    </button>
+                </div>
+
                 {/* Add Company Form */}
+                {activeTab === 'add' && (
+                <>
                 <div className="admin-card">
                     <h2 className="section-title">Add New Company</h2>
 
@@ -374,6 +466,75 @@ function AdminDashboard() {
                             />
                         </div>
 
+                        {/* Social Media URLs Section */}
+                        <div className="form-section">
+                            <h3 className="section-subtitle">Social Media Links</h3>
+                            
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="instagramUrl">
+                                        <i className="fab fa-instagram"></i> Instagram URL
+                                    </label>
+                                    <input
+                                        type="url"
+                                        id="instagramUrl"
+                                        name="instagramUrl"
+                                        value={formData.instagramUrl}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        placeholder="https://instagram.com/username"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="tiktokUrl">
+                                        <i className="fab fa-tiktok"></i> TikTok URL
+                                    </label>
+                                    <input
+                                        type="url"
+                                        id="tiktokUrl"
+                                        name="tiktokUrl"
+                                        value={formData.tiktokUrl}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        placeholder="https://tiktok.com/@username"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="youtubeUrl">
+                                    <i className="fab fa-youtube"></i> YouTube URL
+                                </label>
+                                <input
+                                    type="url"
+                                    id="youtubeUrl"
+                                    name="youtubeUrl"
+                                    value={formData.youtubeUrl}
+                                    onChange={handleInputChange}
+                                    className="form-input"
+                                    placeholder="https://youtube.com/@channel"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Reviewer Name */}
+                        <div className="form-group">
+                            <label htmlFor="reviewerName">
+                                <i className="fas fa-user-check"></i> Reviewer Name
+                            </label>
+                            <input
+                                type="text"
+                                id="reviewerName"
+                                name="reviewerName"
+                                value={formData.reviewerName}
+                                onChange={handleInputChange}
+                                className="form-input"
+                                placeholder="Name of the person who verified this business"
+                            />
+                            <small className="form-hint">Optional: Add the name of who checked/verified this company</small>
+                        </div>
+
                         {/* Verified Checkbox */}
                         <div className="form-group">
                             <label className="checkbox-label">
@@ -466,6 +627,95 @@ function AdminDashboard() {
                         </div>
                     )}
                 </div>
+                </>
+            )}
+
+            {/* Pending Requests Tab */}
+            {activeTab === 'requests' && (
+                <div className="admin-card">
+                    <h2 className="section-title">
+                        <i className="fas fa-inbox"></i> Pending Business Requests ({pendingRequests.length})
+                    </h2>
+                    
+                    {pendingRequests.length === 0 ? (
+                        <div className="no-requests">
+                            <i className="fas fa-check-circle"></i>
+                            <p>No pending requests at the moment!</p>
+                        </div>
+                    ) : (
+                        <div className="requests-grid">
+                            {pendingRequests.map(request => (
+                                <div key={request._id} className="request-card">
+                                    <div className="request-header">
+                                        {request.image && (
+                                            <img 
+                                                src={request.image} 
+                                                alt={request.name}
+                                                className="request-image"
+                                            />
+                                        )}
+                                        <div className="request-info">
+                                            <h3>{request.name}</h3>
+                                            <div className="request-meta">
+                                                <span className="badge category-badge">{request.category}</span>
+                                                <span className="badge city-badge">{request.city}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="request-details">
+                                        {request.email && (
+                                            <p><i className="fas fa-envelope"></i> {request.email}</p>
+                                        )}
+                                        {request.phone && (
+                                            <p><i className="fas fa-phone"></i> {request.phone}</p>
+                                        )}
+                                        {request.website && (
+                                            <p><i className="fas fa-globe"></i> {request.website}</p>
+                                        )}
+                                        {request.description && request.description.en && (
+                                            <p className="request-description">
+                                                {request.description.en.substring(0, 150)}...
+                                            </p>
+                                        )}
+                                        <p className="request-date">
+                                            <i className="fas fa-calendar"></i> 
+                                            {new Date(request.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="request-actions">
+                                        <button 
+                                            onClick={() => handleApproveRequest(request._id, 'free')}
+                                            className="btn-approve-free"
+                                        >
+                                            <i className="fas fa-check"></i> Approve as Free
+                                        </button>
+                                        <button 
+                                            onClick={() => handleApproveRequest(request._id, 'medium')}
+                                            className="btn-approve-medium"
+                                        >
+                                            <i className="fas fa-star"></i> Upgrade to Medium
+                                        </button>
+                                        <button 
+                                            onClick={() => handleApproveRequest(request._id, 'strong')}
+                                            className="btn-approve-strong"
+                                        >
+                                            <i className="fas fa-crown"></i> Upgrade to Strong
+                                        </button>
+                                        <button 
+                                            onClick={() => handleRejectRequest(request._id)}
+                                            className="btn-reject"
+                                        >
+                                            <i className="fas fa-times"></i> Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                )}
             </div>
         </div>
     );

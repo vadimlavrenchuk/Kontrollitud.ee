@@ -1,4 +1,7 @@
 // Kontrollitud.ee/frontend/src/CompanyForm.jsx
+// ⚠️ DEPRECATED: This component is no longer used.
+// Use AddBusiness.jsx instead for public business submissions.
+// This file is kept for reference only and can be safely deleted.
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';

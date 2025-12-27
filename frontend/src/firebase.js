@@ -1,0 +1,102 @@
+// Firebase Configuration for Kontrollitud.ee
+import { initializeApp } from 'firebase/app';
+import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    FacebookAuthProvider,
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    updateProfile
+} from 'firebase/auth';
+
+// Your web app's Firebase configuration
+// TODO: Replace with your actual Firebase config from Firebase Console
+const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "kontrollitud-ee.firebaseapp.com",
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "kontrollitud-ee",
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "kontrollitud-ee.appspot.com",
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789012",
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789012:web:abcdef123456"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase Authentication and get a reference to the service
+export const auth = getAuth(app);
+
+// Set up auth providers
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+    prompt: 'select_account'
+});
+
+export const facebookProvider = new FacebookAuthProvider();
+
+// Auth helper functions
+export const signInWithGoogle = async () => {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        return { user: result.user, error: null };
+    } catch (error) {
+        console.error('Google sign-in error:', error);
+        return { user: null, error: error.message };
+    }
+};
+
+export const signInWithFacebook = async () => {
+    try {
+        const result = await signInWithPopup(auth, facebookProvider);
+        return { user: result.user, error: null };
+    } catch (error) {
+        console.error('Facebook sign-in error:', error);
+        return { user: null, error: error.message };
+    }
+};
+
+export const signUpWithEmail = async (email, password, displayName) => {
+    try {
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Update profile with display name
+        if (displayName) {
+            await updateProfile(result.user, { displayName });
+        }
+        
+        return { user: result.user, error: null };
+    } catch (error) {
+        console.error('Email sign-up error:', error);
+        return { user: null, error: error.message };
+    }
+};
+
+export const signInWithEmail = async (email, password) => {
+    try {
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        return { user: result.user, error: null };
+    } catch (error) {
+        console.error('Email sign-in error:', error);
+        return { user: null, error: error.message };
+    }
+};
+
+export const logOut = async () => {
+    try {
+        await signOut(auth);
+        return { error: null };
+    } catch (error) {
+        console.error('Logout error:', error);
+        return { error: error.message };
+    }
+};
+
+// Subscribe to auth state changes
+export const subscribeToAuthChanges = (callback) => {
+    return onAuthStateChanged(auth, callback);
+};
+
+export default app;

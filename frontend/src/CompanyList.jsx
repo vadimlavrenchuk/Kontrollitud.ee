@@ -4,9 +4,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import CompanyCard from './CompanyCard';
+import CompanyMap from './CompanyMap';
 import './styles/CompanyList.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faSpa, faUtensils, faShoppingBag, faChild, faPlane, faCar, faCogs } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faSpa, faUtensils, faShoppingBag, faChild, faPlane, faCar, faCogs, faMap, faList, faSearchLocation, faComments, faShieldAlt, faInbox } from '@fortawesome/free-solid-svg-icons';
 
 const API_BASE_URL = 'http://localhost:5000/api/companies';
 
@@ -22,12 +23,14 @@ function CompanyList() {
   const [selectedCategory, setSelectedCategory] = useState('Все');
   const [selectedCity, setSelectedCity] = useState('Все');
   const [isVerifiedOnly, setIsVerifiedOnly] = useState(false);
+  const [showMap, setShowMap] = useState(true); // Toggle for mobile view
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null); // For map sync
 
-  // Debounce search input (500ms delay)
+  // Debounce search input (300ms delay)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -79,7 +82,28 @@ function CompanyList() {
         }
 
         const data = await response.json();
-        setCompanies(data);
+        
+        // Sort companies: verified first, then by priority (desc), then by newest
+        const sortedData = data.sort((a, b) => {
+          // First: sort by isVerified (true first)
+          if (a.isVerified !== b.isVerified) {
+            return b.isVerified ? 1 : -1;
+          }
+          
+          // Second: sort by priority (descending)
+          const priorityA = a.priority || 0;
+          const priorityB = b.priority || 0;
+          if (priorityA !== priorityB) {
+            return priorityB - priorityA;
+          }
+          
+          // Third: sort by createdAt (newest first)
+          const dateA = new Date(a.createdAt || 0);
+          const dateB = new Date(b.createdAt || 0);
+          return dateB - dateA;
+        });
+        
+        setCompanies(sortedData);
 
     } catch (err) {
         setError(err.message);
@@ -136,24 +160,6 @@ function CompanyList() {
         <div className="hero-content">
           <h1 className="hero-title fade-in">{t('hero_title')}</h1>
           <p className="hero-subtitle fade-in-delay">{t('hero_subtitle')}</p>
-          
-          {/* Large Search Bar */}
-          <div className="hero-search fade-in-delay-2">
-            <div className="search-wrapper">
-              <FontAwesomeIcon icon={faSearch} className="search-icon" />
-              <input
-                type="text"
-                placeholder={t('search_placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="hero-search-input"
-              />
-              <button className="search-button">
-                <FontAwesomeIcon icon={faSearch} />
-                {t('search_button')}
-              </button>
-            </div>
-          </div>
 
           {/* Quick Category Pills */}
           <div className="category-pills fade-in-delay-3">
@@ -174,13 +180,56 @@ function CompanyList() {
         </div>
       </div>
 
+      {/* How It Works Section */}
+      <div className="how-it-works-section">
+        <div className="container">
+          <h2 className="how-it-works-title">{t('how_it_works_title')}</h2>
+          <div className="how-it-works-grid">
+            <div className="how-it-works-card">
+              <div className="how-it-works-icon">
+                <FontAwesomeIcon icon={faSearchLocation} />
+              </div>
+              <h3>{t('how_it_works_step1_title')}</h3>
+              <p>{t('how_it_works_step1_desc')}</p>
+            </div>
+            <div className="how-it-works-card">
+              <div className="how-it-works-icon">
+                <FontAwesomeIcon icon={faComments} />
+              </div>
+              <h3>{t('how_it_works_step2_title')}</h3>
+              <p>{t('how_it_works_step2_desc')}</p>
+            </div>
+            <div className="how-it-works-card">
+              <div className="how-it-works-icon">
+                <FontAwesomeIcon icon={faShieldAlt} />
+              </div>
+              <h3>{t('how_it_works_step3_title')}</h3>
+              <p>{t('how_it_works_step3_desc')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="container">
-        {/* Secondary Filters */}
+        {/* Unified Search & Filters Bar */}
         <div className="controls-bar">
-          <Link to="/add" className="add-button">
-            {t('add_company')}
-          </Link>
+          <div className="search-input-wrapper">
+            <FontAwesomeIcon icon={faSearch} className="search-input-icon" />
+            <input
+              type="text"
+              placeholder={t('search_placeholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+
+          <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="filter-select">
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{t(cat)}</option>
+            ))}
+          </select>
 
           <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="filter-select">
             {cities.map(city => (
@@ -200,17 +249,58 @@ function CompanyList() {
           <button onClick={handleResetFilters} className="reset-button" title={t('reset_filters_tooltip')}>
             {t('reset_button')}
           </button>
+
+          {/* Mobile Map Toggle */}
+          <button 
+            onClick={() => setShowMap(!showMap)} 
+            className="map-toggle-button mobile-only"
+            title={showMap ? t('show_list') : t('show_map')}
+          >
+            <FontAwesomeIcon icon={showMap ? faList : faMap} />
+            <span>{showMap ? t('show_list') : t('show_map')}</span>
+          </button>
         </div>
         
-          {/* Список компаний */}
-        <div className="company-list">
-          {companies && companies.length > 0 ? (
-            companies.map(company => (
-              <CompanyCard key={company._id} company={company} />
-            ))
-          ) : (
-            <p className="no-results">{t('no_companies_found')}</p>
-          )}
+        {/* Split View: Map + List */}
+        <div className="content-with-map">
+          {/* Map Panel */}
+          <div className={`map-panel ${showMap ? 'visible' : ''}`}>
+            <CompanyMap 
+              companies={companies} 
+              selectedCompanyId={selectedCompanyId}
+              onMarkerClick={setSelectedCompanyId}
+            />
+          </div>
+
+          {/* List Panel */}
+          <div className={`list-panel ${!showMap ? 'visible' : ''}`}>
+            <div className="company-list">
+              {companies && companies.length > 0 ? (
+                companies.map(company => (
+                  <CompanyCard 
+                    key={company._id} 
+                    company={company}
+                    isSelected={selectedCompanyId === company._id}
+                    onClick={() => setSelectedCompanyId(company._id)}
+                  />
+                ))
+              ) : (
+                <div className="empty-state">
+                  <FontAwesomeIcon icon={faInbox} className="empty-icon" />
+                  <h3>{t('no_results_title')}</h3>
+                  <p>{t('no_results_description')}</p>
+                  <div className="empty-actions">
+                    <button onClick={handleResetFilters} className="btn-clear-filters">
+                      {t('clear_filters')}
+                    </button>
+                    <Link to="/add-business" className="btn-add-first">
+                      {t('be_the_first') || 'Be the first to add a business!'}
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>

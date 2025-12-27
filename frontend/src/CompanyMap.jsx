@@ -1,7 +1,7 @@
 // Kontrollitud.ee/frontend/src/CompanyMap.jsx
 
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
@@ -30,8 +30,27 @@ const verifiedIcon = new L.Icon({
     shadowSize: [41, 41],
 });
 
-const CompanyMap = ({ companies }) => {
+// Component to handle map panning when selected company changes
+const MapController = ({ selectedCompanyId, companies }) => {
+    const map = useMap();
+    
+    useEffect(() => {
+        if (selectedCompanyId) {
+            const selectedCompany = companies.find(c => c._id === selectedCompanyId);
+            if (selectedCompany && selectedCompany.latitude && selectedCompany.longitude) {
+                map.flyTo([selectedCompany.latitude, selectedCompany.longitude], 13, {
+                    duration: 1
+                });
+            }
+        }
+    }, [selectedCompanyId, companies, map]);
+    
+    return null;
+};
+
+const CompanyMap = ({ companies, selectedCompanyId, onMarkerClick }) => {
     const { t } = useTranslation();
+    const markerRefs = useRef({});
     
     // Default center: Tallinn, Estonia
     const defaultCenter = [59.4370, 24.7536];
@@ -41,6 +60,13 @@ const CompanyMap = ({ companies }) => {
     const companiesWithCoords = companies.filter(
         company => company.latitude && company.longitude
     );
+    
+    // Open popup for selected marker
+    useEffect(() => {
+        if (selectedCompanyId && markerRefs.current[selectedCompanyId]) {
+            markerRefs.current[selectedCompanyId].openPopup();
+        }
+    }, [selectedCompanyId]);
 
     return (
         <div className="company-map-container">
@@ -55,11 +81,26 @@ const CompanyMap = ({ companies }) => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 
+                {/* Controller component to handle map panning */}
+                <MapController selectedCompanyId={selectedCompanyId} companies={companies} />
+                
                 {companiesWithCoords.map(company => (
                     <Marker
                         key={company._id}
                         position={[company.latitude, company.longitude]}
                         icon={company.isVerified ? verifiedIcon : undefined}
+                        ref={(ref) => {
+                            if (ref) {
+                                markerRefs.current[company._id] = ref;
+                            }
+                        }}
+                        eventHandlers={{
+                            click: () => {
+                                if (onMarkerClick) {
+                                    onMarkerClick(company._id);
+                                }
+                            }
+                        }}
                     >
                         <Popup>
                             <div className="map-popup">
