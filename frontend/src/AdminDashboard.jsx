@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast, ToastContainer } from 'react-toastify';
+import { getCategoryIcon } from './constants/categories';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AdminDashboard.scss';
 
@@ -592,12 +593,16 @@ function AdminDashboard() {
                                     {companies.map(company => (
                                         <tr key={company._id}>
                                             <td className="company-name">
-                                                {company.image && (
+                                                {company.image ? (
                                                     <img 
                                                         src={company.image} 
                                                         alt={company.name}
                                                         className="company-thumb"
                                                     />
+                                                ) : (
+                                                    <span className="company-icon-thumb">
+                                                        {getCategoryIcon(company.mainCategory || 'Teenused')}
+                                                    </span>
                                                 )}
                                                 {company.name}
                                             </td>

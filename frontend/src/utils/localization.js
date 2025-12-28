@@ -34,20 +34,21 @@
  * Get localized content with fallback logic
  * @param {Object} content - Object with language keys (et, en, ru)
  * @param {string} currentLang - Current language code
+ * @param {string} placeholder - Optional placeholder text when no content available
  * @returns {string} - Localized content or fallback
  */
-export const getLocalizedContent = (content, currentLang) => {
+export const getLocalizedContent = (content, currentLang, placeholder = '') => {
   if (!content || typeof content !== 'object') {
-    return '';
+    return placeholder;
   }
   
-  // Priority: current language -> English -> Estonian -> any available
+  // Priority: current language -> Estonian (default) -> English -> Russian -> any available -> placeholder
   return content[currentLang] || 
-         content.en || 
          content.et || 
+         content.en || 
          content.ru ||
-         Object.values(content)[0] || 
-         '';
+         Object.values(content).find(val => val && val.trim()) || 
+         placeholder;
 };
 
 /**

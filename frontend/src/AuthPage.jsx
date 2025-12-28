@@ -101,11 +101,13 @@ function AuthPage() {
             // Friendly error messages
             let errorMessage = result.error;
             if (result.error.includes('email-already-in-use')) {
-                errorMessage = t('email_already_exists');
+                errorMessage = t('email_already_in_use');
             } else if (result.error.includes('invalid-email')) {
                 errorMessage = t('invalid_email');
             } else if (result.error.includes('user-not-found') || result.error.includes('wrong-password')) {
                 errorMessage = t('invalid_credentials');
+            } else if (result.error.includes('weak-password')) {
+                errorMessage = t('password_too_short');
             }
             toast.error(`❌ ${errorMessage}`);
         } else if (result.user) {

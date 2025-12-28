@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { toast, ToastContainer } from 'react-toastify';
 import { useAuth } from './AuthContext';
+import { uploadBusinessImage } from './firebase';
+import { CATEGORIES, getMainCategories, getSubcategories, getCategoryIcon } from './constants/categories';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AddBusiness.scss';
 
@@ -17,11 +19,15 @@ function AddBusiness() {
     const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
     
     const [formData, setFormData] = useState({
         // Step 1: Basic Info
         name: '',
-        category: 'SPA',
+        mainCategory: 'Puhkus',
+        subCategory: 'SPA',
         city: 'Tallinn',
         
         // Step 2: Contact Info
@@ -41,7 +47,7 @@ function AddBusiness() {
         youtubeUrl: ''
     });
 
-    const categories = ['SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services'];
+    const mainCategories = getMainCategories();
     const cities = [
         'Tallinn', 'Tartu', 'Narva', 'Pärnu', 'Kohtla-Järve', 'Viljandi', 
         'Maardu', 'Rakvere', 'Kuressaare', 'Sillamäe', 'Valga', 'Võru', 
@@ -56,21 +62,58 @@ function AddBusiness() {
         }));
     };
 
+    const handleMainCategoryChange = (e) => {
+        const newMainCategory = e.target.value;
+        const subcategories = getSubcategories(newMainCategory);
+        setFormData(prev => ({
+            ...prev,
+            mainCategory: newMainCategory,
+            subCategory: subcategories[0] || '' // Set first subcategory as default
+        }));
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select an image file');
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size must be less than 5MB');
+                return;
+            }
+            
+            setImageFile(file);
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleNextStep = () => {
         // Validate current step
         if (currentStep === 1) {
             if (!formData.name) {
-                toast.error('Please enter business name');
+                toast.error(t('please_enter_business_name'));
                 return;
             }
         } else if (currentStep === 2) {
             if (!formData.email) {
-                toast.error('Please enter email address');
+                toast.error(t('please_enter_email'));
                 return;
             }
         } else if (currentStep === 3) {
-            if (!formData.descriptionEt || !formData.descriptionEn || !formData.descriptionRu) {
-                toast.error('Please provide descriptions in all languages');
+            // Require at least one description (preferably Estonian)
+            if (!formData.descriptionEt && !formData.descriptionEn && !formData.descriptionRu) {
+                toast.error(t('please_provide_at_least_one_description'));
                 return;
             }
         }
@@ -90,9 +133,30 @@ function AddBusiness() {
         setLoading(true);
         
         try {
+            // Upload image if one was selected
+            let imageUrl = formData.image;
+            if (imageFile) {
+                setUploadingImage(true);
+                toast.info(t('uploading_image'));
+                
+                const { url, error } = await uploadBusinessImage(imageFile, formData.name);
+                
+                if (error) {
+                    setUploadingImage(false);
+                    toast.error(t('image_upload_error'));
+                    throw new Error(t('image_upload_error'));
+                }
+                
+                imageUrl = url;
+                setUploadingImage(false);
+                toast.success(t('image_uploaded_success'));
+            }
+            
             // Format description as object
             const submissionData = {
                 ...formData,
+                image: imageUrl,
+                category: formData.subCategory, // Legacy field for backward compatibility
                 userId: user?.uid, // Add Firebase user ID
                 userEmail: user?.email, // Add user email for tracking
                 description: {
@@ -122,10 +186,14 @@ function AddBusiness() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to submit business');
+                // Check for duplicate business name error
+                if (response.status === 400 || (data.error && (data.error.includes('11000') || data.error.includes('duplicate')))) {
+                    throw new Error(t('business_name_exists'));
+                }
+                throw new Error(data.error || t('business_submit_error'));
             }
 
-            toast.success('✅ Business submitted successfully! It will appear after admin approval.');
+            toast.success(t('business_submitted_success'));
             
             // Redirect to dashboard after 2 seconds
             setTimeout(() => {
@@ -133,9 +201,12 @@ function AddBusiness() {
             }, 2000);
 
         } catch (error) {
-            toast.error(`❌ ${error.message}`);
+            // Show user-friendly error message
+            const errorMessage = error.message || t('business_submit_error');
+            toast.error(`❌ ${errorMessage}`);
         } finally {
             setLoading(false);
+            setUploadingImage(false);
         }
     };
 
@@ -195,17 +266,35 @@ function AddBusiness() {
             </div>
 
             <div className="form-group">
-                <label htmlFor="category">{t('category')} *</label>
+                <label htmlFor="mainCategory">{t('main_category')} *</label>
                 <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
+                    id="mainCategory"
+                    name="mainCategory"
+                    value={formData.mainCategory}
+                    onChange={handleMainCategoryChange}
+                    required
+                    className="form-select"
+                >
+                    {mainCategories.map(cat => (
+                        <option key={cat} value={cat}>
+                            {getCategoryIcon(cat)} {t(cat)}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="subCategory">{t('sub_category')} *</label>
+                <select
+                    id="subCategory"
+                    name="subCategory"
+                    value={formData.subCategory}
                     onChange={handleInputChange}
                     required
                     className="form-select"
                 >
-                    {categories.map(cat => (
-                        <option key={cat} value={cat}>{t(cat)}</option>
+                    {getSubcategories(formData.mainCategory).map(subCat => (
+                        <option key={subCat} value={subCat}>{t(subCat)}</option>
                     ))}
                 </select>
             </div>
@@ -261,16 +350,15 @@ function AddBusiness() {
     const renderStep3 = () => (
         <div className="form-step">
             <h2>{t('business_description')}</h2>
-            <p className="step-hint">{t('descriptions_all_languages')}</p>
+            <p className="step-hint">{t('at_least_one_description_required')}</p>
             
             <div className="form-group">
-                <label htmlFor="descriptionEt">{t('description_estonian')} *</label>
+                <label htmlFor="descriptionEt">{t('description_estonian')}</label>
                 <textarea
                     id="descriptionEt"
                     name="descriptionEt"
                     value={formData.descriptionEt}
                     onChange={handleInputChange}
-                    required
                     className="form-textarea"
                     rows="4"
                     placeholder={t('description_placeholder_et')}
@@ -278,13 +366,12 @@ function AddBusiness() {
             </div>
 
             <div className="form-group">
-                <label htmlFor="descriptionEn">{t('description_english')} *</label>
+                <label htmlFor="descriptionEn">{t('description_english')}</label>
                 <textarea
                     id="descriptionEn"
                     name="descriptionEn"
                     value={formData.descriptionEn}
                     onChange={handleInputChange}
-                    required
                     className="form-textarea"
                     rows="4"
                     placeholder={t('description_placeholder_en')}
@@ -292,13 +379,12 @@ function AddBusiness() {
             </div>
 
             <div className="form-group">
-                <label htmlFor="descriptionRu">{t('description_russian')} *</label>
+                <label htmlFor="descriptionRu">{t('description_russian')}</label>
                 <textarea
                     id="descriptionRu"
                     name="descriptionRu"
                     value={formData.descriptionRu}
                     onChange={handleInputChange}
-                    required
                     className="form-textarea"
                     rows="4"
                     placeholder={t('description_placeholder_ru')}
@@ -312,17 +398,21 @@ function AddBusiness() {
             <h2>{t('additional_information')}</h2>
             
             <div className="form-group">
-                <label htmlFor="image">{t('business_image_url')}</label>
+                <label htmlFor="imageFile">{t('business_image')}</label>
                 <input
-                    type="url"
-                    id="image"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleInputChange}
+                    type="file"
+                    id="imageFile"
+                    accept="image/*"
+                    onChange={handleImageChange}
                     className="form-input"
-                    placeholder={t('image_url_placeholder')}
                 />
-                <small className="form-hint">{t('image_url_hint')}</small>
+                <small className="form-hint">{t('image_upload_hint')}</small>
+                
+                {imagePreview && (
+                    <div className="image-preview">
+                        <img src={imagePreview} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
+                    </div>
+                )}
             </div>
 
             <h3 className="section-subtitle">{t('social_media_optional')}</h3>

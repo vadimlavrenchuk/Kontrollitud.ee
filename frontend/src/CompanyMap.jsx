@@ -132,7 +132,7 @@ const CompanyMap = ({ companies, selectedCompanyId, onMarkerClick }) => {
                                     )}
                                 </div>
                                 
-                                <Link to={`/companies/${company._id}`} className="popup-link">
+                                <Link to={`/companies/${company.slug || company._id}`} className="popup-link">
                                     {t('details_button')} →
                                 </Link>
                             </div>

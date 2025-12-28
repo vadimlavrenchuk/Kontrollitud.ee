@@ -4,6 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedContent, getLocaleFromLanguage } from './utils/localization';
+import { getCategoryIcon } from './constants/categories';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShieldAlt, faStar, faStarHalfAlt, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
@@ -32,8 +33,8 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   
-  // Get description in current language with fallback to English
-  const description = getLocalizedContent(company.description, currentLang);
+  // Get description with fallback: current language -> Estonian -> English -> Russian
+  const description = getLocalizedContent(company.description, currentLang, '');
   
   const handleCardClick = (e) => {
     // Prevent propagation if clicking on links
@@ -53,11 +54,20 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
     >
       {/* Image section */}
       <div className="card-image-container">
-        <img 
-          src={company.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="250"%3E%3Crect width="400" height="250" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="18" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E'} 
-          alt={company.name}
-          className="card-image"
-        />
+        {company.image ? (
+          <img 
+            src={company.image} 
+            alt={company.name}
+            className="card-image"
+          />
+        ) : (
+          <div className="card-image-placeholder">
+            <span className="category-icon-large">
+              {getCategoryIcon(company.mainCategory || 'Teenused')}
+            </span>
+            <span className="placeholder-text">{company.name}</span>
+          </div>
+        )}
         {/* Verified badge overlay - only for medium and strong subscriptions */}
         {company.isVerified && (company.subscriptionLevel === 'medium' || company.subscriptionLevel === 'strong') && (
           <div className="verified-badge-overlay">
@@ -142,7 +152,7 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
         )}
         
         {/* Details button */}
-        <Link to={`/companies/${company._id}`} className="details-button">
+        <Link to={`/companies/${company.slug || company._id}`} className="details-button">
           {t('details_button')}
         </Link>
       </div>

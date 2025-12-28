@@ -47,10 +47,60 @@ const companySchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
+    slug: {
+        type: String,
+        unique: true,
+        sparse: true // Allow null values while maintaining uniqueness for non-null
+    },
+    phone: { 
+        type: String, 
+        required: true 
+    },
+    email: { 
+        type: String, 
+        required: true 
+    },
+    // Legacy category field - kept for backward compatibility
     category: { 
         type: String, 
-        enum: ['SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services'],
-        required: true 
+        enum: [
+            // Old categories
+            'SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services',
+            // Puhkus (Rest) subcategories
+            'Hotellid', 'Camping', 'Kuurordid', 'Wellness',
+            // Toit (Food) subcategories
+            'Restoranid', 'Kohvikud', 'Kiirtoitlustus', 'Baarid',
+            // Auto subcategories
+            'Autoteenus', 'Autopesu', 'Varuosad', 'Rehviteenus', 'Autopuhastus',
+            // Teenused (Services) subcategories
+            'Koristus', 'Remont', 'Õigusteenused', 'Konsultatsioonid', 'IT teenused',
+            // Ilu (Beauty) subcategories
+            'Juuksurid', 'Küünesalongid', 'Kosmeetika', 'Massaaž', 'Barbershops',
+            // Ostlemine (Shopping) subcategories
+            'Poed', 'Kaubanduskeskused', 'Butiigid', 'Turud', 'E-poed',
+            // Lapsed (Kids) subcategories
+            'Mänguväljakud', 'Lasteaiad', 'Laste tegevused', 'Mänguasja poed', 'Haridus',
+            // Reisimine (Travel) subcategories
+            'Reisibürood', 'Ekskursioonid', 'Autorent', 'Giidid', 'Transport',
+            // Legacy values for backward compatibility
+            'Hotels', 'Resorts', 'Wellness Centers', 'Cafes', 'Fast Food', 
+            'Fine Dining', 'Bakeries', 'Malls', 'Boutiques', 'Markets', 'Online Stores',
+            'Playgrounds', 'Daycare', 'Kids Activities', 'Toy Stores', 'Education',
+            'Travel Agencies', 'Tours', 'Car Rental', 'Guides',
+            'Car Service', 'Car Wash', 'Parts', 'Tire Service', 'Detailing',
+            'Cleaning', 'Repair', 'Legal', 'Consulting', 'IT Services',
+            'Hair Salons', 'Nail Salons', 'Makeup', 'Cosmetics',
+            'Clinics', 'Dentists', 'Pharmacy', 'Medical Labs', 'Therapy',
+            'Cinema', 'Theaters', 'Clubs', 'Events', 'Museums'
+        ]
+    },
+    // New multi-level category system
+    mainCategory: {
+        type: String,
+        enum: ['Puhkus', 'Toit', 'Auto', 'Teenused', 'Ilu', 'Ostlemine', 'Lapsed', 'Reisimine']
+    },
+    subCategory: {
+        type: String
     },
     city: { 
         type: String, 
@@ -144,6 +194,32 @@ const companySchema = new mongoose.Schema({
 });
 
 const Company = mongoose.model('Company', companySchema);
+
+// ===== HELPER FUNCTIONS =====
+
+/**
+ * Generate URL-friendly slug from company name
+ * @param {string} name - Company name
+ * @returns {string} - URL-friendly slug
+ */
+function generateSlug(name) {
+    return name
+        .toLowerCase()
+        .trim()
+        // Replace Estonian characters
+        .replace(/ä/g, 'a')
+        .replace(/ö/g, 'o')
+        .replace(/ü/g, 'u')
+        .replace(/õ/g, 'o')
+        .replace(/š/g, 's')
+        .replace(/ž/g, 'z')
+        // Replace spaces and special characters with hyphens
+        .replace(/[^a-z0-9]+/g, '-')
+        // Remove leading/trailing hyphens
+        .replace(/^-+|-+$/g, '');
+}
+
+// ===== ROUTES =====
 
 // 🟢 НОВАЯ СХЕМА: Отзывы
 const reviewSchema = new mongoose.Schema({
@@ -255,17 +331,33 @@ app.get('/api/companies', async (req, res) => {
         }
         
         // 2. Добавляем фильтр по поисковому запросу (search)
+        // Search across: name, category, subcategory, mainCategory, and all description languages
         if (req.query.search) {
-            
+            const searchRegex = { $regex: req.query.search, $options: 'i' };
             filter.$or = [
-                { name: { $regex: req.query.search, $options: 'i' } },
-                { description: { $regex: req.query.search, $options: 'i' } }
+                { name: searchRegex },
+                { category: searchRegex },
+                { mainCategory: searchRegex },
+                { subCategory: searchRegex },
+                { 'description.et': searchRegex },
+                { 'description.en': searchRegex },
+                { 'description.ru': searchRegex }
             ];
         }
 
         // 3. Добавляем фильтр по категории
         if (req.query.category && req.query.category !== 'Все') {
             filter.category = req.query.category;
+        }
+
+        // 3b. Добавляем фильтр по основной категории (mainCategory)
+        if (req.query.mainCategory && req.query.mainCategory !== 'Все') {
+            filter.mainCategory = req.query.mainCategory;
+        }
+
+        // 3c. Добавляем фильтр по подкатегории (subCategory)
+        if (req.query.subCategory && req.query.subCategory !== 'Все') {
+            filter.subCategory = req.query.subCategory;
         }
 
         // 4. Добавляем фильтр по городу
@@ -301,10 +393,21 @@ app.get('/api/companies', async (req, res) => {
     }
 });
 
-// GET /api/companies/:id - Получить компанию по ID
+// GET /api/companies/:id - Получить компанию по ID или slug
 app.get('/api/companies/:id', async (req, res) => {
     try {
-        const company = await Company.findById(req.params.id);
+        let company;
+        
+        // Try to find by slug first, then by ID
+        if (req.params.id.includes('-')) {
+            // Likely a slug (contains hyphens)
+            company = await Company.findOne({ slug: req.params.id });
+        }
+        
+        // If not found by slug or doesn't look like a slug, try by ID
+        if (!company) {
+            company = await Company.findById(req.params.id);
+        }
         
         // Если компания не найдена
         if (!company) {
@@ -517,8 +620,11 @@ app.post('/api/companies', async (req, res) => {
         // Статус должен быть установлен только администратором через отдельный эндпоинт
         const { status, ...safeData } = req.body;
         
+        // Generate slug from company name
+        const slug = generateSlug(safeData.name);
+        
         // Всегда устанавливаем статус в 'pending' для новых компаний
-        const companyData = { ...safeData, status: 'pending' };
+        const companyData = { ...safeData, status: 'pending', slug };
         
         // Создаем и сохраняем компанию с защищенными данными
         const newCompany = new Company(companyData); 
@@ -567,6 +673,7 @@ app.post('/api/reviews/:companyId', async (req, res) => {
 // POST /api/business-submission - Protected route for authenticated users to submit their business
 app.post('/api/business-submission', verifyToken, async (req, res) => {
     try {
+        // Ensure category field is set for backward compatibility
         const businessData = {
             ...req.body,
             userId: req.user.uid, // Add authenticated user's ID
@@ -575,6 +682,11 @@ app.post('/api/business-submission', verifyToken, async (req, res) => {
             subscriptionLevel: 'free',
             isVerified: false
         };
+        
+        // If category is not provided but subCategory is, use subCategory as category
+        if (!businessData.category && businessData.subCategory) {
+            businessData.category = businessData.subCategory;
+        }
         
         const newBusiness = new Company(businessData);
         const savedBusiness = await newBusiness.save();

@@ -11,6 +11,7 @@ import {
     onAuthStateChanged,
     updateProfile
 } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Your web app's Firebase configuration
 // TODO: Replace with your actual Firebase config from Firebase Console
@@ -28,6 +29,9 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+
+// Initialize Firebase Storage
+export const storage = getStorage(app);
 
 // Set up auth providers
 export const googleProvider = new GoogleAuthProvider();
@@ -97,6 +101,30 @@ export const logOut = async () => {
 // Subscribe to auth state changes
 export const subscribeToAuthChanges = (callback) => {
     return onAuthStateChanged(auth, callback);
+};
+
+// Upload image to Firebase Storage
+export const uploadBusinessImage = async (file, businessName) => {
+    try {
+        // Create a unique filename
+        const timestamp = Date.now();
+        const sanitizedName = businessName.replace(/[^a-zA-Z0-9]/g, '_');
+        const filename = `business-images/${sanitizedName}_${timestamp}_${file.name}`;
+        
+        // Create a storage reference
+        const storageRef = ref(storage, filename);
+        
+        // Upload the file
+        const snapshot = await uploadBytes(storageRef, file);
+        
+        // Get the download URL
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        return { url: downloadURL, error: null };
+    } catch (error) {
+        console.error('Image upload error:', error);
+        return { url: null, error: error.message };
+    }
 };
 
 export default app;

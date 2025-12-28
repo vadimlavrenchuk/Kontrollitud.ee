@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import ReviewForm from './ReviewForm.jsx';
 import { getLocalizedContent, formatDate, formatRelativeTime, getLocaleFromLanguage } from './utils/localization';
+import { getCategoryIcon } from './constants/categories';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
@@ -96,13 +97,44 @@ function CompanyDetails() {
         return <span className="rating-stars">{stars}</span>;
     };
     
-    // Get localized description
-    const description = getLocalizedContent(company.description, i18n.language);
+    // Get localized description with fallback placeholder
+    const description = getLocalizedContent(company.description, i18n.language, t('description_not_available'));
+    
+    // Determine which language is actually being displayed for the description
+    const getDisplayedLanguage = () => {
+        if (!company.description) return null;
+        if (company.description[i18n.language] && company.description[i18n.language].trim()) {
+            return null; // Current language - no hint needed
+        }
+        if (company.description.et && company.description.et.trim()) {
+            return 'et';
+        }
+        if (company.description.en && company.description.en.trim()) {
+            return 'en';
+        }
+        if (company.description.ru && company.description.ru.trim()) {
+            return 'ru';
+        }
+        return null;
+    };
+    
+    const displayedLang = getDisplayedLanguage();
     
     // Prepare SEO metadata
     const pageTitle = `${company.name} | Kontrollitud.ee`;
-    const metaDescription = description ? description.substring(0, 150) : `${company.name} in ${company.city} - ${t('verified')} business on Kontrollitud.ee`;
-    const ogImage = company.image || 'https://via.placeholder.com/1200x630?text=Kontrollitud.ee';
+    const metaDescription = description && description !== t('description_not_available') ? description.substring(0, 155) : `${company.name} ${company.city ? `- ${company.city}` : ''} - ${t('verified')} business on Kontrollitud.ee`;
+    const ogImage = company.image || 'https://kontrollitud.ee/og-default.jpg';
+    const currentUrl = `https://kontrollitud.ee/companies/${company.slug || id}`;
+    const keywords = [
+        company.name,
+        company.mainCategory ? t(company.mainCategory) : '',
+        company.subCategory ? t(company.subCategory) : '',
+        company.city,
+        'Estonia',
+        'Eesti',
+        'verified business',
+        'kontrollitud ettevõte'
+    ].filter(Boolean).join(', ');
     
     // Format working hours if available
     const formatWorkingHours = (hours) => {
@@ -121,27 +153,39 @@ function CompanyDetails() {
             <Helmet>
                 <title>{pageTitle}</title>
                 <meta name="description" content={metaDescription} />
+                <meta name="keywords" content={keywords} />
+                <meta name="author" content="Kontrollitud.ee" />
+                <meta name="robots" content="index, follow" />
                 
                 {/* Canonical Link */}
-                <link rel="canonical" href={`https://kontrollitud.ee/companies/${id}`} />
+                <link rel="canonical" href={currentUrl} />
                 
                 {/* Open Graph / Facebook */}
                 <meta property="og:type" content="business.business" />
-                <meta property="og:url" content={`https://kontrollitud.ee/companies/${id}`} />
+                <meta property="og:site_name" content="Kontrollitud.ee" />
+                <meta property="og:url" content={currentUrl} />
                 <meta property="og:title" content={pageTitle} />
                 <meta property="og:description" content={metaDescription} />
                 <meta property="og:image" content={ogImage} />
+                <meta property="og:image:width" content="1200" />
+                <meta property="og:image:height" content="630" />
+                <meta property="og:image:alt" content={company.name} />
+                <meta property="og:locale" content="et_EE" />
+                <meta property="og:locale:alternate" content="en_US" />
+                <meta property="og:locale:alternate" content="ru_RU" />
                 
                 {/* Twitter */}
-                <meta property="twitter:card" content="summary_large_image" />
-                <meta property="twitter:url" content={`https://kontrollitud.ee/companies/${id}`} />
-                <meta property="twitter:title" content={pageTitle} />
-                <meta property="twitter:description" content={metaDescription} />
-                <meta property="twitter:image" content={ogImage} />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:site" content="@Kontrollitud" />
+                <meta name="twitter:url" content={currentUrl} />
+                <meta name="twitter:title" content={pageTitle} />
+                <meta name="twitter:description" content={metaDescription} />
+                <meta name="twitter:image" content={ogImage} />
+                <meta name="twitter:image:alt" content={company.name} />
                 
-                {/* Additional metadata */}
-                <meta name="author" content="Kontrollitud.ee" />
-                <meta name="keywords" content={`${company.name}, ${company.category}, ${company.city}, Estonia, verified business`} />
+                {/* Telegram */}
+                <meta property="telegram:channel" content="@kontrollitud" />
+                <meta property="telegram:card" content="summary_large_image" />
                 
                 {/* Schema.org JSON-LD for LocalBusiness */}
                 <script type="application/ld+json">
@@ -149,8 +193,11 @@ function CompanyDetails() {
                         "@context": "https://schema.org",
                         "@type": "LocalBusiness",
                         "name": company.name,
-                        "description": description || company.name,
+                        "description": description !== t('description_not_available') ? description : company.name,
                         "image": ogImage,
+                        "url": currentUrl,
+                        "telephone": company.phone,
+                        "email": company.email,
                         "address": {
                             "@type": "PostalAddress",
                             "addressLocality": company.city,
@@ -186,11 +233,20 @@ function CompanyDetails() {
             {/* Hero Section with Large Image */}
             <section className="hero-section">
                 <div className="hero-image-container">
-                    <img 
-                        src={company.image || 'https://via.placeholder.com/1200x500?text=Company+Image'} 
-                        alt={company.name}
-                        className="hero-image"
-                    />
+                    {company.image ? (
+                        <img 
+                            src={company.image} 
+                            alt={company.name}
+                            className="hero-image"
+                        />
+                    ) : (
+                        <div className="hero-image-placeholder">
+                            <span className="hero-category-icon">
+                                {getCategoryIcon(company.mainCategory || 'Teenused')}
+                            </span>
+                            <h2 className="hero-placeholder-text">{company.name}</h2>
+                        </div>
+                    )}
                     {/* Verified Badge Overlay */}
                     {company.isVerified && (
                         <div className="verified-badge-hero">
@@ -213,7 +269,18 @@ function CompanyDetails() {
                         
                         {/* Meta Info */}
                         <div className="company-meta">
-                            <span className="category-badge">{t(company.category)}</span>
+                            {company.mainCategory && company.subCategory ? (
+                                <>
+                                    <span className="category-badge">
+                                        {getCategoryIcon(company.mainCategory)} {t(company.mainCategory)}
+                                    </span>
+                                    <span className="subcategory-badge">
+                                        {t(company.subCategory)}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="category-badge">{t(company.category)}</span>
+                            )}
                             {company.city && (
                                 <span className="city-badge">
                                     <i className="fas fa-map-marker-alt"></i> {t(company.city)}
@@ -234,9 +301,15 @@ function CompanyDetails() {
                     </header>
 
                     {/* Description */}
-                    {description && (
+                    {description && description !== t('description_not_available') && (
                         <section className="description-section">
                             <h2>{t('description')}</h2>
+                            {displayedLang && displayedLang !== i18n.language && (
+                                <div className="language-fallback-hint">
+                                    <i className="fas fa-info-circle"></i>
+                                    <span>{t('showing_description_in')} {t(`language_${displayedLang}`)}</span>
+                                </div>
+                            )}
                             <p className="description-text">{description}</p>
                         </section>
                     )}

@@ -369,6 +369,18 @@
     border: 2px solid #e2e8f0;
 }
 
+.company-icon-thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+
 // Badges
 .badge {
     display: inline-block;
