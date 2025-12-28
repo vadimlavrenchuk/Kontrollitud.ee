@@ -19,6 +19,9 @@ import ProtectedRoute from './ProtectedRoute.jsx';
 import RequireAuth from './RequireAuth.jsx';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
 import Footer from './Footer.jsx';
+import CatalogPage from './pages/CatalogPage.jsx';
+import PartnersPage from './pages/PartnersPage.jsx';
+import BlogPage from './pages/BlogPage.jsx';
 
 function AppContent() {
     const { t, i18n } = useTranslation();
@@ -75,6 +78,24 @@ function AppContent() {
 
                         {/* Right: User Menu + Language Switcher */}
                         <div className="navbar-right">
+                            {/* Catalog Link */}
+                            <Link to="/catalog" className="catalog-link">
+                                <i className="fas fa-list"></i>
+                                <span>{t('catalog')}</span>
+                            </Link>
+                            
+                            {/* Partners Link */}
+                            <Link to="/partners" className="partners-link">
+                                <i className="fas fa-handshake"></i>
+                                <span>{t('for_business')}</span>
+                            </Link>
+                            
+                            {/* Blog Link */}
+                            <Link to="/blog" className="blog-link">
+                                <i className="fas fa-newspaper"></i>
+                                <span>{t('blog')}</span>
+                            </Link>
+                            
                             {/* Add Business Link */}
                             <Link to="/add-business" className="add-business-link">
                                 <i className="fas fa-plus-circle"></i>
@@ -157,6 +178,9 @@ function AppContent() {
 
                 <Routes>
                     <Route path="/" element={<CompanyList />} />
+                    <Route path="/catalog" element={<CatalogPage />} />
+                    <Route path="/partners" element={<PartnersPage />} />
+                    <Route path="/blog" element={<BlogPage />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/login" element={<AuthPage />} />
                     <Route path="/add" element={

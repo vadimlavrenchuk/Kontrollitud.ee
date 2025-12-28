@@ -12,6 +12,7 @@ import {
     updateProfile
 } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 // TODO: Replace with your actual Firebase config from Firebase Console
@@ -32,6 +33,9 @@ export const auth = getAuth(app);
 
 // Initialize Firebase Storage
 export const storage = getStorage(app);
+
+// Initialize Firestore
+export const db = getFirestore(app);
 
 // Set up auth providers
 export const googleProvider = new GoogleAuthProvider();

@@ -9,34 +9,39 @@ const SearchBar = memo(({ searchQuery, onSearchChange, onClearSearch }) => {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent form submission or page reload
+      e.preventDefault();
     }
   };
 
   return (
-    <div className="search-bar-container fade-in-delay-2">
-      <div className="search-bar">
-        <FontAwesomeIcon icon={faSearch} className="search-icon" />
-        <input
-          type="text"
-          className="search-input"
-          placeholder={t('search_placeholder')}
-          value={searchQuery}
-          onChange={onSearchChange}
-          onKeyDown={handleKeyDown}
-          autoComplete="off"
-        />
-        {searchQuery && (
-          <button 
-            className="search-clear-btn"
-            onClick={onClearSearch}
-            aria-label={t('clear_search')}
-            type="button"
-          >
-            ×
-          </button>
-        )}
+    <div className="search-bar">
+      {/* Search Icon */}
+      <div className="search-bar__icon">
+        <FontAwesomeIcon icon={faSearch} />
       </div>
+      
+      {/* Search Input */}
+      <input
+        type="text"
+        className="search-bar__input"
+        placeholder={t('search_placeholder')}
+        value={searchQuery}
+        onChange={onSearchChange}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+      />
+      
+      {/* Clear Button */}
+      {searchQuery && (
+        <button
+          onClick={onClearSearch}
+          className="search-bar__clear"
+          aria-label={t('clear_search')}
+          type="button"
+        >
+          <span>&times;</span>
+        </button>
+      )}
     </div>
   );
 });
