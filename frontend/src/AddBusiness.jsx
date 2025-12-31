@@ -6,12 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { toast, ToastContainer } from 'react-toastify';
 import { useAuth } from './AuthContext';
-import { uploadBusinessImage } from './firebase';
+import { db, uploadBusinessImage } from './firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { CATEGORIES, getMainCategories, getSubcategories, getCategoryIcon } from './constants/categories';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AddBusiness.scss';
-
-const API_BASE_URL = 'http://localhost:5000/api/business-submission';
 
 function AddBusiness() {
     const { t } = useTranslation();
@@ -19,9 +18,10 @@ function AddBusiness() {
     const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [imageFile, setImageFile] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
-    const [uploadingImage, setUploadingImage] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    // const [imageFile, setImageFile] = useState(null);
+    // const [imagePreview, setImagePreview] = useState(null);
+    // const [uploadingImage, setUploadingImage] = useState(false);
     
     const [formData, setFormData] = useState({
         // Step 1: Basic Info
@@ -72,31 +72,32 @@ function AddBusiness() {
         }));
     };
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                toast.error('Please select an image file');
-                return;
-            }
-            
-            // Validate file size (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                toast.error('Image size must be less than 5MB');
-                return;
-            }
-            
-            setImageFile(file);
-            
-            // Create preview
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+    // Temporarily disabled file upload due to CORS issues
+    // const handleImageChange = (e) => {
+    //     const file = e.target.files[0];
+    //     if (file) {
+    //         // Validate file type
+    //         if (!file.type.startsWith('image/')) {
+    //             toast.error('Please select an image file');
+    //             return;
+    //         }
+    //         
+    //         // Validate file size (max 5MB)
+    //         if (file.size > 5 * 1024 * 1024) {
+    //             toast.error('Image size must be less than 5MB');
+    //             return;
+    //         }
+    //         
+    //         setImageFile(file);
+    //         
+    //         // Create preview
+    //         const reader = new FileReader();
+    //         reader.onloadend = () => {
+    //             setImagePreview(reader.result);
+    //         };
+    //         reader.readAsDataURL(file);
+    //     }
+    // };
 
     const handleNextStep = () => {
         // Validate current step
@@ -130,83 +131,130 @@ function AddBusiness() {
     };
 
     const handleSubmit = async () => {
+        console.log('🚀 Начинаю отправку формы...');
+        console.log('FormData:', formData);
+        console.log('User:', user);
+        console.log('DB object:', db);
+        
         setLoading(true);
         
         try {
-            // Upload image if one was selected
-            let imageUrl = formData.image;
-            if (imageFile) {
-                setUploadingImage(true);
-                toast.info(t('uploading_image'));
-                
-                const { url, error } = await uploadBusinessImage(imageFile, formData.name);
-                
-                if (error) {
-                    setUploadingImage(false);
-                    toast.error(t('image_upload_error'));
-                    throw new Error(t('image_upload_error'));
-                }
-                
-                imageUrl = url;
-                setUploadingImage(false);
-                toast.success(t('image_uploaded_success'));
-            }
+            console.log('✓ Step 1: Начало try блока');
             
-            // Format description as object
+            // Validate that at least one description is provided
+            if (!formData.descriptionEt && !formData.descriptionEn && !formData.descriptionRu) {
+                console.log('❌ Validation failed: no description');
+                toast.error(t('please_provide_at_least_one_description'));
+                setLoading(false);
+                return;
+            }
+
+            console.log('✓ Step 2: Validation passed');
+
+            // Use provided image URL or default placeholder
+            const imageUrl = formData.image && formData.image.trim() !== '' 
+                ? formData.image 
+                : 'https://via.placeholder.com/400x250?text=No+Image';
+            
+            console.log('✓ Step 3: Image URL set to:', imageUrl);
+            
+            // CORS issue - File upload temporarily disabled
+            // if (imageFile) {
+            //     setUploadingImage(true);
+            //     toast.info(t('uploading_image'));
+            //     try {
+            //         const { url, error } = await uploadBusinessImage(imageFile, formData.name);
+            //         if (error) {
+            //             console.error('Image upload failed:', error);
+            //             toast.warning('⚠️ Image upload failed, submitting without image');
+            //             imageUrl = 'https://via.placeholder.com/400x250?text=No+Image';
+            //         } else {
+            //             imageUrl = url;
+            //             toast.success(t('image_uploaded_success'));
+            //         }
+            //     } catch (uploadError) {
+            //         console.error('Image upload exception:', uploadError);
+            //         toast.warning('⚠️ Image upload failed, submitting without image');
+            //         imageUrl = 'https://via.placeholder.com/400x250?text=No+Image';
+            //     } finally {
+            //         setUploadingImage(false);
+            //     }
+            // }
+            
+            console.log('✓ Step 4: Preparing data for Firestore...');
+            
+            // Prepare data for Firestore
             const submissionData = {
-                ...formData,
-                image: imageUrl,
-                category: formData.subCategory, // Legacy field for backward compatibility
-                userId: user?.uid, // Add Firebase user ID
-                userEmail: user?.email, // Add user email for tracking
+                // Basic Info
+                name: formData.name,
+                mainCategory: formData.mainCategory,
+                subCategory: formData.subCategory,
+                category: formData.subCategory, // Legacy field
+                city: formData.city,
+                
+                // Contact Info
+                email: formData.email,
+                phone: formData.phone || '',
+                website: formData.website || '',
+                
+                // Descriptions (multi-language)
                 description: {
-                    et: formData.descriptionEt,
-                    en: formData.descriptionEn,
-                    ru: formData.descriptionRu
-                }
+                    et: formData.descriptionEt || '',
+                    en: formData.descriptionEn || '',
+                    ru: formData.descriptionRu || ''
+                },
+                
+                // Additional Info
+                image: imageUrl,
+                instagramUrl: formData.instagramUrl || '',
+                tiktokUrl: formData.tiktokUrl || '',
+                youtubeUrl: formData.youtubeUrl || '',
+                
+                // Status and tracking fields
+                status: 'pending',
+                verified: false,
+                ownerId: user?.uid || null,
+                ownerEmail: user?.email || formData.email,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
             };
             
-            // Remove individual description fields
-            delete submissionData.descriptionEt;
-            delete submissionData.descriptionEn;
-            delete submissionData.descriptionRu;
+            console.log('✓ Step 5: Submitting business to Firestore:', submissionData);
+            console.log('Collection path:', 'pending_companies');
+            console.log('About to call addDoc...');
             
-            // Get Firebase auth token
-            const token = localStorage.getItem('authToken');
+            // Add to pending_companies collection
+            const docRef = await addDoc(collection(db, 'pending_companies'), submissionData);
             
-            const response = await fetch(API_BASE_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(submissionData)
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                // Check for duplicate business name error
-                if (response.status === 400 || (data.error && (data.error.includes('11000') || data.error.includes('duplicate')))) {
-                    throw new Error(t('business_name_exists'));
-                }
-                throw new Error(data.error || t('business_submit_error'));
-            }
-
+            console.log('✓ Step 6: addDoc completed successfully!');
+            
+            console.log('✅ Business submission created with ID:', docRef.id);
+            
+            // Show success state
+            setSubmitted(true);
             toast.success(t('business_submitted_success'));
             
-            // Redirect to dashboard after 2 seconds
+            // Redirect to dashboard after 3 seconds
             setTimeout(() => {
-                navigate('/dashboard');
-            }, 2000);
+                if (user) {
+                    navigate('/dashboard');
+                } else {
+                    navigate('/');
+                }
+            }, 3000);
 
         } catch (error) {
-            // Show user-friendly error message
+            console.log('🔴 Ошибка:', error);
+            console.error('❌ Error submitting business:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            console.error('Full error object:', JSON.stringify(error, null, 2));
+            
             const errorMessage = error.message || t('business_submit_error');
             toast.error(`❌ ${errorMessage}`);
         } finally {
             setLoading(false);
-            setUploadingImage(false);
+            // setUploadingImage(false);
         }
     };
 
@@ -398,19 +446,21 @@ function AddBusiness() {
             <h2>{t('additional_information')}</h2>
             
             <div className="form-group">
-                <label htmlFor="imageFile">{t('business_image')}</label>
+                <label htmlFor="image">Ссылка на логотип (URL)</label>
                 <input
-                    type="file"
-                    id="imageFile"
-                    accept="image/*"
-                    onChange={handleImageChange}
+                    type="text"
+                    id="image"
+                    name="image"
+                    value={formData.image}
+                    onChange={handleInputChange}
                     className="form-input"
+                    placeholder="https://example.com/logo.jpg"
                 />
-                <small className="form-hint">{t('image_upload_hint')}</small>
+                <small className="form-hint">Вставьте URL изображения или оставьте пустым для картинки по умолчанию</small>
                 
-                {imagePreview && (
+                {formData.image && formData.image.trim() !== '' && (
                     <div className="image-preview">
-                        <img src={imagePreview} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
+                        <img src={formData.image} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
                     </div>
                 )}
             </div>
@@ -482,16 +532,39 @@ function AddBusiness() {
                     </p>
                 </div>
 
-                {renderStepIndicator()}
+                {/* Success State */}
+                {submitted ? (
+                    <div className="success-state">
+                        <div className="success-icon">
+                            <i className="fas fa-check-circle"></i>
+                        </div>
+                        <h2>{t('business_submitted_success')}</h2>
+                        <p className="success-message">
+                            {t('status_pending_desc')}
+                        </p>
+                        <div className="success-actions">
+                            <Link to="/" className="btn-primary">
+                                <i className="fas fa-home"></i> {t('back_to_home')}
+                            </Link>
+                            {user && (
+                                <Link to="/dashboard" className="btn-secondary">
+                                    <i className="fas fa-tachometer-alt"></i> {t('my_dashboard')}
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {renderStepIndicator()}
 
-                <div className="form-container">
-                    {currentStep === 1 && renderStep1()}
-                    {currentStep === 2 && renderStep2()}
-                    {currentStep === 3 && renderStep3()}
-                    {currentStep === 4 && renderStep4()}
-                </div>
+                        <div className="form-container">
+                            {currentStep === 1 && renderStep1()}
+                            {currentStep === 2 && renderStep2()}
+                            {currentStep === 3 && renderStep3()}
+                            {currentStep === 4 && renderStep4()}
+                        </div>
 
-                <div className="form-actions">
+                        <div className="form-actions">
                     {currentStep > 1 && (
                         <button 
                             type="button"
@@ -529,6 +602,8 @@ function AddBusiness() {
                         </button>
                     )}
                 </div>
+                </>
+                )}
             </div>
         </div>
     );

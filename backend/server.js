@@ -34,12 +34,53 @@ app.get('/test', (req, res) => {
 });
 
 // 1. ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ
-const DB_URI = process.env.DB_URI || 'mongodb+srv://Kontrollitud:6MXhF8u4qfK5qBUs@kontrollituddbcluster.bxlehah.mongodb.net/?appName=KontrollitudDBCluster';
+// Поддержка обеих переменных для совместимости
+const DB_URI = process.env.MONGODB_URI || process.env.DB_URI || 'mongodb+srv://Kontrollitud:6MXhF8u4qfK5qBUs@kontrollituddbcluster.bxlehah.mongodb.net/?appName=KontrollitudDBCluster';
 
+console.log('🔄 Подключаюсь к MongoDB Atlas...');
+console.log('URI (первые 50 символов):', DB_URI.substring(0, 50) + '...');
 
-mongoose.connect(DB_URI)
-  .then(() => console.log('✅ MongoDB: Успешно подключено.'))
-  .catch(err => console.error('❌ MongoDB: Ошибка подключения:', err));
+const mongooseOptions = {
+  family: 4, // Принудительно использовать IPv4 (важно для Docker на Windows)
+  serverSelectionTimeoutMS: 5000, // Таймаут выбора сервера 5 сек
+  socketTimeoutMS: 45000, // Таймаут сокета 45 сек
+  connectTimeoutMS: 10000, // Таймаут подключения 10 сек
+  maxPoolSize: 10, // Максимум 10 соединений в пуле
+  minPoolSize: 2, // Минимум 2 соединения
+  retryWrites: true, // Повторять записи при ошибках
+  retryReads: true, // Повторять чтения при ошибках
+};
+
+mongoose.connect(DB_URI, mongooseOptions)
+  .then(() => {
+    console.log('✅ MongoDB Atlas: Успешно подключено!');
+    console.log('✅ Database:', mongoose.connection.name);
+    console.log('✅ Host:', mongoose.connection.host);
+  })
+  .catch(err => {
+    console.error('❌ MongoDB Atlas: Ошибка подключения!');
+    console.error('❌ Тип ошибки:', err.constructor.name);
+    console.error('❌ Сообщение:', err.message);
+    console.error('❌ Код ошибки:', err.code);
+    if (err.reason) {
+      console.error('❌ Причина:', err.reason);
+    }
+    console.error('❌ Полная ошибка:', err);
+    process.exit(1); // Выходим, если не можем подключиться
+  });
+
+// Отслеживание состояния подключения
+mongoose.connection.on('connected', () => {
+  console.log('🔗 Mongoose: Соединение установлено');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('⚠️ Mongoose: Ошибка соединения:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️ Mongoose: Соединение разорвано');
+});
 
 // 2. СХЕМА ДАННЫХ (Определяем, как выглядит компания)
 const companySchema = new mongoose.Schema({

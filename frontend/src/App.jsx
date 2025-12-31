@@ -22,6 +22,7 @@ import Footer from './Footer.jsx';
 import CatalogPage from './pages/CatalogPage.jsx';
 import PartnersPage from './pages/PartnersPage.jsx';
 import BlogPage from './pages/BlogPage.jsx';
+import BlogPostDetail from './pages/BlogPostDetail.jsx';
 
 function AppContent() {
     const { t, i18n } = useTranslation();
@@ -181,6 +182,7 @@ function AppContent() {
                     <Route path="/catalog" element={<CatalogPage />} />
                     <Route path="/partners" element={<PartnersPage />} />
                     <Route path="/blog" element={<BlogPage />} />
+                    <Route path="/blog/:id" element={<BlogPostDetail />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/login" element={<AuthPage />} />
                     <Route path="/add" element={

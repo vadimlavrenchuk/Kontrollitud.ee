@@ -110,23 +110,44 @@ export const subscribeToAuthChanges = (callback) => {
 // Upload image to Firebase Storage
 export const uploadBusinessImage = async (file, businessName) => {
     try {
+        // Validate file
+        if (!file) {
+            throw new Error('No file provided');
+        }
+        
         // Create a unique filename
         const timestamp = Date.now();
         const sanitizedName = businessName.replace(/[^a-zA-Z0-9]/g, '_');
-        const filename = `business-images/${sanitizedName}_${timestamp}_${file.name}`;
+        const fileExtension = file.name.split('.').pop();
+        const filename = `business-images/${sanitizedName}_${timestamp}.${fileExtension}`;
+        
+        console.log('Uploading image to:', filename);
         
         // Create a storage reference
         const storageRef = ref(storage, filename);
         
-        // Upload the file
-        const snapshot = await uploadBytes(storageRef, file);
+        // Set metadata
+        const metadata = {
+            contentType: file.type,
+            customMetadata: {
+                'uploadedBy': businessName,
+                'uploadDate': new Date().toISOString()
+            }
+        };
+        
+        // Upload the file with metadata
+        const snapshot = await uploadBytes(storageRef, file, metadata);
+        console.log('Upload successful, getting download URL...');
         
         // Get the download URL
         const downloadURL = await getDownloadURL(snapshot.ref);
+        console.log('Download URL obtained:', downloadURL);
         
         return { url: downloadURL, error: null };
     } catch (error) {
         console.error('Image upload error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
         return { url: null, error: error.message };
     }
 };
