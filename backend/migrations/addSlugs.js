@@ -1,103 +1,137 @@
-// Migration script to add slugs to existing companies
-const mongoose = require('mongoose');
+// Kontrollitud.ee/backend/migrations/addSlugs.js
+// Migration script to add slugs to existing companies in Firestore
+
+const admin = require('firebase-admin');
 require('dotenv').config();
 
-const DB_URI = process.env.DB_URI || 'mongodb+srv://Kontrollitud:6MXhF8u4qfK5qBUs@kontrollituddbcluster.bxlehah.mongodb.net/?appName=KontrollitudDBCluster';
+// Initialize Firebase Admin
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+    })
+  });
+} catch (error) {
+  console.log('Firebase already initialized');
+}
 
-// Company Schema
-const companySchema = new mongoose.Schema({
-    name: String,
-    slug: String
-});
-
-const Company = mongoose.model('Company', companySchema);
+const db = admin.firestore();
 
 /**
- * Generate URL-friendly slug from company name
+ * Slugify function - converts text to URL-friendly slug with Cyrillic/Estonian support
  */
-function generateSlug(name) {
-    return name
-        .toLowerCase()
-        .trim()
-        // Replace Estonian characters
-        .replace(/ä/g, 'a')
-        .replace(/ö/g, 'o')
-        .replace(/ü/g, 'u')
-        .replace(/õ/g, 'o')
-        .replace(/š/g, 's')
-        .replace(/ž/g, 'z')
-        // Replace spaces and special characters with hyphens
-        .replace(/[^a-z0-9]+/g, '-')
-        // Remove leading/trailing hyphens
-        .replace(/^-+|-+$/g, '');
+function slugify(text) {
+  if (!text) return '';
+
+  const cyrillicMap = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '',
+    'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
+    'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+    'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+    'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '',
+    'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+    'ä': 'a', 'ö': 'o', 'ü': 'u', 'õ': 'o',
+    'Ä': 'A', 'Ö': 'O', 'Ü': 'U', 'Õ': 'O',
+    'š': 's', 'ž': 'z', 'Š': 'S', 'Ž': 'Z'
+  };
+
+  let slug = text.toString().trim();
+  slug = slug.split('').map(char => cyrillicMap[char] || char).join('');
+  slug = slug
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+
+  return slug;
 }
 
 /**
- * Add slugs to all companies that don't have one
+ * Add slugs to all companies in Firestore
  */
-async function addSlugs() {
-    try {
-        console.log('🔗 Connecting to MongoDB...');
-        await mongoose.connect(DB_URI);
-        console.log('✅ Connected to MongoDB');
+async function addSlugsToCompanies() {
+  try {
+    console.log('🚀 Starting slug migration...\n');
+    
+    const companiesRef = db.collection('companies');
+    const snapshot = await companiesRef.get();
 
-        // Find companies without slugs
-        const companies = await Company.find({ 
-            $or: [
-                { slug: { $exists: false } },
-                { slug: null },
-                { slug: '' }
-            ]
-        });
+    console.log(`📊 Found ${snapshot.size} companies to process\n`);
 
-        console.log(`📦 Found ${companies.length} companies without slugs`);
+    const slugs = new Set();
+    const updates = [];
+    let skipped = 0;
+    let processed = 0;
 
-        let updated = 0;
-        let skipped = 0;
+    for (const doc of snapshot.docs) {
+      const company = doc.data();
+      
+      // Skip if already has slug
+      if (company.slug) {
+        console.log(`⏭️  ${company.name} already has slug: ${company.slug}`);
+        skipped++;
+        continue;
+      }
 
-        for (const company of companies) {
-            try {
-                const slug = generateSlug(company.name);
-                
-                // Check if slug already exists
-                const existing = await Company.findOne({ slug, _id: { $ne: company._id } });
-                
-                if (existing) {
-                    // Append ID to make it unique
-                    company.slug = `${slug}-${company._id.toString().slice(-6)}`;
-                    console.log(`⚠️  Duplicate slug detected, using: ${company.slug}`);
-                } else {
-                    company.slug = slug;
-                }
-                
-                await company.save();
-                updated++;
-                console.log(`✅ Updated: ${company.name} -> ${company.slug}`);
-                
-            } catch (error) {
-                console.error(`❌ Failed to update ${company.name}:`, error.message);
-                skipped++;
-            }
-        }
+      // Generate base slug
+      let slug = slugify(company.name);
+      let uniqueSlug = slug;
+      let counter = 1;
 
-        console.log('\n📊 Migration Summary:');
-        console.log(`✅ Successfully updated: ${updated}`);
-        console.log(`⚠️  Skipped: ${skipped}`);
-        console.log(`📦 Total processed: ${companies.length}`);
+      // Ensure uniqueness
+      while (slugs.has(uniqueSlug)) {
+        uniqueSlug = `${slug}-${counter}`;
+        counter++;
+      }
 
-        await mongoose.disconnect();
-        console.log('👋 Disconnected from MongoDB');
-        process.exit(0);
+      slugs.add(uniqueSlug);
+      updates.push({
+        id: doc.id,
+        name: company.name,
+        slug: uniqueSlug
+      });
 
-    } catch (error) {
-        console.error('❌ Migration failed:', error);
-        process.exit(1);
+      console.log(`✅ ${company.name} → ${uniqueSlug}`);
+      processed++;
     }
+
+    // Apply updates in batches
+    console.log(`\n📝 Applying ${updates.length} updates...`);
+    
+    for (let i = 0; i < updates.length; i += 500) {
+      const batch = db.batch();
+      const batchUpdates = updates.slice(i, i + 500);
+      
+      for (const update of batchUpdates) {
+        const docRef = db.collection('companies').doc(update.id);
+        batch.update(docRef, { slug: update.slug });
+      }
+      
+      await batch.commit();
+      console.log(`✓ Batch ${Math.floor(i / 500) + 1} committed (${batchUpdates.length} updates)`);
+    }
+
+    console.log('\n✅ Migration complete!');
+    console.log(`📊 Summary:`);
+    console.log(`   - Processed: ${processed}`);
+    console.log(`   - Skipped: ${skipped}`);
+    console.log(`   - Total: ${snapshot.size}`);
+    
+    process.exit(0);
+  } catch (error) {
+    console.error('\n❌ Migration failed:', error);
+    process.exit(1);
+  }
 }
 
 // Run migration
-if (require.main === module) {
-    addSlugs();
-}
+addSlugsToCompanies();
 
-module.exports = { addSlugs };
