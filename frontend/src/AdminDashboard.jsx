@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast, ToastContainer } from 'react-toastify';
 import { getCategoryIcon } from './constants/categories';
+import { db } from './firebase';
+import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AdminDashboard.scss';
 
@@ -41,6 +43,12 @@ function AdminDashboard() {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('add'); // 'add' or 'requests'
     const [pendingRequests, setPendingRequests] = useState([]);
+    
+    // Edit mode state
+    const [editMode, setEditMode] = useState(false);
+    const [editingCompanyId, setEditingCompanyId] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [uploadingCloudinary, setUploadingCloudinary] = useState(false);
 
     // Fetch all companies on component mount
     useEffect(() => {
@@ -50,23 +58,45 @@ function AdminDashboard() {
 
     const fetchCompanies = async () => {
         try {
-            const response = await fetch(API_BASE_URL);
-            const data = await response.json();
-            setCompanies(data);
+            console.log('📥 Fetching approved companies from Firestore...');
+            const companiesRef = collection(db, 'companies');
+            const snapshot = await getDocs(companiesRef);
+            
+            const companiesList = [];
+            snapshot.forEach((doc) => {
+                companiesList.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            console.log('✅ Fetched companies:', companiesList.length);
+            setCompanies(companiesList);
         } catch (err) {
-            console.error('Error fetching companies:', err);
-            toast.error('Failed to fetch companies');
+            console.error('❌ Error fetching companies:', err);
+            toast.error('Failed to fetch companies: ' + err.message);
         }
     };
 
     const fetchPendingRequests = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/admin/pending-requests');
-            const data = await response.json();
-            setPendingRequests(data);
+            console.log('📥 Fetching pending requests from Firestore...');
+            const pendingRef = collection(db, 'pending_companies');
+            const snapshot = await getDocs(pendingRef);
+            
+            const requests = [];
+            snapshot.forEach((doc) => {
+                requests.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            console.log('✅ Fetched pending requests:', requests.length);
+            setPendingRequests(requests);
         } catch (err) {
-            console.error('Error fetching pending requests:', err);
-            toast.error('Failed to fetch pending requests');
+            console.error('❌ Error fetching pending requests:', err);
+            toast.error('Failed to fetch pending requests: ' + err.message);
         }
     };
 
@@ -127,6 +157,55 @@ function AdminDashboard() {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+    };
+
+    // Upload image to Cloudinary
+    const uploadToCloudinary = async (file) => {
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+        
+        console.log('📸 Cloudinary Upload Config:', {
+            cloudName,
+            uploadPreset,
+            hasCloudName: !!cloudName,
+            hasUploadPreset: !!uploadPreset
+        });
+        
+        if (!cloudName || !uploadPreset) {
+            throw new Error('Cloudinary configuration missing. Check VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in .env');
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', uploadPreset);
+        // Note: Do NOT append api_key, timestamp, or signature for unsigned uploads
+        // folder is configured in upload preset settings on Cloudinary dashboard
+        
+        console.log('🚀 Uploading to Cloudinary...');
+        console.log('URL:', `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`);
+        
+        try {
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+                {
+                    method: 'POST',
+                    body: formData
+                }
+            );
+            
+            const data = await response.json();
+            console.log('📊 Cloudinary Response:', { status: response.status, data });
+            
+            if (!response.ok) {
+                throw new Error(data.error?.message || data.message || 'Upload failed');
+            }
+            
+            console.log('✅ Upload successful! URL:', data.secure_url);
+            return data.secure_url;
+        } catch (error) {
+            console.error('❌ Cloudinary upload error:', error);
+            throw error;
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -205,67 +284,197 @@ function AdminDashboard() {
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/${companyId}`, {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete company');
-            }
-
+            console.log('🗑️ Deleting company:', companyId);
+            
+            // Delete from Firestore companies collection
+            await deleteDoc(doc(db, 'companies', companyId));
+            
             toast.success('🗑️ Company deleted successfully!');
             fetchCompanies();
 
         } catch (err) {
+            console.error('❌ Error deleting company:', err);
             toast.error(`❌ ${err.message}`);
         }
     };
 
-    const handleApproveRequest = async (companyId, subscriptionLevel) => {
+    // Open edit modal with company data
+    const handleEdit = (company) => {
+        setEditMode(true);
+        setEditingCompanyId(company.id);
+        setFormData({
+            name: company.name || '',
+            city: company.city || 'Tallinn',
+            category: company.category || company.subCategory || 'SPA',
+            descriptionEt: company.description?.et || '',
+            descriptionEn: company.description?.en || '',
+            descriptionRu: company.description?.ru || '',
+            image: company.image || '',
+            isVerified: company.verified || company.isVerified || false,
+            tiktokUrl: company.tiktokUrl || '',
+            instagramUrl: company.instagramUrl || '',
+            youtubeUrl: company.youtubeUrl || '',
+            reviewerName: company.reviewerName || ''
+        });
+        setImagePreview(company.image || null);
+        setShowEditModal(true);
+    };
+
+    // Update company in Firestore
+    const handleUpdateCompany = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+
         try {
-            const response = await fetch(`http://localhost:5000/api/admin/approve/${companyId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ subscriptionLevel })
-            });
+            let imageUrl = formData.image;
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to approve business');
+            // Upload new image to Cloudinary if file selected
+            if (imageFile) {
+                setUploadingCloudinary(true);
+                toast.info('Uploading image to Cloudinary...');
+                try {
+                    imageUrl = await uploadToCloudinary(imageFile);
+                    toast.success('Image uploaded successfully!');
+                } catch (uploadError) {
+                    console.error('Cloudinary upload failed:', uploadError);
+                    toast.error('Image upload failed: ' + uploadError.message);
+                    setLoading(false);
+                    setUploadingCloudinary(false);
+                    return;
+                } finally {
+                    setUploadingCloudinary(false);
+                }
             }
 
-            toast.success(`✅ Business approved as ${subscriptionLevel}!`);
-            fetchPendingRequests();
+            // Prepare update data
+            const updateData = {
+                name: formData.name,
+                city: formData.city,
+                category: formData.category,
+                subCategory: formData.category,
+                description: {
+                    et: formData.descriptionEt,
+                    en: formData.descriptionEn,
+                    ru: formData.descriptionRu
+                },
+                image: imageUrl,
+                verified: formData.isVerified,
+                isVerified: formData.isVerified,
+                tiktokUrl: formData.tiktokUrl || '',
+                instagramUrl: formData.instagramUrl || '',
+                youtubeUrl: formData.youtubeUrl || '',
+                updatedAt: serverTimestamp()
+            };
+
+            // Update in Firestore
+            const companyRef = doc(db, 'companies', editingCompanyId);
+            await updateDoc(companyRef, updateData);
+
+            toast.success('✅ Company updated successfully!');
+            
+            // Reset and close modal
+            setShowEditModal(false);
+            setEditMode(false);
+            setEditingCompanyId(null);
+            setImageFile(null);
+            setImagePreview(null);
+            
+            // Refresh companies list
             fetchCompanies();
 
         } catch (err) {
+            console.error('❌ Error updating company:', err);
+            toast.error(`❌ ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Close edit modal
+    const handleCloseEditModal = () => {
+        setShowEditModal(false);
+        setEditMode(false);
+        setEditingCompanyId(null);
+        setImageFile(null);
+        setImagePreview(null);
+        setFormData({
+            name: '',
+            city: 'Tallinn',
+            category: 'SPA',
+            descriptionEt: '',
+            descriptionEn: '',
+            descriptionRu: '',
+            image: '',
+            isVerified: false,
+            tiktokUrl: '',
+            instagramUrl: '',
+            youtubeUrl: '',
+            reviewerName: ''
+        });
+    };
+
+    const handleApproveRequest = async (requestId, subscriptionLevel = 'free') => {
+        try {
+            console.log('✅ Approving request:', requestId);
+            
+            // Get the pending request data
+            const pendingRequest = pendingRequests.find(req => req.id === requestId);
+            if (!pendingRequest) {
+                throw new Error('Request not found');
+            }
+            
+            console.log('📋 Pending request data:', pendingRequest);
+            
+            // Create approved company in companies collection
+            const companyData = {
+                ...pendingRequest,
+                status: 'approved',
+                verified: true,
+                isVerified: true, // Добавляем оба поля для совместимости
+                subscriptionLevel: subscriptionLevel,
+                approvedAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            };
+            
+            // Remove the id field as it will be auto-generated
+            delete companyData.id;
+            
+            console.log('💾 Saving company data to Firestore:', companyData);
+            
+            // Add to companies collection
+            const docRef = await addDoc(collection(db, 'companies'), companyData);
+            console.log('✅ Company added with ID:', docRef.id);
+            
+            // Delete from pending_companies
+            await deleteDoc(doc(db, 'pending_companies', requestId));
+            console.log('🗑️ Deleted from pending_companies');
+            
+            toast.success(`✅ Business approved as ${subscriptionLevel}!`);
+            fetchPendingRequests();
+            fetchCompanies();
+            
+        } catch (err) {
+            console.error('❌ Error approving request:', err);
             toast.error(`❌ ${err.message}`);
         }
     };
 
-    const handleRejectRequest = async (companyId) => {
+    const handleRejectRequest = async (requestId) => {
         if (!window.confirm('Are you sure you want to reject and delete this business submission?')) {
             return;
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/api/admin/reject/${companyId}`, {
-                method: 'DELETE'
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to reject business');
-            }
-
+            console.log('🗑️ Rejecting request:', requestId);
+            
+            // Delete from pending_companies
+            await deleteDoc(doc(db, 'pending_companies', requestId));
+            
             toast.success('🗑️ Business submission rejected and deleted');
             fetchPendingRequests();
-
+            
         } catch (err) {
+            console.error('❌ Error rejecting request:', err);
             toast.error(`❌ ${err.message}`);
         }
     };
@@ -591,7 +800,7 @@ function AdminDashboard() {
                                 </thead>
                                 <tbody>
                                     {companies.map(company => (
-                                        <tr key={company._id}>
+                                        <tr key={company.id}>
                                             <td className="company-name">
                                                 {company.image ? (
                                                     <img 
@@ -611,19 +820,29 @@ function AdminDashboard() {
                                             <td>{(company.rating || 0).toFixed(1)} ⭐</td>
                                             <td>{company.reviewsCount || 0}</td>
                                             <td>
-                                                {company.isVerified ? (
+                                                {company.verified || company.isVerified ? (
                                                     <span className="badge badge-verified">✓ Verified</span>
                                                 ) : (
                                                     <span className="badge badge-pending">Pending</span>
                                                 )}
                                             </td>
                                             <td>
-                                                <button
-                                                    onClick={() => handleDelete(company._id)}
-                                                    className="btn-delete"
-                                                >
-                                                    Delete
-                                                </button>
+                                                <div className="action-buttons">
+                                                    <button
+                                                        onClick={() => handleEdit(company)}
+                                                        className="btn-edit"
+                                                        title="Edit company"
+                                                    >
+                                                        <i className="fas fa-edit"></i> Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(company.id)}
+                                                        className="btn-delete"
+                                                        title="Delete company"
+                                                    >
+                                                        <i className="fas fa-trash"></i> Delete
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -650,7 +869,7 @@ function AdminDashboard() {
                     ) : (
                         <div className="requests-grid">
                             {pendingRequests.map(request => (
-                                <div key={request._id} className="request-card">
+                                <div key={request.id} className="request-card">
                                     <div className="request-header">
                                         {request.image && (
                                             <img 
@@ -662,7 +881,7 @@ function AdminDashboard() {
                                         <div className="request-info">
                                             <h3>{request.name}</h3>
                                             <div className="request-meta">
-                                                <span className="badge category-badge">{request.category}</span>
+                                                <span className="badge category-badge">{request.subCategory || request.category}</span>
                                                 <span className="badge city-badge">{request.city}</span>
                                             </div>
                                         </div>
@@ -685,31 +904,31 @@ function AdminDashboard() {
                                         )}
                                         <p className="request-date">
                                             <i className="fas fa-calendar"></i> 
-                                            {new Date(request.createdAt).toLocaleDateString()}
+                                            {request.createdAt?.toDate ? request.createdAt.toDate().toLocaleDateString() : 'N/A'}
                                         </p>
                                     </div>
                                     
                                     <div className="request-actions">
                                         <button 
-                                            onClick={() => handleApproveRequest(request._id, 'free')}
+                                            onClick={() => handleApproveRequest(request.id, 'free')}
                                             className="btn-approve-free"
                                         >
                                             <i className="fas fa-check"></i> Approve as Free
                                         </button>
                                         <button 
-                                            onClick={() => handleApproveRequest(request._id, 'medium')}
+                                            onClick={() => handleApproveRequest(request.id, 'medium')}
                                             className="btn-approve-medium"
                                         >
                                             <i className="fas fa-star"></i> Upgrade to Medium
                                         </button>
                                         <button 
-                                            onClick={() => handleApproveRequest(request._id, 'strong')}
+                                            onClick={() => handleApproveRequest(request.id, 'strong')}
                                             className="btn-approve-strong"
                                         >
                                             <i className="fas fa-crown"></i> Upgrade to Strong
                                         </button>
                                         <button 
-                                            onClick={() => handleRejectRequest(request._id)}
+                                            onClick={() => handleRejectRequest(request.id)}
                                             className="btn-reject"
                                         >
                                             <i className="fas fa-times"></i> Reject
@@ -722,6 +941,227 @@ function AdminDashboard() {
                 </div>
                 )}
             </div>
+
+            {/* Edit Company Modal */}
+            {showEditModal && (
+                <div className="modal-overlay" onClick={handleCloseEditModal}>
+                    <div className="modal-content edit-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2><i className="fas fa-edit"></i> Edit Company</h2>
+                            <button onClick={handleCloseEditModal} className="modal-close">
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleUpdateCompany} className="edit-form">
+                            <div className="form-grid">
+                                {/* Company Name */}
+                                <div className="form-group">
+                                    <label htmlFor="name">Company Name *</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-input"
+                                    />
+                                </div>
+
+                                {/* City */}
+                                <div className="form-group">
+                                    <label htmlFor="city">City *</label>
+                                    <input
+                                        type="text"
+                                        id="city"
+                                        name="city"
+                                        value={formData.city}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-input"
+                                    />
+                                </div>
+
+                                {/* Category */}
+                                <div className="form-group">
+                                    <label htmlFor="category">Category *</label>
+                                    <input
+                                        type="text"
+                                        id="category"
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-input"
+                                    />
+                                </div>
+
+                                {/* Verified */}
+                                <div className="form-group">
+                                    <label className="checkbox-label">
+                                        <input
+                                            type="checkbox"
+                                            name="isVerified"
+                                            checked={formData.isVerified}
+                                            onChange={handleInputChange}
+                                            className="form-checkbox"
+                                        />
+                                        <span>Verified Business</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Image Upload */}
+                            <div className="form-group">
+                                <label htmlFor="imageFile">Upload New Image (Cloudinary)</label>
+                                <input
+                                    type="file"
+                                    id="imageFile"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                toast.error('Image size must be less than 5 MB');
+                                                return;
+                                            }
+                                            setImageFile(file);
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => setImagePreview(reader.result);
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }}
+                                    className="form-input"
+                                />
+                                <small className="form-hint">Max 5MB. New image will replace current one.</small>
+                                
+                                {imagePreview && (
+                                    <div className="image-preview" style={{ marginTop: '10px' }}>
+                                        <img 
+                                            src={imagePreview} 
+                                            alt="Preview" 
+                                            style={{ 
+                                                maxWidth: '300px', 
+                                                borderRadius: '8px',
+                                                border: '2px solid #e5e7eb'
+                                            }} 
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Descriptions */}
+                            <div className="form-group">
+                                <label htmlFor="descriptionEt">Description (Estonian)</label>
+                                <textarea
+                                    id="descriptionEt"
+                                    name="descriptionEt"
+                                    value={formData.descriptionEt}
+                                    onChange={handleInputChange}
+                                    rows="3"
+                                    className="form-textarea"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="descriptionEn">Description (English)</label>
+                                <textarea
+                                    id="descriptionEn"
+                                    name="descriptionEn"
+                                    value={formData.descriptionEn}
+                                    onChange={handleInputChange}
+                                    rows="3"
+                                    className="form-textarea"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="descriptionRu">Description (Russian)</label>
+                                <textarea
+                                    id="descriptionRu"
+                                    name="descriptionRu"
+                                    value={formData.descriptionRu}
+                                    onChange={handleInputChange}
+                                    rows="3"
+                                    className="form-textarea"
+                                />
+                            </div>
+
+                            {/* Social Media */}
+                            <div className="form-group">
+                                <label htmlFor="instagramUrl">Instagram URL</label>
+                                <input
+                                    type="url"
+                                    id="instagramUrl"
+                                    name="instagramUrl"
+                                    value={formData.instagramUrl}
+                                    onChange={handleInputChange}
+                                    className="form-input"
+                                    placeholder="https://instagram.com/..."
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="tiktokUrl">TikTok URL</label>
+                                <input
+                                    type="url"
+                                    id="tiktokUrl"
+                                    name="tiktokUrl"
+                                    value={formData.tiktokUrl}
+                                    onChange={handleInputChange}
+                                    className="form-input"
+                                    placeholder="https://tiktok.com/@..."
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="youtubeUrl">YouTube URL</label>
+                                <input
+                                    type="url"
+                                    id="youtubeUrl"
+                                    name="youtubeUrl"
+                                    value={formData.youtubeUrl}
+                                    onChange={handleInputChange}
+                                    className="form-input"
+                                    placeholder="https://youtube.com/@..."
+                                />
+                            </div>
+
+                            {/* Submit Buttons */}
+                            <div className="modal-actions">
+                                <button 
+                                    type="button" 
+                                    onClick={handleCloseEditModal}
+                                    className="btn-secondary"
+                                    disabled={loading || uploadingCloudinary}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="btn-primary"
+                                    disabled={loading || uploadingCloudinary}
+                                >
+                                    {uploadingCloudinary ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i> Uploading...
+                                        </>
+                                    ) : loading ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i> Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-save"></i> Save Changes
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -11,8 +11,9 @@ import './styles/CompanyList.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpa, faUtensils, faShoppingBag, faChild, faPlane, faCar, faCogs, faSearchLocation, faComments, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 import tallinnBg from './assets/tallinn-bg.jpg.jpg';
-
-const API_BASE_URL = 'http://localhost:5000/api/companies';
+import { db } from './firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { getMainCategories, getCategoryIcon } from './constants/categories';
 
 function CompanyList() {
   const [allCompanies, setAllCompanies] = useState([]);
@@ -20,35 +21,32 @@ function CompanyList() {
   const [error, setError] = useState(null);
   const { t } = useTranslation(); 
 
-  // Fetch companies for preview
+  // Fetch companies from Firestore
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
-    const url = `${API_BASE_URL}`;
 
     try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        let errorMessage = `${t('fetch_error')}: ${response.statusText}`;
-        
-        try {
-          const data = await response.json();
-          errorMessage = data.error || errorMessage; 
-        } catch (jsonError) {
-          console.warn("Response was not JSON, using status text.");
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
+      const companiesRef = collection(db, 'companies');
+      const q = query(companiesRef, orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      
+      const companiesList = [];
+      snapshot.forEach((doc) => {
+        companiesList.push({
+          id: doc.id,
+          _id: doc.id, // Для обратной совместимости
+          ...doc.data()
+        });
+      });
       
       // Sort companies: verified first, then by priority (desc), then by newest
-      const sortedData = data.sort((a, b) => {
-        if (a.isVerified !== b.isVerified) {
-          return b.isVerified ? 1 : -1;
+      const sortedData = companiesList.sort((a, b) => {
+        const isVerifiedA = a.verified || a.isVerified;
+        const isVerifiedB = b.verified || b.isVerified;
+        
+        if (isVerifiedA !== isVerifiedB) {
+          return isVerifiedB ? 1 : -1;
         }
         
         const priorityA = a.priority || 0;
@@ -57,13 +55,15 @@ function CompanyList() {
           return priorityB - priorityA;
         }
         
-        const dateA = new Date(a.createdAt || 0);
-        const dateB = new Date(b.createdAt || 0);
+        // Handle Firestore Timestamp
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
         return dateB - dateA;
       });
       
       setAllCompanies(sortedData);
     } catch (err) {
+      console.error('❌ Error fetching companies:', err);
       setError(err.message);
       setAllCompanies([]);
     } finally {
@@ -78,22 +78,12 @@ function CompanyList() {
   // Get first 4 companies for preview
   const previewCompanies = useMemo(() => allCompanies.slice(0, 4), [allCompanies]);
 
-  // Category icons mapping
-  const categoryIcons = useMemo(() => ({
-    'SPA': faSpa,
-    'Restaurants': faUtensils,
-    'Shops': faShoppingBag,
-    'Kids': faChild,
-    'Travel': faPlane,
-    'Auto': faCar,
-    'Services': faCogs
-  }), []);
+  // Get main categories from constants
+  const mainCategories = useMemo(() => getMainCategories(), []);
 
-  const categories = useMemo(() => ['SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services'], []);
-
-  // Handle category click - navigate to catalog with category filter
-  const handleCategoryClick = useCallback((category) => {
-    window.location.href = `/catalog?category=${category}`;
+  // Handle category click - navigate to catalog with main category filter
+  const handleCategoryClick = useCallback((mainCategory) => {
+    window.location.href = `/catalog?mainCategory=${mainCategory}`;
   }, []);
 
   if (loading) {
@@ -139,27 +129,26 @@ function CompanyList() {
             </Link>
           </div>
           
-          {/* Quick Category Pills */}
+          {/* Main Category Pills */}
           <div className="category-pills fade-in-delay-3">
             <p className="pills-label">{t('popular_categories')}</p>
             <div className="pills-container">
-              {categories.map(category => (
+              {mainCategories.map(category => (
                 <button
                   key={category}
                   className="category-pill"
                   onClick={() => handleCategoryClick(category)}
                 >
-                  <FontAwesomeIcon icon={categoryIcons[category]} />
-                  <span>{t(category)}</span>
+                  <span style={{ fontSize: '1.5rem', marginRight: '0.5rem' }}>
+                    {getCategoryIcon(category)}
+                  </span>
+                  <span>{t(category) || category}</span>
                 </button>
               ))}
             </div>
           </div>
         </div>
       </section>
-
-      {/* Category Grid */}
-      <CategoryGrid onCategorySelect={(cat) => window.location.href = `/catalog?mainCategory=${cat}`} />
 
       {/* How It Works Section */}
       <div className="how-it-works-section">

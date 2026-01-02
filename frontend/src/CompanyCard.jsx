@@ -36,21 +36,13 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
   // Get description with fallback: current language -> Estonian -> English -> Russian
   const description = getLocalizedContent(company.description, currentLang, '');
   
-  const handleCardClick = (e) => {
-    // Prevent propagation if clicking on links
-    if (e.target.tagName === 'A' || e.target.closest('a')) {
-      return;
-    }
-    if (onClick) {
-      onClick();
-    }
-  };
+  const companyUrl = `/companies/${company.slug || company._id || company.id}`;
   
   return (
-    <div 
+    <Link 
+      to={companyUrl}
       className={`company-card ${company.isVerified ? 'verified-card' : ''} ${isSelected ? 'selected' : ''}`}
-      onClick={handleCardClick}
-      style={{ cursor: 'pointer' }}
+      style={{ textDecoration: 'none', color: 'inherit' }}
     >
       {/* Image section */}
       <div className="card-image-container">
@@ -113,6 +105,7 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
                 rel="noopener noreferrer"
                 className="social-icon instagram"
                 title="Instagram"
+                onClick={(e) => e.stopPropagation()}
               >
                 <FontAwesomeIcon icon={faInstagram} />
               </a>
@@ -124,6 +117,7 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
                 rel="noopener noreferrer"
                 className="social-icon tiktok"
                 title="TikTok"
+                onClick={(e) => e.stopPropagation()}
               >
                 <FontAwesomeIcon icon={faTiktok} />
               </a>
@@ -135,6 +129,7 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
                 rel="noopener noreferrer"
                 className="social-icon youtube"
                 title="YouTube"
+                onClick={(e) => e.stopPropagation()}
               >
                 <FontAwesomeIcon icon={faYoutube} />
               </a>
@@ -152,11 +147,11 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
         )}
         
         {/* Details button */}
-        <Link to={`/companies/${company.slug || company._id}`} className="details-button">
+        <span className="details-button">
           {t('details_button')}
-        </Link>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 };
 

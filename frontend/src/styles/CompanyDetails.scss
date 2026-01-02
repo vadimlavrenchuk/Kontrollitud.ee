@@ -138,12 +138,65 @@
         border-bottom: 2px solid #f0f0f0;
         padding-bottom: 24px;
         margin-bottom: 32px;
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 16px;
+            
+            @media (max-width: 768px) {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
 
         .company-title {
             font-size: 2.5em;
-            margin: 0 0 16px 0;
+            margin: 0;
             color: #172a3a;
             font-weight: 700;
+            flex: 1;
+            
+            @media (max-width: 768px) {
+                font-size: 2em;
+            }
+        }
+        
+        .share-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+            }
+            
+            &:active {
+                transform: translateY(0);
+            }
+            
+            i {
+                font-size: 1.1em;
+            }
+            
+            @media (max-width: 768px) {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                align-self: flex-start;
+            }
         }
 
         .company-meta {

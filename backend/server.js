@@ -466,7 +466,9 @@ app.get('/api/companies/:id', async (req, res) => {
 });
 
 
+// 🔒 PRODUCTION: Закомментировано для безопасности. Раскомментируйте только для локального тестирования.
 // Дополнительный маршрут для добавления тестовых данных (seed)
+/*
 app.get('/api/seed', async (req, res) => {
     try {
         await Company.deleteMany({});
@@ -639,6 +641,7 @@ app.get('/api/seed', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+*/
 
 // 🟢 НОВЫЙ МАРШРУТ: GET /api/reviews/:companyId - Получить все отзывы для компании
 app.get('/api/reviews/:companyId', async (req, res) => {
@@ -849,7 +852,14 @@ app.get('/api/user/submissions', verifyToken, async (req, res) => {
 // POST /api/admin/login - Simple admin authentication
 app.post('/api/admin/login', (req, res) => {
     const { password } = req.body;
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    
+    if (!adminPassword) {
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Admin password not configured. Set ADMIN_PASSWORD in .env file.' 
+        });
+    }
     
     if (password === adminPassword) {
         // Generate a simple token (in production, use JWT)

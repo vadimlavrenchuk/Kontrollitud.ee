@@ -11,12 +11,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import './styles/CompanyDetails.scss';
-
-const API_COMPANY_BASE = 'http://localhost:5000/api/companies';
-const API_REVIEW_BASE = 'http://localhost:5000/api/reviews';
+import { db } from './firebase';
+import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 
 function CompanyDetails() {
-    const { id } = useParams();
+    const { slugOrId } = useParams(); // Changed from 'id' to 'slugOrId'
     const { t, i18n } = useTranslation();
     const currentLocale = getLocaleFromLanguage(i18n.language);
     const [company, setCompany] = useState(null);
@@ -26,33 +25,107 @@ function CompanyDetails() {
 
     const fetchCompanyData = async () => {
         try {
-            const companyResponse = await fetch(`${API_COMPANY_BASE}/${id}`);
-            if (!companyResponse.ok) {
+            console.log('📥 Fetching company by slug or ID:', slugOrId);
+            
+            // Try to fetch by document ID first
+            let companyData = null;
+            let companyId = slugOrId;
+            
+            try {
+                const companyRef = doc(db, 'companies', slugOrId);
+                const companySnap = await getDoc(companyRef);
+                
+                if (companySnap.exists()) {
+                    companyData = {
+                        id: companySnap.id,
+                        _id: companySnap.id,
+                        ...companySnap.data()
+                    };
+                }
+            } catch (err) {
+                console.log('Not found by ID, trying slug...');
+            }
+            
+            // If not found by ID, try to find by slug
+            if (!companyData) {
+                const companiesRef = collection(db, 'companies');
+                const q = query(companiesRef, where('slug', '==', slugOrId));
+                const snapshot = await getDocs(q);
+                
+                if (!snapshot.empty) {
+                    const docSnap = snapshot.docs[0];
+                    companyData = {
+                        id: docSnap.id,
+                        _id: docSnap.id,
+                        ...docSnap.data()
+                    };
+                    companyId = docSnap.id;
+                }
+            }
+            
+            if (!companyData) {
                 throw new Error(t('company_not_found'));
             }
-            const companyData = await companyResponse.json();
+            
+            console.log('✅ Company loaded:', companyData);
             setCompany(companyData);
             setError(null);
         } catch (err) {
+            console.error('❌ Error fetching company:', err);
             setError(err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    // Function to fetch reviews
+    // Function to fetch reviews from Firestore
     const fetchReviews = async () => {
         try {
-            const reviewResponse = await fetch(`${API_REVIEW_BASE}/${id}`);
-            const reviewData = await reviewResponse.json();
-            setReviews(reviewData);
+            // Get company ID first
+            let companyId = slugOrId;
+            
+            // If slugOrId is a slug, find the actual ID
+            const companiesRef = collection(db, 'companies');
+            const q = query(companiesRef, where('slug', '==', slugOrId));
+            const snapshot = await getDocs(q);
+            
+            if (!snapshot.empty) {
+                companyId = snapshot.docs[0].id;
+            }
+            
+            console.log('📥 Fetching approved reviews from Firestore for company:', companyId);
+            const reviewsRef = collection(db, 'reviews');
+            const reviewQuery = query(
+                reviewsRef, 
+                where('companyId', '==', companyId),
+                where('status', '==', 'approved'),
+                orderBy('createdAt', 'desc')
+            );
+            const reviewSnapshot = await getDocs(reviewQuery);
+            
+            const reviewsList = [];
+            reviewSnapshot.forEach((doc) => {
+                reviewsList.push({
+                    id: doc.id,
+                    _id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            console.log('✅ Fetched approved reviews:', reviewsList.length);
+            setReviews(reviewsList);
         } catch (err) {
-            console.error(t('reviews_load_error'), err);
+            console.error('❌ Error fetching reviews:', err);
+            // If error is due to missing index, log helpful message
+            if (err.code === 'failed-precondition') {
+                console.error('⚠️ Firestore index required. Check console for index creation link.');
+            }
         }
     };
     
     // Function called after adding a new review
     const handleReviewAdded = (newReview) => {
+        console.log('🔄 New review added, updating list:', newReview);
         // Update reviews list by adding the new one at the beginning
         setReviews([newReview, ...reviews]);
         
@@ -61,11 +134,11 @@ function CompanyDetails() {
     };
 
     useEffect(() => {
-        if (id) {
+        if (slugOrId) {
             fetchCompanyData();
             fetchReviews(); // Load reviews when page loads
         }
-    }, [id, i18n.language]); // Re-fetch when language changes
+    }, [slugOrId, i18n.language]); // Re-fetch when slug/id or language changes
 
     if (loading) {
         return <div className="details-container">{t('loading')}</div>;
@@ -120,11 +193,13 @@ function CompanyDetails() {
     
     const displayedLang = getDisplayedLanguage();
     
-    // Prepare SEO metadata
-    const pageTitle = `${company.name} | Kontrollitud.ee`;
-    const metaDescription = description && description !== t('description_not_available') ? description.substring(0, 155) : `${company.name} ${company.city ? `- ${company.city}` : ''} - ${t('verified')} business on Kontrollitud.ee`;
+    // Prepare SEO metadata with improved social media optimization
+    const pageTitle = `${company.name} — ${t('reviews_and_info')} | Kontrollitud.ee`;
+    const metaDescription = description && description !== t('description_not_available') 
+        ? description.substring(0, 155) 
+        : `${company.name} ${company.city ? `${t('in')} ${company.city}` : ''} — ${t('verified_reviews_ratings')} ${t('on')} Kontrollitud.ee`;
     const ogImage = company.image || 'https://kontrollitud.ee/og-default.jpg';
-    const currentUrl = `https://kontrollitud.ee/companies/${company.slug || id}`;
+    const currentUrl = `https://kontrollitud.ee/companies/${company.slug || company.id}`;
     const keywords = [
         company.name,
         company.mainCategory ? t(company.mainCategory) : '',
@@ -132,7 +207,8 @@ function CompanyDetails() {
         company.city,
         'Estonia',
         'Eesti',
-        'verified business',
+        t('verified_business'),
+        t('reviews'),
         'kontrollitud ettevõte'
     ].filter(Boolean).join(', ');
     
@@ -210,7 +286,7 @@ function CompanyDetails() {
                             "bestRating": 5,
                             "worstRating": 1
                         } : undefined,
-                        "url": `https://kontrollitud.ee/companies/${id}`,
+                        "url": `https://kontrollitud.ee/companies/${company.slug || company.id}`,
                         "telephone": company.phone || undefined,
                         "email": company.email || undefined,
                         "openingHoursSpecification": company.workingHours ? Object.entries(company.workingHours).map(([day, time]) => ({
@@ -265,7 +341,34 @@ function CompanyDetails() {
                     
                     {/* Company Header */}
                     <header className="company-header">
-                        <h1 className="company-title">{company.name}</h1>
+                        <div className="header-top">
+                            <h1 className="company-title">{company.name}</h1>
+                            
+                            {/* Share Button */}
+                            <button 
+                                className="share-button"
+                                onClick={() => {
+                                    const shareData = {
+                                        title: company.name,
+                                        text: `${company.name} — ${t('reviews_and_info')} | Kontrollitud.ee`,
+                                        url: window.location.href
+                                    };
+                                    
+                                    if (navigator.share) {
+                                        navigator.share(shareData).catch(err => console.log('Share error:', err));
+                                    } else {
+                                        // Fallback: copy to clipboard
+                                        navigator.clipboard.writeText(window.location.href)
+                                            .then(() => alert(t('link_copied') || 'Link copied to clipboard!'))
+                                            .catch(err => console.log('Copy error:', err));
+                                    }
+                                }}
+                                title={t('share')}
+                            >
+                                <i className="fas fa-share-alt"></i>
+                                <span>{t('share')}</span>
+                            </button>
+                        </div>
                         
                         {/* Meta Info */}
                         <div className="company-meta">

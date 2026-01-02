@@ -13,6 +13,55 @@
     .review-form-title {
         color: $color-primary;
         margin-bottom: $spacing-base;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.3em;
+        
+        i {
+            color: $color-primary;
+        }
+    }
+
+    // Login required notice
+    .login-required-notice {
+        text-align: center;
+        padding: $spacing-base * 2;
+        background-color: color.adjust($color-warning, $lightness: 40%);
+        border: 2px dashed $color-warning;
+        border-radius: 8px;
+        
+        i {
+            font-size: 2em;
+            color: $color-warning;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        p {
+            font-size: 1.1em;
+            color: $color-text;
+            margin-bottom: $spacing-base;
+        }
+        
+        .login-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background-color: $color-primary;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-weight: 600;
+            
+            &:hover {
+                background-color: color.adjust($color-primary, $lightness: -10%);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+        }
     }
 
     .review-form {
@@ -26,8 +75,15 @@
 
             label {
                 font-weight: bold;
-                margin-bottom: 5px;
+                margin-bottom: 8px;
                 color: $color-text;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                
+                i {
+                    color: $color-primary;
+                }
             }
 
             .form-input, .form-select, .form-textarea {
@@ -44,6 +100,70 @@
 
             .form-textarea {
                 resize: vertical;
+                min-height: 120px;
+                font-family: inherit;
+            }
+            
+            .user-display {
+                margin-top: 5px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+                
+                .user-badge {
+                    display: inline-block;
+                    padding: 8px 16px;
+                    background-color: $color-primary;
+                    color: white;
+                    border-radius: 20px;
+                    font-weight: 600;
+                    font-size: 0.9em;
+                }
+                
+                .trusted-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    padding: 6px 12px;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: white;
+                    border-radius: 16px;
+                    font-size: 0.8em;
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+                    
+                    i {
+                        font-size: 0.9em;
+                    }
+                }
+            }
+            
+            .textarea-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 8px;
+                flex-wrap: wrap;
+                gap: 8px;
+                
+                .char-count {
+                    font-size: 0.85em;
+                    font-weight: 500;
+                }
+                
+                .moderation-hint {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    color: #6b7280;
+                    font-size: 0.8em;
+                    
+                    i {
+                        font-size: 0.9em;
+                        color: #3b82f6;
+                    }
+                }
             }
         }
 
@@ -58,7 +178,7 @@
                 border: none;
                 cursor: pointer;
                 padding: 4px;
-                font-size: 1.5em;
+                font-size: 1.8em;
                 transition: transform 0.2s;
                 
                 &:hover:not(:disabled) {
@@ -81,23 +201,31 @@
             
             .rating-label {
                 margin-left: 8px;
-                font-weight: 500;
+                font-weight: 600;
                 color: $color-text;
+                font-size: 1.1em;
             }
         }
 
         .submit-button {
             padding: 12px 20px;
             background-color: $color-primary;
-            color: $color-card-bg;
+            color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 1em;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
 
             &:hover:not(:disabled) {
                 background-color: color.adjust($color-primary, $lightness: -10%);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             }
 
             &:disabled {
@@ -105,16 +233,38 @@
                 cursor: not-allowed;
             }
         }
-    }
-    
-    .review-error-message {
-        color: $color-danger;
-        margin-top: $spacing-base;
-    }
+        
+        .review-error-message {
+            padding: 12px;
+            background-color: color.adjust($color-danger, $lightness: 35%);
+            border: 1px solid $color-danger;
+            border-radius: 4px;
+            color: color.adjust($color-danger, $lightness: -20%);
+            margin-top: $spacing-base;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            
+            i {
+                font-size: 1.2em;
+            }
+        }
 
-    .review-success-message {
-        color: $color-secondary;
-        margin-top: $spacing-base;
-        font-weight: bold;
+        .review-success-message {
+            padding: 12px;
+            background-color: color.adjust($color-secondary, $lightness: 35%);
+            border: 1px solid $color-secondary;
+            border-radius: 4px;
+            color: color.adjust($color-secondary, $lightness: -20%);
+            margin-top: $spacing-base;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            
+            i {
+                font-size: 1.2em;
+            }
+        }
     }
 }

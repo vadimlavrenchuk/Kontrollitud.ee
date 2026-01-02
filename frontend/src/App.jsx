@@ -23,6 +23,7 @@ import CatalogPage from './pages/CatalogPage.jsx';
 import PartnersPage from './pages/PartnersPage.jsx';
 import BlogPage from './pages/BlogPage.jsx';
 import BlogPostDetail from './pages/BlogPostDetail.jsx';
+import AboutPage from './pages/AboutPage.jsx';
 
 function AppContent() {
     const { t, i18n } = useTranslation();
@@ -181,6 +182,7 @@ function AppContent() {
                     <Route path="/" element={<CompanyList />} />
                     <Route path="/catalog" element={<CatalogPage />} />
                     <Route path="/partners" element={<PartnersPage />} />
+                    <Route path="/about" element={<AboutPage />} />
                     <Route path="/blog" element={<BlogPage />} />
                     <Route path="/blog/:id" element={<BlogPostDetail />} />
                     <Route path="/auth" element={<AuthPage />} />
@@ -205,8 +207,9 @@ function AppContent() {
                             <AdminDashboard />
                         </ProtectedRoute>
                     } />
-                    <Route path="/companies/:id" element={<CompanyDetails />} />
-                    <Route path="/company/:id" element={<CompanyDetails />} />
+                    {/* Company routes - support both slug and ID */}
+                    <Route path="/companies/:slugOrId" element={<CompanyDetails />} />
+                    <Route path="/company/:slugOrId" element={<CompanyDetails />} />
                     <Route path="*" element={
                         <div style={{ padding: '20px' }}>
                             <h2>404 - {t('page_not_found')}</h2>

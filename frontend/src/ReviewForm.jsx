@@ -1,51 +1,213 @@
 // Kontrollitud.ee/frontend/src/ReviewForm.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from './AuthContext.jsx';
+import { toast } from 'react-toastify';
 import './styles/ReviewForm.scss';
-
-const API_BASE_URL = 'http://localhost:5000/api/reviews';
+import { db } from './firebase';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { 
+    checkBadWords, 
+    checkSpamPatterns, 
+    checkContentRequirements,
+    checkAntiFlood,
+    isUserTrusted,
+    determineModerStatus,
+    getModerationErrorMessage
+} from './utils/moderationUtils';
+import { MODERATION_STATUS } from './utils/moderationConfig';
 
 function ReviewForm({ companyId, onReviewAdded }) {
-    const { t } = useTranslation();
-    const [userName, setUserName] = useState('');
+    const { t, i18n } = useTranslation();
+    const { user, isAuthenticated } = useAuth();
     const [rating, setRating] = useState(5);
     const [hoveredRating, setHoveredRating] = useState(0);
     const [comment, setComment] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [isTrustedUser, setIsTrustedUser] = useState(false);
+    const [charCount, setCharCount] = useState(0);
+
+    // Check if user is trusted on mount
+    useEffect(() => {
+        const checkUserTrust = async () => {
+            if (user && user.uid) {
+                const trusted = await isUserTrusted(db, user.uid);
+                setIsTrustedUser(trusted);
+                if (trusted) {
+                    console.log('✅ User is trusted - reviews will be auto-approved');
+                }
+            }
+        };
+        
+        checkUserTrust();
+    }, [user]);
+
+    // Update character count
+    useEffect(() => {
+        setCharCount(comment.length);
+    }, [comment]);
+
+    // Calculate average rating for company
+    const recalculateCompanyRating = async (companyId) => {
+        try {
+            console.log('📊 Recalculating rating for company:', companyId);
+            
+            // Get all reviews for this company
+            const reviewsRef = collection(db, 'reviews');
+            const q = query(reviewsRef, where('companyId', '==', companyId));
+            const snapshot = await getDocs(q);
+            
+            let totalRating = 0;
+            let count = 0;
+            
+            snapshot.forEach((doc) => {
+                totalRating += doc.data().rating || 0;
+                count++;
+            });
+            
+            const averageRating = count > 0 ? totalRating / count : 0;
+            
+            console.log('✅ New rating:', {
+                totalRating,
+                reviewsCount: count,
+                averageRating: averageRating.toFixed(2)
+            });
+            
+            // Update company document
+            const companyRef = doc(db, 'companies', companyId);
+            await updateDoc(companyRef, {
+                rating: parseFloat(averageRating.toFixed(2)),
+                reviewsCount: count,
+                updatedAt: serverTimestamp()
+            });
+            
+            console.log('✅ Company rating updated successfully');
+            return { rating: averageRating, reviewsCount: count };
+        } catch (error) {
+            console.error('❌ Error recalculating rating:', error);
+            throw error;
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Check authentication
+        if (!isAuthenticated || !user) {
+            toast.error(t('login_required_to_review') || 'Please login to leave a review');
+            setError(t('login_required_to_review') || 'You must be logged in to leave a review');
+            return;
+        }
+        
         setLoading(true);
         setError(null);
         setSuccess(false);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/${companyId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userName, rating: Number(rating), comment }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || t('review_submit_error'));
+            const currentLang = i18n.language || 'ru';
+            
+            // LAYER 1: Check bad words
+            const badWordsCheck = checkBadWords(comment);
+            if (!badWordsCheck.isClean) {
+                const errorMsg = getModerationErrorMessage('contains_bad_words', currentLang);
+                toast.error(errorMsg);
+                setError(errorMsg);
+                setLoading(false);
+                return;
             }
-
+            
+            // LAYER 2: Check content requirements
+            const contentCheck = checkContentRequirements(comment);
+            if (!contentCheck.isValid) {
+                const errorMsg = getModerationErrorMessage(contentCheck.errors[0], currentLang);
+                toast.error(errorMsg);
+                setError(errorMsg);
+                setLoading(false);
+                return;
+            }
+            
+            // LAYER 3: Check spam patterns
+            const spamCheck = checkSpamPatterns(comment);
+            if (spamCheck.isSuspicious) {
+                const errorMsg = getModerationErrorMessage(spamCheck.reasons[0], currentLang);
+                toast.warning(errorMsg);
+                // Don't block, but warn user
+            }
+            
+            // LAYER 4: Anti-flood check
+            const floodCheck = await checkAntiFlood(db, user.uid, companyId);
+            if (!floodCheck.canReview) {
+                const errorMsg = floodCheck.remainingMinutes 
+                    ? `${getModerationErrorMessage(floodCheck.reason, currentLang)} (${floodCheck.remainingMinutes} мин.)`
+                    : getModerationErrorMessage(floodCheck.reason, currentLang);
+                toast.error(errorMsg);
+                setError(errorMsg);
+                setLoading(false);
+                return;
+            }
+            
+            // Determine moderation status
+            const moderationStatus = determineModerStatus(comment, isTrustedUser);
+            
+            console.log('📝 Submitting review:', {
+                companyId,
+                userId: user.uid,
+                userName: user.displayName || user.email,
+                rating,
+                comment: comment.substring(0, 50) + '...',
+                moderationStatus,
+                isTrustedUser
+            });
+            
+            // Add review to Firestore
+            const reviewData = {
+                companyId: companyId,
+                userId: user.uid,
+                userName: user.displayName || user.email.split('@')[0],
+                userEmail: user.email,
+                rating: Number(rating),
+                comment: comment.trim(),
+                status: moderationStatus,
+                createdAt: serverTimestamp()
+            };
+            
+            const reviewRef = await addDoc(collection(db, 'reviews'), reviewData);
+            console.log('✅ Review added with ID:', reviewRef.id);
+            
+            // Only recalculate if approved
+            if (moderationStatus === MODERATION_STATUS.APPROVED) {
+                await recalculateCompanyRating(companyId);
+            }
+            
             setSuccess(true);
+            
+            // Show appropriate message based on status
+            if (moderationStatus === MODERATION_STATUS.APPROVED) {
+                toast.success(t('review_submitted_success') || 'Review submitted successfully!');
+            } else if (moderationStatus === MODERATION_STATUS.NEEDS_REVIEW) {
+                toast.info('Ваш отзыв отправлен на модерацию и появится после проверки.');
+            }
+            
             // Clear the form
-            setUserName('');
             setRating(5);
             setComment('');
 
             // Call the callback function to update the reviews list
-            onReviewAdded(data); 
+            if (onReviewAdded && moderationStatus === MODERATION_STATUS.APPROVED) {
+                onReviewAdded({
+                    id: reviewRef.id,
+                    ...reviewData,
+                    createdAt: new Date()
+                });
+            }
 
         } catch (err) {
+            console.error('❌ Error submitting review:', err);
             setError(err.message);
+            toast.error(t('review_submit_error') || 'Failed to submit review');
         } finally {
             setLoading(false);
         }
@@ -63,7 +225,8 @@ function ReviewForm({ companyId, onReviewAdded }) {
                         onClick={() => setRating(star)}
                         onMouseEnter={() => setHoveredRating(star)}
                         onMouseLeave={() => setHoveredRating(0)}
-                        disabled={loading}
+                        disabled={loading || !isAuthenticated}
+                        aria-label={`${star} ${t('stars')}`}
                     >
                         <i 
                             className={`fas fa-star ${
@@ -79,48 +242,94 @@ function ReviewForm({ companyId, onReviewAdded }) {
 
     return (
         <div className="review-form-section">
-            <h3 className="review-form-title">{t('add_your_review')}</h3>
-            <form onSubmit={handleSubmit} className="review-form">
-                
-                <div className="form-group">
-                    <label htmlFor="userName">{t('your_name')}:</label>
-                    <input
-                        id="userName"
-                        type="text"
-                        className="form-input"
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
-                        placeholder={t('anonymous_placeholder')}
-                        required
-                        disabled={loading}
-                    />
+            <h3 className="review-form-title">
+                <i className="fas fa-comment-dots"></i> {t('add_your_review')}
+            </h3>
+            
+            {!isAuthenticated ? (
+                <div className="login-required-notice">
+                    <i className="fas fa-lock"></i>
+                    <p>{t('login_required_to_review') || 'Please login to leave a review'}</p>
+                    <a href="/auth" className="login-link">
+                        <i className="fas fa-sign-in-alt"></i> {t('login') || 'Login'}
+                    </a>
                 </div>
+            ) : (
+                <form onSubmit={handleSubmit} className="review-form">
+                    
+                    <div className="form-group">
+                        <label htmlFor="user-display">
+                            <i className="fas fa-user"></i> {t('reviewing_as')}:
+                        </label>
+                        <div className="user-display">
+                            <span className="user-badge">
+                                {user?.displayName || user?.email?.split('@')[0]}
+                            </span>
+                            {isTrustedUser && (
+                                <span className="trusted-badge" title="Trusted user - auto-approved reviews">
+                                    <i className="fas fa-check-circle"></i> Trusted
+                                </span>
+                            )}
+                        </div>
+                    </div>
 
-                <div className="form-group">
-                    <label>{t('rating')}:</label>
-                    <StarRatingSelector />
-                </div>
+                    <div className="form-group">
+                        <label>
+                            <i className="fas fa-star"></i> {t('rating')}:
+                        </label>
+                        <StarRatingSelector />
+                    </div>
 
-                <div className="form-group">
-                    <label htmlFor="comment">{t('comment')}:</label>
-                    <textarea
-                        id="comment"
-                        className="form-textarea"
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        required
-                        disabled={loading}
-                    />
-                </div>
-                
-                <button type="submit" className="submit-button" disabled={loading}>
-                    {loading ? t('submitting') : t('submit_review')}
-                </button>
+                    <div className="form-group">
+                        <label htmlFor="comment">
+                            <i className="fas fa-comment"></i> {t('comment')}:
+                        </label>
+                        <textarea
+                            id="comment"
+                            className="form-textarea"
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder={t('share_your_experience') || 'Share your experience...'}
+                            required
+                            disabled={loading}
+                            minLength={10}
+                            maxLength={2000}
+                        />
+                        <div className="textarea-footer">
+                            <small className="char-count" style={{ color: charCount < 10 ? '#ef4444' : charCount > 2000 ? '#f59e0b' : '#6b7280' }}>
+                                {charCount} / 2000 {charCount < 10 && '(минимум 10 символов)'}
+                            </small>
+                            <small className="moderation-hint">
+                                <i className="fas fa-info-circle"></i> Без ссылок, email, телефонов
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" className="submit-button" disabled={loading}>
+                        {loading ? (
+                            <>
+                                <i className="fas fa-spinner fa-spin"></i> {t('submitting') || 'Submitting...'}
+                            </>
+                        ) : (
+                            <>
+                                <i className="fas fa-paper-plane"></i> {t('submit_review') || 'Submit Review'}
+                            </>
+                        )}
+                    </button>
 
-                {error && <p className="review-error-message">{error}</p>}
-                {success && <p className="review-success-message">{t('review_submitted_success')}</p>}
+                    {error && (
+                        <div className="review-error-message">
+                            <i className="fas fa-exclamation-circle"></i> {error}
+                        </div>
+                    )}
+                    {success && (
+                        <div className="review-success-message">
+                            <i className="fas fa-check-circle"></i> {t('review_submitted_success') || 'Review submitted successfully!'}
+                        </div>
+                    )}
 
-            </form>
+                </form>
+            )}
         </div>
     );
 }

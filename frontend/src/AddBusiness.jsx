@@ -12,6 +12,9 @@ import { CATEGORIES, getMainCategories, getSubcategories, getCategoryIcon } from
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AddBusiness.scss';
 
+// SVG placeholder for images
+const PLACEHOLDER_IMAGE = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250"%3E%3Crect width="400" height="250" fill="%23f3f4f6"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="%239ca3af"%3ENo Image%3C/text%3E%3C/svg%3E';
+
 function AddBusiness() {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -19,9 +22,9 @@ function AddBusiness() {
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    // const [imageFile, setImageFile] = useState(null);
-    // const [imagePreview, setImagePreview] = useState(null);
-    // const [uploadingImage, setUploadingImage] = useState(false);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
     
     const [formData, setFormData] = useState({
         // Step 1: Basic Info
@@ -60,6 +63,94 @@ function AddBusiness() {
             ...prev,
             [name]: value
         }));
+
+        // Auto-update subcategory based on main category
+        if (name === 'mainCategory') {
+            const subcategories = getSubcategories(value);
+            if (subcategories.length > 0) {
+                setFormData(prev => ({
+                    ...prev,
+                    mainCategory: value,
+                    subCategory: subcategories[0]
+                }));
+            }
+        }
+    };
+
+    // Handle image file selection
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                toast.error(t('please_select_image_file'));
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error(t('image_too_large'));
+                return;
+            }
+            
+            setImageFile(file);
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Upload image to Cloudinary
+    const uploadToCloudinary = async (file) => {
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+        
+        console.log('📸 Cloudinary Upload Config:', {
+            cloudName,
+            uploadPreset,
+            hasCloudName: !!cloudName,
+            hasUploadPreset: !!uploadPreset
+        });
+        
+        if (!cloudName || !uploadPreset) {
+            throw new Error('Cloudinary configuration missing. Check VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in .env');
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', uploadPreset);
+        // Note: Do NOT append api_key, timestamp, or signature for unsigned uploads
+        // folder is configured in upload preset settings on Cloudinary dashboard
+        
+        console.log('🚀 Uploading to Cloudinary...');
+        console.log('URL:', `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`);
+        
+        try {
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+                {
+                    method: 'POST',
+                    body: formData
+                }
+            );
+            
+            const data = await response.json();
+            console.log('📊 Cloudinary Response:', { status: response.status, data });
+            
+            if (!response.ok) {
+                throw new Error(data.error?.message || data.message || 'Upload failed');
+            }
+            
+            console.log('✅ Upload successful! URL:', data.secure_url);
+            return data.secure_url;
+        } catch (error) {
+            console.error('❌ Cloudinary upload error:', error);
+            throw error;
+        }
     };
 
     const handleMainCategoryChange = (e) => {
@@ -71,33 +162,6 @@ function AddBusiness() {
             subCategory: subcategories[0] || '' // Set first subcategory as default
         }));
     };
-
-    // Temporarily disabled file upload due to CORS issues
-    // const handleImageChange = (e) => {
-    //     const file = e.target.files[0];
-    //     if (file) {
-    //         // Validate file type
-    //         if (!file.type.startsWith('image/')) {
-    //             toast.error('Please select an image file');
-    //             return;
-    //         }
-    //         
-    //         // Validate file size (max 5MB)
-    //         if (file.size > 5 * 1024 * 1024) {
-    //             toast.error('Image size must be less than 5MB');
-    //             return;
-    //         }
-    //         
-    //         setImageFile(file);
-    //         
-    //         // Create preview
-    //         const reader = new FileReader();
-    //         reader.onloadend = () => {
-    //             setImagePreview(reader.result);
-    //         };
-    //         reader.readAsDataURL(file);
-    //     }
-    // };
 
     const handleNextStep = () => {
         // Validate current step
@@ -151,35 +215,30 @@ function AddBusiness() {
 
             console.log('✓ Step 2: Validation passed');
 
-            // Use provided image URL or default placeholder
-            const imageUrl = formData.image && formData.image.trim() !== '' 
-                ? formData.image 
-                : 'https://via.placeholder.com/400x250?text=No+Image';
+            // Upload image to Cloudinary if file selected
+            let imageUrl = PLACEHOLDER_IMAGE;
             
-            console.log('✓ Step 3: Image URL set to:', imageUrl);
-            
-            // CORS issue - File upload temporarily disabled
-            // if (imageFile) {
-            //     setUploadingImage(true);
-            //     toast.info(t('uploading_image'));
-            //     try {
-            //         const { url, error } = await uploadBusinessImage(imageFile, formData.name);
-            //         if (error) {
-            //             console.error('Image upload failed:', error);
-            //             toast.warning('⚠️ Image upload failed, submitting without image');
-            //             imageUrl = 'https://via.placeholder.com/400x250?text=No+Image';
-            //         } else {
-            //             imageUrl = url;
-            //             toast.success(t('image_uploaded_success'));
-            //         }
-            //     } catch (uploadError) {
-            //         console.error('Image upload exception:', uploadError);
-            //         toast.warning('⚠️ Image upload failed, submitting without image');
-            //         imageUrl = 'https://via.placeholder.com/400x250?text=No+Image';
-            //     } finally {
-            //         setUploadingImage(false);
-            //     }
-            // }
+            if (imageFile) {
+                setUploadingImage(true);
+                toast.info(t('uploading_image'));
+                try {
+                    imageUrl = await uploadToCloudinary(imageFile);
+                    toast.success(t('image_uploaded_success'));
+                    console.log('✓ Step 3: Image uploaded to Cloudinary:', imageUrl);
+                } catch (uploadError) {
+                    console.error('Image upload failed:', uploadError);
+                    toast.warning(t('image_upload_failed'));
+                    imageUrl = PLACEHOLDER_IMAGE;
+                } finally {
+                    setUploadingImage(false);
+                }
+            } else if (formData.image && formData.image.trim() !== '') {
+                // Use provided image URL if no file selected
+                imageUrl = formData.image;
+                console.log('✓ Step 3: Using provided image URL:', imageUrl);
+            } else {
+                console.log('✓ Step 3: No image provided, using placeholder');
+            }
             
             console.log('✓ Step 4: Preparing data for Firestore...');
             
@@ -446,7 +505,31 @@ function AddBusiness() {
             <h2>{t('additional_information')}</h2>
             
             <div className="form-group">
-                <label htmlFor="image">Ссылка на логотип (URL)</label>
+                <label htmlFor="imageFile">{t('upload_logo_or_photo')}</label>
+                <input
+                    type="file"
+                    id="imageFile"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="form-input"
+                />
+                <small className="form-hint">{t('max_file_size_5mb')}</small>
+                
+                {imagePreview && (
+                    <div className="image-preview">
+                        <img src={imagePreview} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
+                    </div>
+                )}
+                
+                {uploadingImage && (
+                    <div className="uploading-indicator">
+                        <span>⏳ {t('uploading_image')}...</span>
+                    </div>
+                )}
+            </div>
+            
+            <div className="form-group">
+                <label htmlFor="image">{t('or_paste_image_url')}</label>
                 <input
                     type="text"
                     id="image"
@@ -455,10 +538,11 @@ function AddBusiness() {
                     onChange={handleInputChange}
                     className="form-input"
                     placeholder="https://example.com/logo.jpg"
+                    disabled={!!imageFile}
                 />
-                <small className="form-hint">Вставьте URL изображения или оставьте пустым для картинки по умолчанию</small>
+                <small className="form-hint">{t('image_url_hint')}</small>
                 
-                {formData.image && formData.image.trim() !== '' && (
+                {!imagePreview && formData.image && formData.image.trim() !== '' && (
                     <div className="image-preview">
                         <img src={formData.image} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
                     </div>

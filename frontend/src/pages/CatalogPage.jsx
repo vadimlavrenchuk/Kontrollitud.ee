@@ -12,55 +12,77 @@ import '../styles/CompanyList.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faSpa, faUtensils, faShoppingBag, faChild, faPlane, faCar, faCogs, faMap, faList, faInbox } from '@fortawesome/free-solid-svg-icons';
 import tallinnBg from '../assets/tallinn-bg.jpg.jpg';
-
-const API_BASE_URL = 'http://localhost:5000/api/companies';
+import { db } from '../firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { useSearchParams } from 'react-router-dom';
 
 function CatalogPage() {
   const [allCompanies, setAllCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState(null);
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
 
   // State for filters and search
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Все');
-  const [selectedMainCategory, setSelectedMainCategory] = useState('Все');
+  const [selectedMainCategory, setSelectedMainCategory] = useState(searchParams.get('mainCategory') || 'Все');
   const [selectedSubCategory, setSelectedSubCategory] = useState('Все');
   const [selectedCity, setSelectedCity] = useState('Все');
   const [isVerifiedOnly, setIsVerifiedOnly] = useState(false);
-  const [showMap, setShowMap] = useState(true); // Toggle for mobile view
+  const [showMap, setShowMap] = useState(false); // Toggle for mobile view (false = show list by default)
   const [selectedCompanyId, setSelectedCompanyId] = useState(null); // For map sync
 
-  // Fetch all approved companies
+  // Handle card click - automatically switch to map on mobile
+  const handleCompanyCardClick = useCallback((companyId) => {
+    setSelectedCompanyId(companyId);
+    
+    // Auto-switch to map view on mobile
+    if (window.innerWidth <= 1024) {
+      setShowMap(true);
+    }
+  }, []);
+
+  // Handle window resize to show both panels on desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 1024) {
+        setShowMap(true); // Always show map on desktop
+      }
+    };
+    
+    handleResize(); // Check on mount
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Fetch all approved companies from Firestore
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
-    const url = `${API_BASE_URL}`;
 
     try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        let errorMessage = `${t('fetch_error')}: ${response.statusText}`;
-        
-        try {
-          const data = await response.json();
-          errorMessage = data.error || errorMessage; 
-        } catch (jsonError) {
-          console.warn("Response was not JSON, using status text.");
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
+      const companiesRef = collection(db, 'companies');
+      const q = query(companiesRef, orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      
+      const companiesList = [];
+      snapshot.forEach((doc) => {
+        companiesList.push({
+          id: doc.id,
+          _id: doc.id, // Для обратной совместимости
+          ...doc.data()
+        });
+      });
       
       // Sort companies: verified first, then by priority (desc), then by newest
-      const sortedData = data.sort((a, b) => {
-        if (a.isVerified !== b.isVerified) {
-          return b.isVerified ? 1 : -1;
+      const sortedData = companiesList.sort((a, b) => {
+        const isVerifiedA = a.verified || a.isVerified;
+        const isVerifiedB = b.verified || b.isVerified;
+        
+        if (isVerifiedA !== isVerifiedB) {
+          return isVerifiedB ? 1 : -1;
         }
         
         const priorityA = a.priority || 0;
@@ -69,13 +91,15 @@ function CatalogPage() {
           return priorityB - priorityA;
         }
         
-        const dateA = new Date(a.createdAt || 0);
-        const dateB = new Date(b.createdAt || 0);
+        // Handle Firestore Timestamp
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
         return dateB - dateA;
       });
       
       setAllCompanies(sortedData);
     } catch (err) {
+      console.error('❌ Error fetching companies:', err);
       setError(err.message);
       setAllCompanies([]);
     } finally {
@@ -104,9 +128,12 @@ function CatalogPage() {
       });
     }
 
-    // Category filter
+    // Category filter (старый формат)
     if (selectedCategory && selectedCategory !== 'Все') {
-      result = result.filter(company => company.category === selectedCategory);
+      result = result.filter(company => {
+        const match = company.category === selectedCategory || company.subCategory === selectedCategory;
+        return match;
+      });
     }
 
     // Main category filter
@@ -116,7 +143,10 @@ function CatalogPage() {
 
     // Subcategory filter
     if (selectedSubCategory && selectedSubCategory !== 'Все') {
-      result = result.filter(company => company.subCategory === selectedSubCategory);
+      result = result.filter(company => {
+        const match = company.subCategory === selectedSubCategory || company.category === selectedSubCategory;
+        return match;
+      });
     }
 
     // City filter
@@ -124,9 +154,9 @@ function CatalogPage() {
       result = result.filter(company => company.city === selectedCity);
     }
 
-    // Verified filter
+    // Verified filter - поддержка обоих полей
     if (isVerifiedOnly) {
-      result = result.filter(company => company.isVerified === true);
+      result = result.filter(company => company.verified === true || company.isVerified === true);
     }
 
     return result;
@@ -169,20 +199,20 @@ function CatalogPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Memoize categories and cities
-  const categories = useMemo(() => ['Все', 'SPA', 'Restaurants', 'Shops', 'Kids', 'Travel', 'Auto', 'Services'], []);
+  // Memoize categories and cities from constants
+  const mainCategories = useMemo(() => ['Все', ...getMainCategories()], []);
+  
   const cities = useMemo(() => ['Все', 'Tallinn', 'Tartu', 'Pärnu', 'Narva'], []);
+  
+  // Get subcategories based on selected main category
+  const availableSubcategories = useMemo(() => {
+    if (!selectedMainCategory || selectedMainCategory === 'Все') {
+      return ['Все'];
+    }
+    return ['Все', ...getSubcategories(selectedMainCategory)];
+  }, [selectedMainCategory]);
 
-  // Category icons mapping
-  const categoryIcons = useMemo(() => ({
-    'SPA': faSpa,
-    'Restaurants': faUtensils,
-    'Shops': faShoppingBag,
-    'Kids': faChild,
-    'Travel': faPlane,
-    'Auto': faCar,
-    'Services': faCogs
-  }), []);
+  // Category icons are now handled by getCategoryIcon from constants
 
   if (isInitialLoad && loading) {
     return <div className="container">{t('loading')}</div>;
@@ -223,19 +253,19 @@ function CatalogPage() {
             />
           </div>
 
-          {/* Quick Category Pills */}
+          {/* Main Category Pills */}
           {!searchQuery && (
             <div className="category-pills fade-in-delay-3">
               <p className="pills-label">{t('popular_categories')}</p>
               <div className="pills-container">
-                {categories.filter(cat => cat !== 'Все').map(category => (
+                {mainCategories.filter(cat => cat !== 'Все').map(category => (
                   <button
                     key={category}
-                    className={`category-pill ${selectedCategory === category ? 'active' : ''}`}
-                    onClick={() => handleCategoryClick(category)}
+                    className={`category-pill ${selectedMainCategory === category ? 'active' : ''}`}
+                    onClick={() => setSelectedMainCategory(category)}
                   >
-                    <FontAwesomeIcon icon={categoryIcons[category]} />
-                    <span>{t(category)}</span>
+                    {getCategoryIcon(category)}
+                    <span>{t(category) || category}</span>
                   </button>
                 ))}
               </div>
@@ -303,15 +333,6 @@ function CatalogPage() {
             <button onClick={handleResetFilters} className="reset-button" title={t('reset_filters_tooltip')}>
               {t('reset_button')}
             </button>
-
-            <button 
-              onClick={() => setShowMap(!showMap)} 
-              className="map-toggle-button mobile-only"
-              title={showMap ? t('show_list') : t('show_map')}
-            >
-              <FontAwesomeIcon icon={showMap ? faList : faMap} />
-              <span>{showMap ? t('show_list') : t('show_map')}</span>
-            </button>
           </div>
         )}
         
@@ -331,16 +352,8 @@ function CatalogPage() {
           </div>
         )}
         
-        {/* Split View: Map + List */}
+        {/* Split View: List (40%) + Map (60%) */}
         <div className="content-with-map">
-          <div className={`map-panel ${showMap ? 'visible' : ''}`}>
-            <CompanyMap 
-              companies={companies} 
-              selectedCompanyId={selectedCompanyId}
-              onMarkerClick={setSelectedCompanyId}
-            />
-          </div>
-
           <div className={`list-panel ${!showMap ? 'visible' : ''}`}>
             <div className="company-list">
               {companies && companies.length > 0 ? (
@@ -349,7 +362,7 @@ function CatalogPage() {
                     key={company._id} 
                     company={company}
                     isSelected={selectedCompanyId === company._id}
-                    onClick={() => setSelectedCompanyId(company._id)}
+                    onClick={() => handleCompanyCardClick(company._id)}
                   />
                 ))
               ) : (
@@ -382,7 +395,25 @@ function CatalogPage() {
               )}
             </div>
           </div>
+          
+          <div className={`map-panel ${showMap ? 'visible' : ''}`}>
+            <CompanyMap 
+              companies={companies} 
+              selectedCompanyId={selectedCompanyId}
+              onMarkerClick={setSelectedCompanyId}
+            />
+          </div>
         </div>
+        
+        {/* Floating Toggle Button for Mobile */}
+        <button 
+          onClick={() => setShowMap(!showMap)} 
+          className="map-toggle-button mobile-only"
+          title={showMap ? t('show_list') : t('show_map')}
+        >
+          <FontAwesomeIcon icon={showMap ? faList : faMap} />
+          <span>{showMap ? t('show_list') : t('show_map')}</span>
+        </button>
       </div>
     </>
   );
