@@ -1,0 +1,38 @@
+# Зависимости (игнорируем везде, в корне и в подпапках)
+node_modules/
+**/node_modules/
+
+# Секреты (самое важное)
+.env
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/backend/.env
+**/frontend/.env
+
+# Сборка и кэш
+dist/
+dist-ssr/
+build/
+.cache/
+.npm/
+
+# Логи
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Редактор и ОС
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Docker
+.docker/

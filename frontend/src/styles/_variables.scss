@@ -1,0 +1,19 @@
+// Kontrollitud.ee/frontend/src/_variables.scss
+
+// Цвета Kontrollitud.ee
+$color-primary: #3498db;     // Основной синий
+$color-secondary: #2ecc71;   // Зеленый для успеха/верификации
+$color-danger: #e74c3c;      // Красный для ошибок
+$color-warning: #f39c12;     // Оранжевый для предупреждений
+$color-info: #3498db;        // Синий для информации
+$color-text: #333;           // Основной текст
+$color-background: #f4f7f6;  // Легкий фон
+$color-card-bg: #fff;        // Фон карточек
+$color-border: #ddd;         // Границы
+
+// Типографика
+$font-stack: 'Arial', sans-serif;
+
+// Отступы и тени
+$spacing-base: 16px;
+$shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);
