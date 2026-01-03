@@ -41,7 +41,7 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
   return (
     <Link 
       to={companyUrl}
-      className={`company-card ${company.isVerified ? 'verified-card' : ''} ${isSelected ? 'selected' : ''}`}
+      className={`company-card ${company.isVerified ? 'verified-card' : ''} ${isSelected ? 'selected' : ''} ${company.subscriptionLevel === 'enterprise' ? 'enterprise-card' : ''}`}
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       {/* Image section */}
@@ -60,8 +60,8 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
             <span className="placeholder-text">{company.name}</span>
           </div>
         )}
-        {/* Verified badge overlay - only for medium and strong subscriptions */}
-        {company.isVerified && (company.subscriptionLevel === 'medium' || company.subscriptionLevel === 'strong') && (
+        {/* Verified badge overlay - only for pro and enterprise subscriptions */}
+        {company.isVerified && (company.subscriptionLevel === 'pro' || company.subscriptionLevel === 'enterprise') && (
           <div className="verified-badge-overlay">
             <FontAwesomeIcon icon={faShieldAlt} className="shield-icon" />
             <span>{t('verified')}</span>
@@ -72,7 +72,17 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
       {/* Content section */}
       <div className="card-content">
         <div className="card-header">
-          <h3 className="company-name">{company.name}</h3>
+          <h3 className="company-name">
+            {company.name}
+            {/* Blue checkmark for pro tier */}
+            {company.subscriptionLevel === 'pro' && (
+              <span className="pro-badge" title="Pro Business"> ✔️</span>
+            )}
+            {/* Gold badge for enterprise tier */}
+            {company.subscriptionLevel === 'enterprise' && (
+              <span className="enterprise-badge" title="Enterprise Business"> 🏆</span>
+            )}
+          </h3>
         </div>
         
         {/* Category and City */}
@@ -81,21 +91,23 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
           {company.city && <span className="company-city-tag">{t(company.city)}</span>}
         </div>
         
-        {/* Rating */}
-        <div className="rating-container">
-          <StarRating rating={company.rating || 0} />
-          <span className="rating-text">
-            {(company.rating || 0).toFixed(1)} ({company.reviewsCount || 0} {t('reviews')})
-          </span>
-        </div>
+        {/* Rating - hide for basic subscription */}
+        {company.subscriptionLevel !== 'basic' && (
+          <div className="rating-container">
+            <StarRating rating={company.rating || 0} />
+            <span className="rating-text">
+              {(company.rating || 0).toFixed(1)} ({company.reviewsCount || 0} {t('reviews')})
+            </span>
+          </div>
+        )}
         
         {/* Description */}
         {description && (
           <p className="company-description">{description}</p>
         )}
         
-        {/* Social Media Icons - only for medium and strong subscriptions */}
-        {(company.subscriptionLevel === 'medium' || company.subscriptionLevel === 'strong') && 
+        {/* Social Media Icons - only for pro and enterprise subscriptions */}
+        {(company.subscriptionLevel === 'pro' || company.subscriptionLevel === 'enterprise') && 
          (company.instagramUrl || company.tiktokUrl || company.youtubeUrl) && (
           <div className="social-media-links">
             {company.instagramUrl && (
@@ -137,15 +149,26 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
           </div>
         )}
         
-        {/* Reviewer Badge - only for medium and strong subscriptions */}
-        {(company.subscriptionLevel === 'medium' || company.subscriptionLevel === 'strong') && 
+        {/* Reviewer Badge - only for pro and enterprise subscriptions */}
+        {(company.subscriptionLevel === 'pro' || company.subscriptionLevel === 'enterprise') && 
          company.reviewerName && (
           <div className="reviewer-badge">
             <FontAwesomeIcon icon={faUserCheck} className="reviewer-icon" />
             <span>Checked by {company.reviewerName}</span>
           </div>
-        )}
-        
+        )}        
+        {/* Blog Article Button - only for enterprise with blogArticleUrl */}
+        {company.subscriptionLevel === 'enterprise' && company.blogArticleUrl && (
+          <a 
+            href={company.blogArticleUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="blog-article-button"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t('read_review') || 'Читать обзор'}
+          </a>
+        )}        
         {/* Details button */}
         <span className="details-button">
           {t('details_button')}

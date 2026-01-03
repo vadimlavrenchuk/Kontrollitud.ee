@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet-async';
 import { toast, ToastContainer } from 'react-toastify';
 import { useAuth } from './AuthContext';
 import { db, uploadBusinessImage } from './firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { CATEGORIES, getMainCategories, getSubcategories, getCategoryIcon } from './constants/categories';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AddBusiness.scss';
@@ -43,7 +43,10 @@ function AddBusiness() {
         descriptionEn: '',
         descriptionRu: '',
         
-        // Step 4: Additional Info
+        // Step 4: Plan Selection
+        plan: 'basic',
+        
+        // Step 5: Additional Info (only for pro/enterprise)
         image: '',
         instagramUrl: '',
         tiktokUrl: '',
@@ -181,9 +184,18 @@ function AddBusiness() {
                 toast.error(t('please_provide_at_least_one_description'));
                 return;
             }
+        } else if (currentStep === 4) {
+            // Step 4 is plan selection - no validation needed, plan has default value
+            // If basic plan, skip to submission (no step 5)
+            if (formData.plan === 'basic') {
+                return; // Stay on step 4, show submit button
+            }
         }
         
-        if (currentStep < 4) {
+        // Move to next step
+        // Max step is 5 if pro/enterprise, 4 if basic
+        const maxStep = formData.plan === 'basic' ? 4 : 5;
+        if (currentStep < maxStep) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -215,32 +227,42 @@ function AddBusiness() {
 
             console.log('✓ Step 2: Validation passed');
 
-            // Upload image to Cloudinary if file selected
+            // Upload image to Cloudinary if file selected and plan is not basic
             let imageUrl = PLACEHOLDER_IMAGE;
             
-            if (imageFile) {
-                setUploadingImage(true);
-                toast.info(t('uploading_image'));
-                try {
-                    imageUrl = await uploadToCloudinary(imageFile);
-                    toast.success(t('image_uploaded_success'));
-                    console.log('✓ Step 3: Image uploaded to Cloudinary:', imageUrl);
-                } catch (uploadError) {
-                    console.error('Image upload failed:', uploadError);
-                    toast.warning(t('image_upload_failed'));
-                    imageUrl = PLACEHOLDER_IMAGE;
-                } finally {
-                    setUploadingImage(false);
+            // Only handle image upload for pro and enterprise plans
+            if (formData.plan !== 'basic') {
+                if (imageFile) {
+                    setUploadingImage(true);
+                    toast.info(t('uploading_image'));
+                    try {
+                        imageUrl = await uploadToCloudinary(imageFile);
+                        toast.success(t('image_uploaded_success'));
+                        console.log('✓ Step 3: Image uploaded to Cloudinary:', imageUrl);
+                    } catch (uploadError) {
+                        console.error('Image upload failed:', uploadError);
+                        toast.warning(t('image_upload_failed'));
+                        imageUrl = PLACEHOLDER_IMAGE;
+                    } finally {
+                        setUploadingImage(false);
+                    }
+                } else if (formData.image && formData.image.trim() !== '') {
+                    // Use provided image URL if no file selected
+                    imageUrl = formData.image;
+                    console.log('✓ Step 3: Using provided image URL:', imageUrl);
+                } else {
+                    console.log('✓ Step 3: No image provided, using placeholder');
                 }
-            } else if (formData.image && formData.image.trim() !== '') {
-                // Use provided image URL if no file selected
-                imageUrl = formData.image;
-                console.log('✓ Step 3: Using provided image URL:', imageUrl);
             } else {
-                console.log('✓ Step 3: No image provided, using placeholder');
+                // For basic plan, always use placeholder (category icon will be shown)
+                console.log('✓ Step 3: Basic plan - using placeholder image');
             }
             
             console.log('✓ Step 4: Preparing data for Firestore...');
+            
+            // Use plan from form instead of fetching from user profile
+            const selectedPlan = formData.plan || 'basic';
+            console.log('✓ Selected plan from form:', selectedPlan);
             
             // Prepare data for Firestore
             const submissionData = {
@@ -265,9 +287,12 @@ function AddBusiness() {
                 
                 // Additional Info
                 image: imageUrl,
-                instagramUrl: formData.instagramUrl || '',
-                tiktokUrl: formData.tiktokUrl || '',
-                youtubeUrl: formData.youtubeUrl || '',
+                instagramUrl: formData.plan !== 'basic' ? (formData.instagramUrl || '') : '',
+                tiktokUrl: formData.plan !== 'basic' ? (formData.tiktokUrl || '') : '',
+                youtubeUrl: formData.plan !== 'basic' ? (formData.youtubeUrl || '') : '',
+                
+                // Subscription Level (from form selection)
+                subscriptionLevel: selectedPlan,
                 
                 // Status and tracking fields
                 status: 'pending',
@@ -318,9 +343,13 @@ function AddBusiness() {
     };
 
     const renderStepIndicator = () => {
+        // Show 5 steps for pro/enterprise, 4 for basic
+        const totalSteps = formData.plan === 'basic' ? 4 : 5;
+        const steps = Array.from({ length: totalSteps }, (_, i) => i + 1);
+        
         return (
             <div className="step-indicator">
-                {[1, 2, 3, 4].map(step => (
+                {steps.map(step => (
                     <div 
                         key={step} 
                         className={`step ${currentStep >= step ? 'active' : ''} ${currentStep === step ? 'current' : ''}`}
@@ -330,7 +359,8 @@ function AddBusiness() {
                             {step === 1 && t('step_basic_info')}
                             {step === 2 && t('step_contact')}
                             {step === 3 && t('step_description')}
-                            {step === 4 && t('step_additional')}
+                            {step === 4 && (t('step_plan') || 'План')}
+                            {step === 5 && (t('step_additional') || 'Дополнительно')}
                         </div>
                     </div>
                 ))}
@@ -502,7 +532,168 @@ function AddBusiness() {
 
     const renderStep4 = () => (
         <div className="form-step">
+            <h2>{t('choose_plan') || 'Выберите тарифный план'}</h2>
+            <p className="step-hint">{t('plan_preview_hint') || 'Посмотрите, как будет выглядеть ваша карточка бизнеса'}</p>
+            
+            <div className="plan-selection-form">
+                <div className="plan-preview-grid">
+                    {/* BASIC PLAN PREVIEW */}
+                    <label className={`plan-preview-card basic-preview ${formData.plan === 'basic' ? 'selected' : ''}`}>
+                        <input
+                            type="radio"
+                            name="plan"
+                            value="basic"
+                            checked={formData.plan === 'basic'}
+                            onChange={handleInputChange}
+                        />
+                        <div className="preview-header">
+                            <span className="plan-badge">📄 Basic</span>
+                            <span className="plan-price-tag">{t('free') || 'Бесплатно'}</span>
+                        </div>
+                        <div className="business-card-preview">
+                            {/* Image placeholder with icon */}
+                            <div className="preview-image basic-image">
+                                <i className="fas fa-building" style={{ fontSize: '3rem', color: '#9ca3af' }}></i>
+                            </div>
+                            {/* Content */}
+                            <div className="preview-content">
+                                <h3 className="preview-business-name">Ваш Бизнес</h3>
+                                <div className="preview-meta">
+                                    <span className="preview-category">Категория</span>
+                                    <span className="preview-city">Город</span>
+                                </div>
+                                <p className="preview-description">
+                                    Краткое описание вашего бизнеса будет отображаться здесь...
+                                </p>
+                            </div>
+                        </div>
+                        <div className="preview-footer">
+                            <small>✗ Без фото • ✗ Без рейтинга • ✗ Без соцсетей</small>
+                        </div>
+                    </label>
+
+                    {/* PRO PLAN PREVIEW */}
+                    <label className={`plan-preview-card pro-preview ${formData.plan === 'pro' ? 'selected' : ''}`}>
+                        <input
+                            type="radio"
+                            name="plan"
+                            value="pro"
+                            checked={formData.plan === 'pro'}
+                            onChange={handleInputChange}
+                        />
+                        <div className="preview-header">
+                            <span className="plan-badge pro-badge">⚡ Pro</span>
+                            <span className="plan-price-tag">€29/{t('month') || 'мес'}</span>
+                        </div>
+                        <div className="business-card-preview verified-preview">
+                            {/* Image with verified badge */}
+                            <div className="preview-image pro-image">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%233b82f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='white'%3EВаше фото%3C/text%3E%3C/svg%3E" alt="Preview" />
+                                <div className="preview-verified-badge">
+                                    <i className="fas fa-shield-alt"></i>
+                                    <span>Verified</span>
+                                </div>
+                            </div>
+                            {/* Content */}
+                            <div className="preview-content">
+                                <h3 className="preview-business-name">
+                                    Ваш Бизнес <span className="pro-checkmark">✔️</span>
+                                </h3>
+                                <div className="preview-meta">
+                                    <span className="preview-category">Категория</span>
+                                    <span className="preview-city">Город</span>
+                                </div>
+                                {/* Rating */}
+                                <div className="preview-rating">
+                                    <span className="stars">★★★★★</span>
+                                    <span className="rating-text">5.0 (10 отзывов)</span>
+                                </div>
+                                <p className="preview-description">
+                                    Ваше описание с приоритетом в поиске...
+                                </p>
+                                {/* Social icons */}
+                                <div className="preview-social">
+                                    <span className="social-icon instagram"><i className="fab fa-instagram"></i></span>
+                                    <span className="social-icon tiktok"><i className="fab fa-tiktok"></i></span>
+                                    <span className="social-icon youtube"><i className="fab fa-youtube"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="preview-footer">
+                            <small>✓ Фото • ✓ Рейтинг • ✓ Соцсети • ✓ Синяя галочка</small>
+                        </div>
+                    </label>
+
+                    {/* ENTERPRISE PLAN PREVIEW */}
+                    <label className={`plan-preview-card enterprise-preview ${formData.plan === 'enterprise' ? 'selected' : ''}`}>
+                        <input
+                            type="radio"
+                            name="plan"
+                            value="enterprise"
+                            checked={formData.plan === 'enterprise'}
+                            onChange={handleInputChange}
+                        />
+                        <div className="preview-header">
+                            <span className="plan-badge enterprise-badge">💎 Enterprise</span>
+                            <span className="plan-price-tag">€50/{t('month') || 'мес'}</span>
+                        </div>
+                        <div className="business-card-preview enterprise-card">
+                            <div className="top-priority-badge">
+                                <i className="fas fa-crown"></i> TOP Priority
+                            </div>
+                            {/* Image */}
+                            <div className="preview-image enterprise-image">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Cdefs%3E%3ClinearGradient id='gold' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23fbbf24'/%3E%3Cstop offset='100%25' style='stop-color:%23f59e0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='200' fill='url(%23gold)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white' font-weight='bold'%3EПРЕМИУМ БАННЕР%3C/text%3E%3C/svg%3E" alt="Premium" />
+                            </div>
+                            {/* Content */}
+                            <div className="preview-content">
+                                <h3 className="preview-business-name">
+                                    Ваш Бизнес <span className="enterprise-crown">🏆</span>
+                                </h3>
+                                <div className="preview-meta">
+                                    <span className="preview-category">Категория</span>
+                                    <span className="preview-city">Город</span>
+                                </div>
+                                {/* Rating */}
+                                <div className="preview-rating">
+                                    <span className="stars gold-stars">★★★★★</span>
+                                    <span className="rating-text">5.0 (50+ отзывов)</span>
+                                </div>
+                                <p className="preview-description">
+                                    Премиум описание с максимальным охватом и топовым размещением...
+                                </p>
+                                {/* Social icons */}
+                                <div className="preview-social">
+                                    <span className="social-icon instagram"><i className="fab fa-instagram"></i></span>
+                                    <span className="social-icon tiktok"><i className="fab fa-tiktok"></i></span>
+                                    <span className="social-icon youtube"><i className="fab fa-youtube"></i></span>
+                                </div>
+                                {/* Blog button */}
+                                <button className="preview-blog-button" type="button">
+                                    📰 Читать обзор в блоге
+                                </button>
+                            </div>
+                        </div>
+                        <div className="preview-footer">
+                            <small>✓ Все из Pro • ✓ Золотая рамка • ✓ Блог • ✓ ТОП-1</small>
+                        </div>
+                    </label>
+                </div>
+                
+                {formData.plan === 'basic' && (
+                    <div className="plan-notice">
+                        <i className="fas fa-info-circle"></i>
+                        <p>{t('basic_plan_notice') || 'С планом Basic ваш бизнес будет отображаться с иконкой категории вместо фото'}</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+    const renderStep5 = () => (
+        <div className="form-step">
             <h2>{t('additional_information')}</h2>
+            <p className="step-hint">{t('upload_photo_and_social_links')}</p>
             
             <div className="form-group">
                 <label htmlFor="imageFile">{t('upload_logo_or_photo')}</label>
@@ -646,6 +837,7 @@ function AddBusiness() {
                             {currentStep === 2 && renderStep2()}
                             {currentStep === 3 && renderStep3()}
                             {currentStep === 4 && renderStep4()}
+                            {currentStep === 5 && renderStep5()}
                         </div>
 
                         <div className="form-actions">
@@ -659,7 +851,8 @@ function AddBusiness() {
                         </button>
                     )}
                     
-                    {currentStep < 4 ? (
+                    {/* Show Next button for steps 1-3, and step 4 only if pro/enterprise */}
+                    {(currentStep < 4 || (currentStep === 4 && formData.plan !== 'basic')) ? (
                         <button 
                             type="button"
                             onClick={handleNextStep}
@@ -668,6 +861,7 @@ function AddBusiness() {
                             {t('btn_next')} <i className="fas fa-arrow-right"></i>
                         </button>
                     ) : (
+                        /* Show Submit button on step 4 for basic, or step 5 for pro/enterprise */
                         <button 
                             type="button"
                             onClick={handleSubmit}

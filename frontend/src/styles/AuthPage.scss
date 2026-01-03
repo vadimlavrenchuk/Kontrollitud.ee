@@ -229,6 +229,95 @@
 }
 
 // ========================================
+// PLAN SELECTION
+// ========================================
+
+.plan-selection {
+    .plan-label {
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        color: #1a202c !important;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+    
+    .plan-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+    }
+    
+    .plan-option {
+        position: relative;
+        cursor: pointer;
+        
+        input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .plan-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 16px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: white;
+            transition: all 0.2s ease;
+            text-align: center;
+            
+            .plan-icon {
+                font-size: 2rem;
+                margin-bottom: 4px;
+            }
+            
+            .plan-name {
+                font-weight: 700;
+                font-size: 1rem;
+                color: #1a202c;
+            }
+            
+            .plan-price {
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: #667eea;
+            }
+            
+            .plan-description {
+                font-size: 0.75rem;
+                color: #6b7280;
+                line-height: 1.3;
+            }
+            
+            &:hover {
+                border-color: #667eea;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            }
+        }
+        
+        &.selected .plan-card {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+            
+            .plan-name {
+                color: #667eea;
+            }
+        }
+    }
+}
+
+// ========================================
 // AUTH SWITCH
 // ========================================
 

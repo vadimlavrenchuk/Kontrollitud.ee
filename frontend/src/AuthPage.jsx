@@ -33,7 +33,8 @@ function AuthPage() {
         email: '',
         password: '',
         confirmPassword: '',
-        displayName: ''
+        displayName: '',
+        plan: 'basic' // Default plan
     });
 
     // Get the redirect path from location state, default to home
@@ -92,7 +93,7 @@ function AuthPage() {
         if (isLogin) {
             result = await signInWithEmail(formData.email, formData.password);
         } else {
-            result = await signUpWithEmail(formData.email, formData.password, formData.displayName);
+            result = await signUpWithEmail(formData.email, formData.password, formData.displayName, formData.plan);
         }
 
         setLoading(false);
@@ -229,6 +230,67 @@ function AuthPage() {
                                     required={!isLogin}
                                     minLength={6}
                                 />
+                            </div>
+                        )}
+
+                        {/* Plan Selection - Only for Registration */}
+                        {!isLogin && (
+                            <div className="form-group plan-selection">
+                                <label className="plan-label">
+                                    {t('choose_plan') || 'Выберите тип аккаунта'} *
+                                </label>
+                                <div className="plan-options">
+                                    <label className={`plan-option ${formData.plan === 'basic' ? 'selected' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="plan"
+                                            value="basic"
+                                            checked={formData.plan === 'basic'}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                        <div className="plan-card">
+                                            <span className="plan-icon">📄</span>
+                                            <span className="plan-name">Basic</span>
+                                            <span className="plan-price">{t('free') || 'Бесплатно'}</span>
+                                            <span className="plan-description">{t('basic_plan_desc') || 'Простой листинг'}</span>
+                                        </div>
+                                    </label>
+
+                                    <label className={`plan-option ${formData.plan === 'pro' ? 'selected' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="plan"
+                                            value="pro"
+                                            checked={formData.plan === 'pro'}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                        <div className="plan-card">
+                                            <span className="plan-icon">⚡</span>
+                                            <span className="plan-name">Pro</span>
+                                            <span className="plan-price">€29/{t('month') || 'месяц'}</span>
+                                            <span className="plan-description">{t('pro_plan_desc') || 'Быстрый старт + соцсети'}</span>
+                                        </div>
+                                    </label>
+
+                                    <label className={`plan-option ${formData.plan === 'enterprise' ? 'selected' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="plan"
+                                            value="enterprise"
+                                            checked={formData.plan === 'enterprise'}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                        <div className="plan-card">
+                                            <span className="plan-icon">💎</span>
+                                            <span className="plan-name">Enterprise</span>
+                                            <span className="plan-price">€50/{t('month') || 'месяц'}</span>
+                                            <span className="plan-description">{t('enterprise_plan_desc') || 'Максимальный охват + топ'}</span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
                         )}
 

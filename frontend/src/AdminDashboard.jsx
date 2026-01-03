@@ -30,7 +30,8 @@ function AdminDashboard() {
         tiktokUrl: '',
         instagramUrl: '',
         youtubeUrl: '',
-        reviewerName: ''
+        reviewerName: '',
+        blogArticleUrl: ''
     });
     
     // Image upload state
@@ -263,7 +264,8 @@ function AdminDashboard() {
                 tiktokUrl: '',
                 instagramUrl: '',
                 youtubeUrl: '',
-                reviewerName: ''
+                reviewerName: '',
+                blogArticleUrl: ''
             });
             setImageFile(null);
             setImagePreview(null);
@@ -314,7 +316,8 @@ function AdminDashboard() {
             tiktokUrl: company.tiktokUrl || '',
             instagramUrl: company.instagramUrl || '',
             youtubeUrl: company.youtubeUrl || '',
-            reviewerName: company.reviewerName || ''
+            reviewerName: company.reviewerName || '',
+            blogArticleUrl: company.blogArticleUrl || ''
         });
         setImagePreview(company.image || null);
         setShowEditModal(true);
@@ -413,7 +416,7 @@ function AdminDashboard() {
         });
     };
 
-    const handleApproveRequest = async (requestId, subscriptionLevel = 'free') => {
+    const handleApproveRequest = async (requestId, subscriptionLevel = null) => {
         try {
             console.log('✅ Approving request:', requestId);
             
@@ -425,13 +428,16 @@ function AdminDashboard() {
             
             console.log('📋 Pending request data:', pendingRequest);
             
+            // Use subscription level from request if not provided, or fall back to basic
+            const finalSubscriptionLevel = subscriptionLevel || pendingRequest.subscriptionLevel || 'basic';
+            
             // Create approved company in companies collection
             const companyData = {
                 ...pendingRequest,
                 status: 'approved',
                 verified: true,
                 isVerified: true, // Добавляем оба поля для совместимости
-                subscriptionLevel: subscriptionLevel,
+                subscriptionLevel: finalSubscriptionLevel,
                 approvedAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             };
@@ -449,7 +455,7 @@ function AdminDashboard() {
             await deleteDoc(doc(db, 'pending_companies', requestId));
             console.log('🗑️ Deleted from pending_companies');
             
-            toast.success(`✅ Business approved as ${subscriptionLevel}!`);
+            toast.success(`✅ Business approved as ${finalSubscriptionLevel}!`);
             fetchPendingRequests();
             fetchCompanies();
             
@@ -745,6 +751,23 @@ function AdminDashboard() {
                             <small className="form-hint">Optional: Add the name of who checked/verified this company</small>
                         </div>
 
+                        {/* Blog Article URL (for Enterprise tier) */}
+                        <div className="form-group">
+                            <label htmlFor="blogArticleUrl">
+                                <i className="fas fa-newspaper"></i> Blog Article URL (Enterprise Only)
+                            </label>
+                            <input
+                                type="url"
+                                id="blogArticleUrl"
+                                name="blogArticleUrl"
+                                value={formData.blogArticleUrl || ''}
+                                onChange={handleInputChange}
+                                className="form-input"
+                                placeholder="https://example.com/blog/company-review"
+                            />
+                            <small className="form-hint">Optional: Link to a blog article review (shown only for Enterprise tier)</small>
+                        </div>
+
                         {/* Verified Checkbox */}
                         <div className="form-group">
                             <label className="checkbox-label">
@@ -906,32 +929,72 @@ function AdminDashboard() {
                                             <i className="fas fa-calendar"></i> 
                                             {request.createdAt?.toDate ? request.createdAt.toDate().toLocaleDateString() : 'N/A'}
                                         </p>
+                                        {request.subscriptionLevel && (
+                                            <p className="request-plan">
+                                                <i className="fas fa-tag"></i> 
+                                                <strong>Выбранный план:</strong> 
+                                                <span className={`plan-badge plan-${request.subscriptionLevel}`}>
+                                                    {request.subscriptionLevel === 'basic' && '📄 Basic (Free)'}
+                                                    {request.subscriptionLevel === 'pro' && '⚡ Pro (€29)'}
+                                                    {request.subscriptionLevel === 'enterprise' && '💎 Enterprise (€50)'}
+                                                </span>
+                                            </p>
+                                        )}
                                     </div>
                                     
                                     <div className="request-actions">
-                                        <button 
-                                            onClick={() => handleApproveRequest(request.id, 'free')}
-                                            className="btn-approve-free"
-                                        >
-                                            <i className="fas fa-check"></i> Approve as Free
-                                        </button>
-                                        <button 
-                                            onClick={() => handleApproveRequest(request.id, 'medium')}
-                                            className="btn-approve-medium"
-                                        >
-                                            <i className="fas fa-star"></i> Upgrade to Medium
-                                        </button>
-                                        <button 
-                                            onClick={() => handleApproveRequest(request.id, 'strong')}
-                                            className="btn-approve-strong"
-                                        >
-                                            <i className="fas fa-crown"></i> Upgrade to Strong
-                                        </button>
+                                        {/* Show Approve buttons only for pending/pending_payment requests */}
+                                        {request.approvalStatus !== 'approved' && (
+                                            <>
+                                                <button 
+                                                    onClick={() => handleApproveRequest(request.id)}
+                                                    className="btn-approve-main"
+                                                >
+                                                    <i className="fas fa-check"></i> Approve ({request.subscriptionLevel || 'basic'})
+                                                </button>
+                                                
+                                                {/* Show plan change buttons only if not already in that plan */}
+                                                {request.subscriptionLevel !== 'basic' && (
+                                                    <button 
+                                                        onClick={() => handleApproveRequest(request.id, 'basic')}
+                                                        className="btn-approve-free"
+                                                    >
+                                                        <i className="fas fa-arrow-down"></i> Downgrade to Basic
+                                                    </button>
+                                                )}
+                                                {request.subscriptionLevel !== 'pro' && (
+                                                    <button 
+                                                        onClick={() => handleApproveRequest(request.id, 'pro')}
+                                                        className="btn-approve-medium"
+                                                    >
+                                                        <i className="fas fa-star"></i> Change to Pro (€29)
+                                                    </button>
+                                                )}
+                                                {request.subscriptionLevel !== 'enterprise' && (
+                                                    <button 
+                                                        onClick={() => handleApproveRequest(request.id, 'enterprise')}
+                                                        className="btn-approve-strong"
+                                                    >
+                                                        <i className="fas fa-crown"></i> Upgrade to Enterprise (€50)
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                        
+                                        {/* Show approved badge if already approved */}
+                                        {request.approvalStatus === 'approved' && (
+                                            <div className="approved-badge">
+                                                <i className="fas fa-check-circle"></i> Already Approved
+                                            </div>
+                                        )}
+                                        
+                                        {/* Ban/Block button always available */}
                                         <button 
                                             onClick={() => handleRejectRequest(request.id)}
                                             className="btn-reject"
+                                            title={request.approvalStatus === 'approved' ? 'Block/Ban this company' : 'Reject this request'}
                                         >
-                                            <i className="fas fa-times"></i> Reject
+                                            <i className="fas fa-ban"></i> {request.approvalStatus === 'approved' ? 'Ban/Block' : 'Reject'}
                                         </button>
                                     </div>
                                 </div>

@@ -49,6 +49,23 @@ export const facebookProvider = new FacebookAuthProvider();
 export const signInWithGoogle = async () => {
     try {
         const result = await signInWithPopup(auth, googleProvider);
+        
+        // Save user data to Firestore if it's a new user
+        try {
+            await addDoc(collection(db, 'users'), {
+                uid: result.user.uid,
+                email: result.user.email,
+                displayName: result.user.displayName || '',
+                plan: 'basic', // Default plan for social sign-in
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            console.log('User profile saved with plan: basic');
+        } catch (firestoreError) {
+            // If document already exists or other error, silently continue
+            console.log('User profile may already exist or Firestore error:', firestoreError.message);
+        }
+        
         return { user: result.user, error: null };
     } catch (error) {
         console.error('Google sign-in error:', error);
@@ -59,6 +76,23 @@ export const signInWithGoogle = async () => {
 export const signInWithFacebook = async () => {
     try {
         const result = await signInWithPopup(auth, facebookProvider);
+        
+        // Save user data to Firestore if it's a new user
+        try {
+            await addDoc(collection(db, 'users'), {
+                uid: result.user.uid,
+                email: result.user.email,
+                displayName: result.user.displayName || '',
+                plan: 'basic', // Default plan for social sign-in
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            console.log('User profile saved with plan: basic');
+        } catch (firestoreError) {
+            // If document already exists or other error, silently continue
+            console.log('User profile may already exist or Firestore error:', firestoreError.message);
+        }
+        
         return { user: result.user, error: null };
     } catch (error) {
         console.error('Facebook sign-in error:', error);
@@ -66,13 +100,29 @@ export const signInWithFacebook = async () => {
     }
 };
 
-export const signUpWithEmail = async (email, password, displayName) => {
+export const signUpWithEmail = async (email, password, displayName, plan = 'basic') => {
     try {
         const result = await createUserWithEmailAndPassword(auth, email, password);
         
         // Update profile with display name
         if (displayName) {
             await updateProfile(result.user, { displayName });
+        }
+        
+        // Save user data with plan to Firestore
+        try {
+            await addDoc(collection(db, 'users'), {
+                uid: result.user.uid,
+                email: result.user.email,
+                displayName: displayName || '',
+                plan: plan,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            console.log('User profile saved with plan:', plan);
+        } catch (firestoreError) {
+            console.error('Error saving user profile to Firestore:', firestoreError);
+            // Don't fail the registration if Firestore save fails
         }
         
         return { user: result.user, error: null };

@@ -7,6 +7,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
+const cron = require('node-cron');
+const nodemailer = require('nodemailer');
 const { verifyToken, optionalAuth } = require('./middleware/authMiddleware');
 const app = express();
 const PORT = 5000;
@@ -81,6 +83,402 @@ mongoose.connection.on('error', (err) => {
 mongoose.connection.on('disconnected', () => {
   console.warn('⚠️ Mongoose: Соединение разорвано');
 });
+
+// 3. ЧЕРНЫЙ СПИСОК И ФУНКЦИИ ПРОВЕРКИ
+// Blacklist words for automatic rejection (Estonian + international)
+const blackListWords = [
+    // Profanity (Estonian)
+    'pask', 'sitt', 'kurat', 'vittu', 'persse', 'loll', 'idioot', 'türa',
+    
+    // Profanity (Russian - common in Estonia)
+    'блять', 'сука', 'хуй', 'пизда', 'ебать', 'мудак', 'дерьмо',
+    
+    // Profanity (English)
+    'fuck', 'shit', 'bitch', 'asshole', 'damn', 'bastard', 'crap',
+    
+    // Scam/fraud trigger words
+    'scam', 'fraud', 'fake', 'steal', 'cheat', 'ponzi', 'pyramid',
+    'fast money', 'quick cash', 'get rich', 'easy money', 'free money',
+    'casino online', 'gambling', 'bitcoin hack', 'crypto scam',
+    
+    // Spam patterns
+    '!!!!!!', 'AAAAAAA', '$$$$$$', '###', 'CLICK HERE', 'BUY NOW',
+    'LIMITED TIME', '100% FREE', 'GUARANTEED', 'NO RISK',
+    
+    // Competitors (add your specific competitors)
+    // 'competitor1', 'competitor2', etc.
+    
+    // Inappropriate content
+    'porn', 'sex', 'xxx', 'adult', 'escort', 'drugs', 'weapon'
+];
+
+// Function to check text against blacklist
+function containsBlacklistedWords(text) {
+    if (!text) return false;
+    
+    const normalizedText = text.toLowerCase().trim();
+    
+    // Check for exact matches and partial matches
+    for (const word of blackListWords) {
+        const normalizedWord = word.toLowerCase();
+        
+        // Check if blacklisted word appears as whole word or part of text
+        if (normalizedText.includes(normalizedWord)) {
+            console.log(`🚫 Blacklisted word detected: "${word}" in text: "${text.substring(0, 50)}..."`);
+            return true;
+        }
+    }
+    
+    // Check for excessive repetition (spam pattern like "AAAAAA" or "!!!!!!")
+    const repetitionPattern = /(.)\1{5,}/g; // 6+ repeated characters
+    if (repetitionPattern.test(normalizedText)) {
+        console.log(`🚫 Spam pattern detected (excessive repetition) in: "${text.substring(0, 50)}..."`);
+        return true;
+    }
+    
+    // Note: Excessive caps are handled by normalization, not rejection
+    // They will be auto-corrected to Title Case instead of being rejected
+    
+    return false;
+}
+
+// Function to send admin notification (Telegram or Email)
+async function sendAdminNotification(companyName, action, subscriptionLevel) {
+    const message = `
+🔔 Новая компания автоматически ${action === 'approved' ? 'одобрена' : 'отклонена'}
+
+📊 Название: ${companyName}
+💰 План: ${subscriptionLevel}
+⏰ Время: ${new Date().toLocaleString('et-EE', { timeZone: 'Europe/Tallinn' })}
+    `.trim();
+    
+    console.log('📧 Admin notification:', message);
+    
+    // TODO: Implement actual notification (Telegram or Email)
+    // For Telegram:
+    // const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    // const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+    // await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    //     chat_id: TELEGRAM_CHAT_ID,
+    //     text: message
+    // });
+    
+    // For Email (using nodemailer):
+    // const transporter = nodemailer.createTransport({ ... });
+    // await transporter.sendMail({
+    //     from: 'noreply@kontrollitud.ee',
+    //     to: process.env.ADMIN_EMAIL,
+    //     subject: 'Новая компания добавлена',
+    //     text: message
+    // });
+}
+
+// Function to normalize company name (fix excessive CAPS)
+function normalizeName(name) {
+    if (!name) return name;
+    
+    const trimmedName = name.trim();
+    
+    // Check if name is ALL CAPS (more than 80% uppercase letters)
+    const uppercaseCount = (trimmedName.match(/[A-ZА-ЯÄÖÜÕ]/g) || []).length;
+    const letterCount = (trimmedName.match(/[A-Za-zА-Яа-яÄäÖöÜüÕõ]/g) || []).length;
+    
+    if (letterCount > 0 && (uppercaseCount / letterCount) > 0.8) {
+        // Convert to title case: first letter of each word capitalized
+        const normalized = trimmedName
+            .toLowerCase()
+            .split(' ')
+            .map(word => {
+                if (word.length === 0) return word;
+                // Capitalize first letter, keep rest lowercase
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            })
+            .join(' ');
+        
+        console.log(`📝 Normalized name from "${trimmedName}" to "${normalized}"`);
+        return normalized;
+    }
+    
+    return trimmedName;
+}
+
+// Function to remove excessive punctuation (max 3 consecutive ! or ?)
+function removeExcessivePunctuation(text) {
+    if (!text) return text;
+    
+    // Replace 4+ consecutive exclamation marks with 3
+    let cleaned = text.replace(/!{4,}/g, '!!!');
+    
+    // Replace 4+ consecutive question marks with 3
+    cleaned = cleaned.replace(/\?{4,}/g, '???');
+    
+    // Replace 4+ consecutive dots with 3
+    cleaned = cleaned.replace(/\.{4,}/g, '...');
+    
+    // Log if changes were made
+    if (cleaned !== text) {
+        console.log(`✂️ Removed excessive punctuation from: "${text.substring(0, 50)}..." to "${cleaned.substring(0, 50)}..."`);
+    }
+    
+    return cleaned;
+}
+
+// Function to validate and sanitize business data
+function validateAndSanitizeBusinessData(data) {
+    const sanitized = { ...data };
+    
+    // 1. Normalize company name (fix CAPS)
+    if (sanitized.name) {
+        sanitized.name = normalizeName(sanitized.name);
+        sanitized.name = removeExcessivePunctuation(sanitized.name);
+    }
+    
+    // 2. Clean description
+    if (sanitized.description) {
+        if (typeof sanitized.description === 'string') {
+            sanitized.description = removeExcessivePunctuation(sanitized.description);
+        } else if (typeof sanitized.description === 'object') {
+            // Handle multilingual descriptions
+            if (sanitized.description.et) {
+                sanitized.description.et = removeExcessivePunctuation(sanitized.description.et);
+            }
+            if (sanitized.description.en) {
+                sanitized.description.en = removeExcessivePunctuation(sanitized.description.en);
+            }
+            if (sanitized.description.ru) {
+                sanitized.description.ru = removeExcessivePunctuation(sanitized.description.ru);
+            }
+        }
+    }
+    
+    // 3. Clean other text fields
+    if (sanitized.reviewerName) {
+        sanitized.reviewerName = removeExcessivePunctuation(sanitized.reviewerName);
+    }
+    
+    return sanitized;
+}
+
+// EMAIL TRANSPORTER SETUP
+let emailTransporter = null;
+
+function getEmailTransporter() {
+    if (!emailTransporter && process.env.SMTP_HOST && process.env.SMTP_USER) {
+        emailTransporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT || 587,
+            secure: false, // true for 465, false for other ports
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            }
+        });
+        console.log('✅ Email transporter configured');
+    }
+    return emailTransporter;
+}
+
+// Function to send subscription expiration reminder email
+async function sendExpirationReminderEmail(company) {
+    const transporter = getEmailTransporter();
+    
+    if (!transporter || !company.userEmail) {
+        console.log(`⚠️ Cannot send reminder: transporter or email missing for ${company.name}`);
+        return false;
+    }
+    
+    const daysLeft = Math.ceil((company.planExpiresAt - new Date()) / (1000 * 60 * 60 * 24));
+    
+    const message = {
+        from: `"Kontrollitud.ee" <${process.env.SMTP_USER}>`,
+        to: company.userEmail,
+        subject: `⏰ Ваша подписка ${company.subscriptionLevel.toUpperCase()} скоро закончится`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #f59e0b;">⏰ Напоминание о подписке</h2>
+                <p>Здравствуйте!</p>
+                <p>Ваша подписка <strong>${company.subscriptionLevel.toUpperCase()}</strong> для компании <strong>${company.name}</strong> истекает через <strong>${daysLeft} ${daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней'}</strong>.</p>
+                
+                <h3>Что произойдет после истечения:</h3>
+                <ul>
+                    <li>План автоматически изменится на <strong>Basic (бесплатный)</strong></li>
+                    <li>Фотографии компании будут удалены</li>
+                    <li>Ссылки на социальные сети будут скрыты</li>
+                    <li>Значки верификации будут сняты</li>
+                    ${company.subscriptionLevel === 'enterprise' ? '<li>Ссылка на блог будет удалена</li>' : ''}
+                </ul>
+                
+                <p>Чтобы продлить подписку и сохранить все функции, пожалуйста, свяжитесь с нами.</p>
+                
+                <p style="margin-top: 30px;">
+                    <a href="mailto:support@kontrollitud.ee" style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Продлить подписку</a>
+                </p>
+                
+                <p style="color: #6b7280; font-size: 0.875rem; margin-top: 30px;">
+                    С уважением,<br>
+                    Команда Kontrollitud.ee
+                </p>
+            </div>
+        `
+    };
+    
+    try {
+        await transporter.sendMail(message);
+        console.log(`📧 Reminder sent to ${company.userEmail} for ${company.name} (${daysLeft} days left)`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Failed to send reminder to ${company.userEmail}:`, error.message);
+        return false;
+    }
+}
+
+// Function to send subscription expired notification
+async function sendExpiredNotificationEmail(company) {
+    const transporter = getEmailTransporter();
+    
+    if (!transporter || !company.userEmail) {
+        console.log(`⚠️ Cannot send expiration notice: transporter or email missing for ${company.name}`);
+        return false;
+    }
+    
+    const message = {
+        from: `"Kontrollitud.ee" <${process.env.SMTP_USER}>`,
+        to: company.userEmail,
+        subject: `❌ Ваша подписка ${company.subscriptionLevel.toUpperCase()} истекла`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #ef4444;">❌ Подписка истекла</h2>
+                <p>Здравствуйте!</p>
+                <p>Ваша подписка <strong>${company.subscriptionLevel.toUpperCase()}</strong> для компании <strong>${company.name}</strong> истекла.</p>
+                
+                <h3>Что изменилось:</h3>
+                <ul>
+                    <li>План автоматически изменен на <strong>Basic (бесплатный)</strong></li>
+                    <li>Фотографии компании удалены</li>
+                    <li>Ссылки на социальные сети скрыты</li>
+                    <li>Значки верификации сняты</li>
+                    ${company.subscriptionLevel === 'enterprise' ? '<li>Ссылка на блог удалена</li>' : ''}
+                </ul>
+                
+                <p>Вы можете продолжать использовать <strong>Basic план</strong> бесплатно или обновить подписку для восстановления всех функций.</p>
+                
+                <p style="margin-top: 30px;">
+                    <a href="mailto:support@kontrollitud.ee" style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Обновить подписку</a>
+                </p>
+                
+                <p style="color: #6b7280; font-size: 0.875rem; margin-top: 30px;">
+                    С уважением,<br>
+                    Команда Kontrollitud.ee
+                </p>
+            </div>
+        `
+    };
+    
+    try {
+        await transporter.sendMail(message);
+        console.log(`📧 Expiration notice sent to ${company.userEmail} for ${company.name}`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Failed to send expiration notice to ${company.userEmail}:`, error.message);
+        return false;
+    }
+}
+
+// Function to downgrade expired subscriptions
+async function downgradeExpiredSubscriptions() {
+    const now = new Date();
+    
+    try {
+        // Find all companies with expired paid plans
+        const expiredCompanies = await Company.find({
+            subscriptionLevel: { $in: ['pro', 'enterprise'] },
+            planExpiresAt: { $lt: now }
+        });
+        
+        console.log(`🔍 Found ${expiredCompanies.length} expired subscriptions`);
+        
+        for (const company of expiredCompanies) {
+            const oldPlan = company.subscriptionLevel;
+            
+            // Downgrade to basic
+            company.subscriptionLevel = 'basic';
+            company.isVerified = false;
+            company.planDowngradedAt = now;
+            company.planReminderSent = false; // Reset for next subscription cycle
+            
+            // Clear paid-tier-only fields
+            company.image = null;
+            company.tiktokUrl = null;
+            company.instagramUrl = null;
+            company.youtubeUrl = null;
+            company.blogArticleUrl = null;
+            
+            await company.save();
+            
+            console.log(`⬇️ Downgraded ${company.name} from ${oldPlan} to basic`);
+            
+            // Send notification email
+            await sendExpiredNotificationEmail(company);
+        }
+        
+        return expiredCompanies.length;
+    } catch (error) {
+        console.error('❌ Error downgrading expired subscriptions:', error);
+        return 0;
+    }
+}
+
+// Function to send 3-day expiration reminders
+async function sendExpirationReminders() {
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 4);
+    
+    try {
+        // Find companies with plans expiring in 3 days that haven't received reminder
+        const companiesNeedingReminder = await Company.find({
+            subscriptionLevel: { $in: ['pro', 'enterprise'] },
+            planExpiresAt: {
+                $gte: threeDaysFromNow,
+                $lt: tomorrow
+            },
+            planReminderSent: { $ne: true }
+        });
+        
+        console.log(`🔔 Found ${companiesNeedingReminder.length} companies needing expiration reminders`);
+        
+        for (const company of companiesNeedingReminder) {
+            const reminderSent = await sendExpirationReminderEmail(company);
+            
+            if (reminderSent) {
+                company.planReminderSent = true;
+                await company.save();
+            }
+        }
+        
+        return companiesNeedingReminder.length;
+    } catch (error) {
+        console.error('❌ Error sending expiration reminders:', error);
+        return 0;
+    }
+}
+
+// Main subscription check function
+async function checkSubscriptions() {
+    console.log('\n⏰ Starting daily subscription check...');
+    const startTime = Date.now();
+    
+    // Step 1: Send 3-day reminders
+    const remindersCount = await sendExpirationReminders();
+    
+    // Step 2: Downgrade expired subscriptions
+    const downgradedCount = await downgradeExpiredSubscriptions();
+    
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`✅ Subscription check complete in ${duration}s: ${remindersCount} reminders sent, ${downgradedCount} plans downgraded\n`);
+}
 
 // 2. СХЕМА ДАННЫХ (Определяем, как выглядит компания)
 const companySchema = new mongoose.Schema({
@@ -190,16 +588,26 @@ const companySchema = new mongoose.Schema({
     reviewerName: {
         type: String
     },
+    // Blog article URL (for enterprise tier)
+    blogArticleUrl: {
+        type: String
+    },
     // Subscription and approval
     subscriptionLevel: {
         type: String,
-        enum: ['free', 'lite', 'medium', 'strong'],
-        default: 'free'
+        enum: ['basic', 'pro', 'enterprise'],
+        default: 'basic'
     },
     approvalStatus: {
         type: String,
-        enum: ['pending', 'approved', 'rejected'],
+        enum: ['pending', 'approved', 'rejected', 'pending_payment'],
         default: 'pending'
+    },
+    rejectionReason: {
+        type: String // Reason for automatic rejection (e.g., "blacklist")
+    },
+    paymentConfirmedAt: {
+        type: Date // When payment was confirmed for pro/enterprise
     },
     // Additional fields for map and sorting
     latitude: {
@@ -227,6 +635,17 @@ const companySchema = new mongoose.Schema({
     },
     userEmail: {
         type: String // User's email for reference
+    },
+    // Subscription management
+    planExpiresAt: {
+        type: Date // When the current paid plan expires
+    },
+    planReminderSent: {
+        type: Boolean,
+        default: false // Track if 3-day reminder was sent
+    },
+    planDowngradedAt: {
+        type: Date // When plan was auto-downgraded to basic
     },
     createdAt: {
         type: Date,
@@ -426,6 +845,20 @@ app.get('/api/companies', async (req, res) => {
 
         // Выполняем поиск в MongoDB с учетом созданного объекта filter
         const companies = await Company.find(filter);
+        
+        // Сортируем компании по уровню подписки: enterprise -> pro -> basic
+        const subscriptionPriority = {
+            'enterprise': 3,
+            'pro': 2,
+            'basic': 1
+        };
+        
+        companies.sort((a, b) => {
+            const priorityA = subscriptionPriority[a.subscriptionLevel] || 0;
+            const priorityB = subscriptionPriority[b.subscriptionLevel] || 0;
+            return priorityB - priorityA;
+        });
+        
         res.json(companies);
 
     } catch (error) {
@@ -656,28 +1089,90 @@ app.get('/api/reviews/:companyId', async (req, res) => {
 });
 
 // POST /api/companies - Добавить новую компанию
-// 🟢 SECURITY: Status is NOT user-controllable. Always defaults to 'pending'.
-// Admin status changes will be handled by a separate authenticated endpoint (future).
+// 🟢 AUTOMATED MODERATION: Validation + Blacklist check + auto-approval
 app.post('/api/companies', async (req, res) => {
     try {
         // 🟢 SECURITY: Не позволяем пользователю устанавливать статус вручную
-        // Статус должен быть установлен только администратором через отдельный эндпоинт
-        const { status, ...safeData } = req.body;
+        const { status, approvalStatus, ...safeData } = req.body;
         
-        // Generate slug from company name
-        const slug = generateSlug(safeData.name);
+        // 📝 STEP 0: Validate and sanitize data (fix CAPS, remove excessive punctuation)
+        const sanitizedData = validateAndSanitizeBusinessData(safeData);
         
-        // Всегда устанавливаем статус в 'pending' для новых компаний
-        const companyData = { ...safeData, status: 'pending', slug };
+        // Generate slug from sanitized company name
+        const slug = generateSlug(sanitizedData.name);
         
-        // Создаем и сохраняем компанию с защищенными данными
-        const newCompany = new Company(companyData); 
+        // 🚫 STEP 1: Check blacklist (name + description)
+        const nameCheck = containsBlacklistedWords(sanitizedData.name);
+        const descCheck = containsBlacklistedWords(
+            typeof sanitizedData.description === 'string' 
+                ? sanitizedData.description 
+                : JSON.stringify(sanitizedData.description)
+        );
+        
+        if (nameCheck || descCheck) {
+            console.log(`🚫 Company rejected due to blacklist: ${sanitizedData.name}`);
+            
+            // Auto-reject if blacklisted words found
+            const companyData = { 
+                ...sanitizedData, 
+                slug,
+                approvalStatus: 'rejected',
+                rejectionReason: 'Содержит запрещенные слова или спам-паттерны'
+            };
+            
+            const newCompany = new Company(companyData);
+            const savedCompany = await newCompany.save();
+            
+            return res.status(400).json({ 
+                error: 'Заявка отклонена: содержит недопустимый контент',
+                company: savedCompany
+            });
+        }
+        
+        // ✅ STEP 2: Auto-approval logic based on subscription level
+        const subscriptionLevel = sanitizedData.subscriptionLevel || 'basic';
+        let finalApprovalStatus = 'pending';
+        let isVerified = false;
+        
+        if (subscriptionLevel === 'basic') {
+            // ✅ Basic tier: Auto-approve immediately if blacklist passed
+            finalApprovalStatus = 'approved';
+            console.log(`✅ Basic company auto-approved: ${sanitizedData.name}`);
+            
+            // Send notification to admin with sanitized name
+            await sendAdminNotification(sanitizedData.name, 'approved', 'basic');
+            
+        } else if (subscriptionLevel === 'pro' || subscriptionLevel === 'enterprise') {
+            // 💰 Paid tiers: Set to pending_payment (will be approved after payment webhook)
+            finalApprovalStatus = 'pending_payment';
+            isVerified = false; // Will be set to true after payment
+            console.log(`💰 ${subscriptionLevel} company set to pending_payment: ${sanitizedData.name}`);
+        }
+        
+        // Create company with automated status
+        const companyData = { 
+            ...sanitizedData, 
+            slug,
+            subscriptionLevel,
+            approvalStatus: finalApprovalStatus,
+            isVerified
+        };
+        
+        const newCompany = new Company(companyData);
         const savedCompany = await newCompany.save();
         
-        // Отправляем обратно успешный статус и сохраненный объект
-        res.status(201).json(savedCompany); 
+        // Success response
+        res.status(201).json({
+            success: true,
+            message: finalApprovalStatus === 'approved' 
+                ? 'Компания автоматически одобрена и опубликована!' 
+                : 'Заявка принята. Ожидает оплаты.',
+            company: savedCompany,
+            approvalStatus: finalApprovalStatus
+        });
+        
     } catch (error) {
-        // Если, например, поле 'name' уже существует (unique: true)
+        console.error('Error creating company:', error);
         res.status(400).json({ error: error.message }); 
     }
 });
@@ -715,16 +1210,56 @@ app.post('/api/reviews/:companyId', async (req, res) => {
 });
 
 // POST /api/business-submission - Protected route for authenticated users to submit their business
+// 🟢 AUTOMATED MODERATION: Validation + Blacklist check + auto-approval
 app.post('/api/business-submission', verifyToken, async (req, res) => {
     try {
-        // Ensure category field is set for backward compatibility
+        // Get subscription level from request (set by user in AddBusiness form)
+        const subscriptionLevel = req.body.subscriptionLevel || req.body.plan || 'basic';
+        
+        // 📝 STEP 0: Validate and sanitize data
+        const sanitizedData = validateAndSanitizeBusinessData(req.body);
+        
+        // 🚫 STEP 1: Check blacklist
+        const nameCheck = containsBlacklistedWords(sanitizedData.name);
+        const descCheck = containsBlacklistedWords(
+            typeof sanitizedData.description === 'string' 
+                ? sanitizedData.description 
+                : JSON.stringify(sanitizedData.description)
+        );
+        
+        if (nameCheck || descCheck) {
+            console.log(`🚫 Business submission rejected due to blacklist: ${sanitizedData.name}`);
+            
+            return res.status(400).json({ 
+                error: 'Заявка отклонена: содержит недопустимый контент или спам-паттерны',
+                reason: 'blacklist'
+            });
+        }
+        
+        // ✅ STEP 2: Auto-approval logic
+        let approvalStatus = 'pending';
+        let isVerified = false;
+        
+        if (subscriptionLevel === 'basic') {
+            // Basic: Auto-approve
+            approvalStatus = 'approved';
+            console.log(`✅ Basic business auto-approved: ${sanitizedData.name}`);
+            await sendAdminNotification(sanitizedData.name, 'approved', 'basic');
+            
+        } else if (subscriptionLevel === 'pro' || subscriptionLevel === 'enterprise') {
+            // Paid tiers: Pending payment
+            approvalStatus = 'pending_payment';
+            console.log(`💰 ${subscriptionLevel} business pending payment: ${sanitizedData.name}`);
+        }
+        
+        // Prepare business data with sanitized fields
         const businessData = {
-            ...req.body,
-            userId: req.user.uid, // Add authenticated user's ID
-            userEmail: req.user.email, // Add user's email for reference
-            approvalStatus: 'pending',
-            subscriptionLevel: 'free',
-            isVerified: false
+            ...sanitizedData,
+            userId: req.user.uid,
+            userEmail: req.user.email,
+            approvalStatus,
+            subscriptionLevel,
+            isVerified
         };
         
         // If category is not provided but subCategory is, use subCategory as category
@@ -737,8 +1272,13 @@ app.post('/api/business-submission', verifyToken, async (req, res) => {
         
         res.status(201).json({ 
             success: true,
-            message: 'Business submitted successfully. It will appear after admin approval.',
-            business: savedBusiness
+            message: approvalStatus === 'approved'
+                ? 'Ваш бизнес автоматически одобрен и опубликован!'
+                : approvalStatus === 'pending_payment'
+                ? 'Заявка принята. Ожидает подтверждения оплаты.'
+                : 'Заявка отправлена на модерацию.',
+            business: savedBusiness,
+            approvalStatus
         });
     } catch (error) {
         console.error("Error submitting business:", error);
@@ -766,11 +1306,11 @@ app.put('/api/admin/approve/:id', async (req, res) => {
         
         const updateData = {
             approvalStatus: 'approved',
-            subscriptionLevel: subscriptionLevel || 'free'
+            subscriptionLevel: subscriptionLevel || 'basic'
         };
         
-        // If upgrading to medium or strong, mark as verified
-        if (subscriptionLevel === 'medium' || subscriptionLevel === 'strong') {
+        // If upgrading to pro or enterprise, mark as verified
+        if (subscriptionLevel === 'pro' || subscriptionLevel === 'enterprise') {
             updateData.isVerified = true;
         }
         
@@ -813,6 +1353,121 @@ app.delete('/api/admin/reject/:id', async (req, res) => {
     } catch (error) {
         console.error("Error deleting business:", error);
         res.status(400).json({ error: error.message });
+    }
+});
+
+// PATCH /api/companies/:id/extend-subscription - Extend/renew company subscription
+app.patch('/api/companies/:id/extend-subscription', async (req, res) => {
+    try {
+        const { months, plan } = req.body;
+        const companyId = req.params.id;
+        
+        if (!months || !plan) {
+            return res.status(400).json({ error: 'months and plan are required' });
+        }
+        
+        if (!['basic', 'pro', 'enterprise'].includes(plan)) {
+            return res.status(400).json({ error: 'Invalid plan. Must be: basic, pro, or enterprise' });
+        }
+        
+        const company = await Company.findById(companyId);
+        
+        if (!company) {
+            return res.status(404).json({ error: 'Company not found' });
+        }
+        
+        // Calculate new expiry date
+        const currentExpiry = company.planExpiresAt || new Date();
+        const newExpiry = new Date(currentExpiry);
+        newExpiry.setMonth(newExpiry.getMonth() + months);
+        
+        // Update subscription
+        company.subscriptionLevel = plan;
+        company.planExpiresAt = newExpiry;
+        company.planReminderSent = false; // Reset reminder flag
+        
+        // If upgrading to paid plan, mark as verified
+        if (plan === 'pro' || plan === 'enterprise') {
+            company.isVerified = true;
+        }
+        
+        await company.save();
+        
+        console.log(`✅ Subscription extended: ${company.name} → ${plan} until ${newExpiry.toLocaleDateString()}`);
+        
+        res.json({ 
+            success: true,
+            message: `Subscription extended for ${months} months`,
+            company: {
+                id: company._id,
+                name: company.name,
+                subscriptionLevel: company.subscriptionLevel,
+                planExpiresAt: company.planExpiresAt,
+                newExpiry: newExpiry
+            }
+        });
+    } catch (error) {
+        console.error("Error extending subscription:", error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// 🧪 TEST ENDPOINT: Set expired date for testing (for testing only)
+app.patch('/api/admin/test-set-expired/:id', async (req, res) => {
+    try {
+        const { daysAgo, plan } = req.body;
+        const companyId = req.params.id;
+        
+        const company = await Company.findById(companyId);
+        if (!company) {
+            return res.status(404).json({ error: 'Company not found' });
+        }
+        
+        // Set expiry date in the past
+        const expiredDate = new Date();
+        expiredDate.setDate(expiredDate.getDate() - (daysAgo || 3));
+        
+        company.subscriptionLevel = plan || 'pro';
+        company.planExpiresAt = expiredDate;
+        company.isVerified = true;
+        company.planReminderSent = false;
+        company.approvalStatus = 'approved';
+        
+        await company.save();
+        
+        console.log(`🧪 TEST: Set ${company.name} to expired ${plan || 'pro'} (${daysAgo || 3} days ago)`);
+        
+        res.json({ 
+            success: true,
+            message: 'Company updated for testing',
+            company: {
+                name: company.name,
+                subscriptionLevel: company.subscriptionLevel,
+                planExpiresAt: company.planExpiresAt,
+                isVerified: company.isVerified
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error setting test data:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 🧪 TEST ENDPOINT: Manual subscription check (for testing only)
+app.get('/api/admin/test-subscription-check', async (req, res) => {
+    try {
+        console.log('🧪 Manual subscription check triggered via API');
+        await checkSubscriptions();
+        res.json({ 
+            success: true,
+            message: 'Subscription check completed. Check server logs for details.'
+        });
+    } catch (error) {
+        console.error('❌ Error during manual subscription check:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
     }
 });
 
@@ -873,6 +1528,73 @@ app.post('/api/admin/login', (req, res) => {
         res.status(401).json({ 
             error: 'Invalid password' 
         });
+    }
+});
+
+// 🔔 POST /api/webhooks/payment - Webhook for payment confirmation
+// This endpoint will be called by your payment provider (Stripe, PayPal, etc.)
+app.post('/api/webhooks/payment', express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+        // TODO: Verify webhook signature from payment provider
+        // For Stripe: stripe.webhooks.constructEvent(req.body, sig, webhookSecret)
+        // For PayPal: verify signature according to PayPal docs
+        
+        const paymentData = req.body;
+        
+        console.log('💳 Payment webhook received:', paymentData);
+        
+        // Extract company ID and payment status from webhook
+        // Structure depends on your payment provider
+        const { companyId, status, amount, subscriptionLevel } = paymentData;
+        
+        if (status === 'succeeded' || status === 'completed') {
+            // Find company by ID
+            const company = await Company.findById(companyId);
+            
+            if (!company) {
+                console.error(`❌ Company not found: ${companyId}`);
+                return res.status(404).json({ error: 'Company not found' });
+            }
+            
+            // Check if company was waiting for payment
+            if (company.approvalStatus !== 'pending_payment') {
+                console.warn(`⚠️ Company ${companyId} not in pending_payment status`);
+                return res.status(400).json({ error: 'Company not awaiting payment' });
+            }
+            
+            // ✅ Auto-approve after successful payment
+            company.approvalStatus = 'approved';
+            company.isVerified = true;
+            company.paymentConfirmedAt = new Date();
+            
+            await company.save();
+            
+            console.log(`✅ Company auto-approved after payment: ${company.name} (${subscriptionLevel})`);
+            
+            // Send notification to admin
+            await sendAdminNotification(
+                company.name, 
+                'approved', 
+                company.subscriptionLevel
+            );
+            
+            res.json({ 
+                success: true, 
+                message: 'Payment confirmed and company approved',
+                company 
+            });
+            
+        } else {
+            console.log(`💳 Payment failed or pending for company: ${companyId}`);
+            res.json({ 
+                success: false, 
+                message: 'Payment not completed' 
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error processing payment webhook:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -986,6 +1708,30 @@ app.get('/sitemap.xml', async (req, res) => {
         res.status(500).send('Error generating sitemap');
     }
 });
+
+// 🕐 CRON JOB: Daily subscription check at 3:00 AM
+// Schedule: '0 3 * * *' = Every day at 3:00 AM (Europe/Tallinn timezone)
+// For testing: '*/5 * * * *' = Every 5 minutes
+// For testing: '* * * * *' = Every minute
+// For testing: '0 * * * *' = Every hour
+
+cron.schedule('0 3 * * *', async () => {
+    console.log('⏰ Cron job triggered: Daily subscription check');
+    await checkSubscriptions();
+}, {
+    scheduled: true,
+    timezone: "Europe/Tallinn"
+});
+
+console.log('✅ Cron job scheduled: Daily subscription check at 3:00 AM (Europe/Tallinn)');
+
+// Run initial check on server startup (optional, for testing)
+if (process.env.RUN_SUBSCRIPTION_CHECK_ON_STARTUP === 'true') {
+    setTimeout(async () => {
+        console.log('🔄 Running initial subscription check on startup...');
+        await checkSubscriptions();
+    }, 5000); // Wait 5 seconds for DB connection
+}
 
 // 4. ЗАПУСК СЕРВЕРА
 app.listen(PORT, () => {

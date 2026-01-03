@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      # HTTP порт
+      - '80:80'
+      # Админ панель
+      - '81:81'
+      # HTTPS порт
+      - '443:443'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    environment:
+      # Отключить IPv6 если нужно
+      DISABLE_IPV6: 'true'
