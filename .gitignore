@@ -10,3 +10,9 @@ frontend/.env
 .env.development.local
 .env.test.local
 .env.production.local
+
+# SSL certificates for local development
+ssl/
+*.pem
+*.key
+*.crt

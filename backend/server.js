@@ -1,7 +1,7 @@
 // Kontrollitud.ee/backend/server.js
 
 // 1. ИМПОРТЫ
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -41,7 +41,7 @@ const DB_URI = process.env.MONGODB_URI || process.env.DB_URI;
 
 if (!DB_URI) {
     console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: MONGODB_URI не найден в переменных окружения!');
-    console.error('Создайте файл .env в директории backend/ с переменной MONGODB_URI');
+    console.error('Создайте файл .env в корне проекта (Kontrollitud.ee/.env) с переменной MONGODB_URI');
     process.exit(1);
 }
 

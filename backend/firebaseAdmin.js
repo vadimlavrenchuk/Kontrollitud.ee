@@ -3,29 +3,40 @@
  * Used for backend token verification and user management
  */
 
+// Load environment variables from root .env file
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
 const admin = require('firebase-admin');
+const path = require('path');
+const fs = require('fs');
 
 // Check if Firebase Admin is already initialized
 if (!admin.apps.length) {
     try {
-        // Initialize Firebase Admin with service account credentials from environment variables
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                projectId: process.env.FIREBASE_PROJECT_ID,
-                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-                // Replace escaped newlines with actual newlines
-                privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-            })
-        });
+        // Try to use service account JSON file first
+        const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json');
         
-        console.log('✅ Firebase Admin SDK initialized successfully');
+        if (fs.existsSync(serviceAccountPath)) {
+            // Use JSON file if it exists
+            const serviceAccount = require('./firebase-service-account.json');
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount)
+            });
+            console.log('✅ Firebase Admin SDK initialized from JSON file');
+        } else {
+            // Fall back to environment variables
+            admin.initializeApp({
+                credential: admin.credential.cert({
+                    projectId: process.env.FIREBASE_PROJECT_ID,
+                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+                })
+            });
+            console.log('✅ Firebase Admin SDK initialized from .env');
+        }
     } catch (error) {
         console.error('❌ Firebase Admin initialization error:', error.message);
-        console.error('⚠️  Please check your FIREBASE_* environment variables in .env file');
-        console.error('⚠️  Authentication endpoints will not work until Firebase is configured');
-        
-        // Don't throw error to allow server to start (but auth will fail)
-        // This allows developers to set up environment variables without crashing
+        console.error('⚠️  Please add firebase-service-account.json to backend folder');
     }
 } else {
     console.log('ℹ️  Firebase Admin SDK already initialized');

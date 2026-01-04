@@ -285,34 +285,23 @@ function CatalogPage() {
         {/* Search & Filters Bar */}
         {!searchQuery && (
           <div className="controls-bar">
-            <div className="search-input-wrapper">
-              <FontAwesomeIcon icon={faSearch} className="search-input-icon" />
-              <input
-                type="text"
-                placeholder={t('search_placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-            </div>
+            {selectedMainCategory !== 'Все' && (
+              <div className="selected-main-category">
+                {getCategoryIcon(selectedMainCategory)} {t(selectedMainCategory)}
+              </div>
+            )}
 
             {selectedMainCategory !== 'Все' && (
-              <>
-                <div className="selected-main-category">
-                  {getCategoryIcon(selectedMainCategory)} {t(selectedMainCategory)}
-                </div>
-                
-                <select 
-                  value={selectedSubCategory} 
-                  onChange={(e) => handleSubCategoryChange(e.target.value)} 
-                  className="filter-select"
-                >
-                  <option value="Все">{t('all_subcategories')}</option>
-                  {getSubcategories(selectedMainCategory).map(subCat => (
-                    <option key={subCat} value={subCat}>{t(subCat)}</option>
-                  ))}
-                </select>
-              </>
+              <select 
+                value={selectedSubCategory} 
+                onChange={(e) => handleSubCategoryChange(e.target.value)} 
+                className="filter-select"
+              >
+                <option value="Все">{t('all_subcategories')}</option>
+                {getSubcategories(selectedMainCategory).map(subCat => (
+                  <option key={subCat} value={subCat}>{t(subCat)}</option>
+                ))}
+              </select>
             )}
 
             <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="filter-select">
