@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
+import { auth } from '../firebase';
 import './PaymentButton.css';
 
 // Initialize Stripe with publishable key
@@ -45,12 +46,12 @@ function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic' })
         setError(null);
         
         try {
-            // Get auth token
-            const token = localStorage.getItem('authToken');
-            
-            if (!token) {
+            // Get auth token from Firebase
+            if (!auth.currentUser) {
                 throw new Error('Вы должны быть авторизованы для оплаты');
             }
+            
+            const token = await auth.currentUser.getIdToken();
             
             // Create checkout session
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';

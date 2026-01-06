@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { toast, ToastContainer } from 'react-toastify';
 import { useAuth } from './AuthContext';
-import { db, uploadBusinessImage } from './firebase';
+import { db, uploadBusinessImage, auth } from './firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { CATEGORIES, getMainCategories, getSubcategories, getCategoryIcon } from './constants/categories';
 import 'react-toastify/dist/ReactToastify.css';
@@ -212,7 +212,7 @@ function AddBusiness() {
         setLoading(true);
         
         try {
-            const token = await user.getIdToken();
+            const token = await auth.currentUser.getIdToken();
             
             // Prepare minimal company data for pending payment
             const companyData = {
