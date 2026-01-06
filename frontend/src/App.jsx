@@ -26,6 +26,7 @@ import BlogPostDetail from './pages/BlogPostDetail.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import PaymentSuccess from './pages/PaymentSuccess.jsx';
 import PaymentCancelled from './pages/PaymentCancelled.jsx';
+import PaymentPage from './pages/PaymentPage.jsx';
 
 function AppContent() {
     const { t, i18n } = useTranslation();
@@ -191,6 +192,11 @@ function AppContent() {
                     <Route path="/login" element={<AuthPage />} />
                     <Route path="/payment-success" element={<PaymentSuccess />} />
                     <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+                    <Route path="/payment" element={
+                        <RequireAuth>
+                            <PaymentPage />
+                        </RequireAuth>
+                    } />
                     <Route path="/add" element={
                         <RequireAuth>
                             <AddBusiness />

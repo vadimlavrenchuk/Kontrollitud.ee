@@ -1,0 +1,92 @@
+/* PaymentPage.css */
+
+.payment-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 40px 20px;
+}
+
+.payment-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.payment-header {
+    margin-bottom: 40px;
+}
+
+.back-button {
+    background: white;
+    border: 1px solid #e0e0e0;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.back-button:hover {
+    background: #f5f5f5;
+    transform: translateX(-4px);
+}
+
+.payment-header h1 {
+    color: #2c3e50;
+    font-size: 32px;
+    margin: 0;
+}
+
+.payment-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.plan-summary {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.plan-summary h2 {
+    color: #2c3e50;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.plan-card {
+    border: 3px solid;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+}
+
+.plan-card h3 {
+    font-size: 24px;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.plan-price {
+    font-size: 36px;
+    font-weight: bold;
+    color: #27ae60;
+}
+
+.payment-section {
+    display: flex;
+    align-items: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .payment-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .payment-header h1 {
+        font-size: 24px;
+    }
+}

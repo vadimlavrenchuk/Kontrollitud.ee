@@ -1,9 +1,10 @@
 // Kontrollitud.ee/frontend/src/pages/PartnersPage.jsx
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
+import { useAuth } from '../AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faShieldAlt, 
@@ -23,6 +24,10 @@ import '../styles/PartnersPage.scss';
 
 function PartnersPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [userCompanies, setUserCompanies] = useState([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [formData, setFormData] = useState({
     businessName: '',
     email: '',
@@ -31,6 +36,73 @@ function PartnersPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
+
+  // Fetch user's companies
+  useEffect(() => {
+    const fetchUserCompanies = async () => {
+      if (!user) {
+        setUserCompanies([]);
+        return;
+      }
+
+      setLoadingCompanies(true);
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch('http://localhost:5000/api/companies', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const companies = await response.json();
+          // Filter companies that belong to this user
+          const myCompanies = companies.filter(c => c.userId === user.uid);
+          setUserCompanies(myCompanies);
+        }
+      } catch (err) {
+        console.error('Error fetching companies:', err);
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+
+    fetchUserCompanies();
+  }, [user]);
+
+  // Smart routing for plan selection
+  const handlePlanClick = (plan) => {
+    // Plan can be: 'basic', 'pro', 'enterprise'
+    
+    // If not logged in, go to auth page
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    // If logged in but no companies, go to add business
+    if (userCompanies.length === 0) {
+      navigate('/add-business');
+      return;
+    }
+
+    // If user has companies
+    if (plan === 'basic') {
+      // For basic plan, always go to add business form
+      navigate('/add-business');
+    } else {
+      // For pro/enterprise, use first company for payment
+      const firstCompany = userCompanies[0];
+      
+      // Create payment button component dynamically or navigate with state
+      navigate('/payment', { 
+        state: { 
+          companyId: firstCompany._id,
+          subscriptionLevel: plan 
+        } 
+      });
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -242,9 +314,12 @@ function PartnersPage() {
               </div>
 
               {/* CTA */}
-              <Link to="/add-business" className="pricing-cta">
+              <button 
+                onClick={() => handlePlanClick('basic')}
+                className="pricing-cta"
+              >
                 <FontAwesomeIcon icon={faRocket} /> {t('get_started')}
-              </Link>
+              </button>
             </div>
 
             {/* PRO PLAN */}
@@ -298,9 +373,12 @@ function PartnersPage() {
               </div>
 
               {/* CTA */}
-              <a href="#contact" className="pricing-cta cta-popular">
+              <button 
+                onClick={() => handlePlanClick('pro')}
+                className="pricing-cta cta-popular"
+              >
                 <FontAwesomeIcon icon={faBolt} /> {t('upgrade_to_pro')}
-              </a>
+              </button>
             </div>
 
             {/* ENTERPRISE PLAN */}
@@ -355,9 +433,12 @@ function PartnersPage() {
               </div>
 
               {/* CTA */}
-              <a href="#contact" className="pricing-cta">
+              <button 
+                onClick={() => handlePlanClick('enterprise')}
+                className="pricing-cta"
+              >
                 <FontAwesomeIcon icon={faCrown} /> {t('buy_luxury') || 'Купить Люкс'}
-              </a>
+              </button>
             </div>
           </div>
         </div>
