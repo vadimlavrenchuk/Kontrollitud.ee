@@ -251,7 +251,7 @@ function AddBusiness() {
             }
             
             const result = await response.json();
-            const companyId = result._id || result.id;
+            const companyId = result.company?._id || result.company?.id || result._id || result.id;
             
             console.log('✅ Company created with pending_payment status:', companyId);
             
