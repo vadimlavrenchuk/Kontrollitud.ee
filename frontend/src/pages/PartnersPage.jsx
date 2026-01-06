@@ -223,7 +223,7 @@ function PartnersPage() {
                   <i className="fas fa-building" style={{ fontSize: '4rem', color: '#9ca3af' }}></i>
                 </div>
                 <div className="preview-content">
-                  <h3 className="preview-business-name">{t('your_business') || 'Ваш Бизнес'}</h3>
+                  <h3 className="preview-business-name">{t('your_business') || t('business_name') || 'Ваш Бизнес'}</h3>
                   <div className="preview-meta">
                     <span>{t('category') || 'Категория'}</span>
                     <span>{t('city') || 'Город'}</span>
@@ -269,7 +269,7 @@ function PartnersPage() {
                 </div>
                 <div className="preview-content">
                   <h3 className="preview-business-name">
-                    {t('your_business') || 'Ваш Бизнес'} <span className="pro-checkmark">✔️</span>
+                    {t('your_business') || t('business_name') || 'Ваш Бизнес'} <span className="pro-checkmark">✔️</span>
                   </h3>
                   <div className="preview-meta">
                     <span>{t('category') || 'Категория'}</span>
@@ -310,7 +310,7 @@ function PartnersPage() {
                 <span className="plan-badge enterprise-badge">
                   <FontAwesomeIcon icon={faCrown} /> {t('enterprise_plan')}
                 </span>
-                <span className="plan-price-tag">{t('custom')}</span>
+                <span className="plan-price-tag">€50/{t('per_month')}</span>
               </div>
 
               {/* Preview Card */}
@@ -323,7 +323,7 @@ function PartnersPage() {
                 </div>
                 <div className="preview-content">
                   <h3 className="preview-business-name">
-                    {t('your_business') || 'Ваш Бизнес'} <span className="enterprise-crown">🏆</span>
+                    {t('your_business') || t('business_name') || 'Ваш Бизнес'} <span className="enterprise-crown">🏆</span>
                   </h3>
                   <div className="preview-meta">
                     <span>{t('category') || 'Категория'}</span>
@@ -356,7 +356,7 @@ function PartnersPage() {
 
               {/* CTA */}
               <a href="#contact" className="pricing-cta">
-                <FontAwesomeIcon icon={faCrown} /> {t('contact_sales')}
+                <FontAwesomeIcon icon={faCrown} /> {t('buy_luxury') || 'Купить Люкс'}
               </a>
             </div>
           </div>
