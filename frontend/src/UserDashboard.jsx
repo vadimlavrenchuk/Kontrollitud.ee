@@ -42,7 +42,8 @@ function UserDashboard() {
         try {
             setLoading(true);
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`http://localhost:5000/api/user/submissions?userId=${user.uid}`, {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const response = await fetch(`${apiUrl}/api/user/submissions?userId=${user.uid}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

@@ -10,8 +10,8 @@ import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AdminDashboard.scss';
 
-const API_BASE_URL = 'http://localhost:5000/api/companies';
-const UPLOAD_URL = 'http://localhost:5000/api/upload';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/companies`;
+const UPLOAD_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/upload`;
 
 function AdminDashboard() {
     const { t } = useTranslation();
