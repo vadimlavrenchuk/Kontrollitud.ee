@@ -166,7 +166,7 @@ function AddBusiness() {
         }));
     };
 
-    const handleNextStep = () => {
+    const handleNextStep = async () => {
         // Validate current step
         if (currentStep === 1) {
             if (!formData.name) {
@@ -185,11 +185,13 @@ function AddBusiness() {
                 return;
             }
         } else if (currentStep === 4) {
-            // Step 4 is plan selection - no validation needed, plan has default value
-            // If basic plan, skip to submission (no step 5)
-            if (formData.plan === 'basic') {
-                return; // Stay on step 4, show submit button
+            // Step 4 is plan selection
+            // For paid plans (pro/enterprise), create company and redirect to payment
+            if (formData.plan === 'pro' || formData.plan === 'enterprise') {
+                await createPendingCompanyAndRedirectToPayment();
+                return; // Stop here, don't move to next step
             }
+            // For basic plan, no validation needed, continue to submission
         }
         
         // Move to next step
@@ -205,7 +207,68 @@ function AddBusiness() {
             setCurrentStep(currentStep - 1);
         }
     };
-
+    // Create company with pending_payment status and redirect to payment
+    const createPendingCompanyAndRedirectToPayment = async () => {
+        setLoading(true);
+        
+        try {
+            const token = await user.getIdToken();
+            
+            // Prepare minimal company data for pending payment
+            const companyData = {
+                name: formData.name,
+                mainCategory: formData.mainCategory,
+                subCategory: formData.subCategory,
+                category: formData.subCategory,
+                city: formData.city,
+                email: formData.email,
+                phone: formData.phone || '',
+                website: formData.website || '',
+                description: {
+                    et: formData.descriptionEt || '',
+                    en: formData.descriptionEn || '',
+                    ru: formData.descriptionRu || ''
+                },
+                subscriptionLevel: formData.plan,
+                approvalStatus: 'pending_payment',
+                userId: user.uid,
+                userEmail: user.email
+            };
+            
+            // Send to backend
+            const response = await fetch('http://localhost:5000/api/companies', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(companyData)
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to create company');
+            }
+            
+            const result = await response.json();
+            const companyId = result._id || result.id;
+            
+            console.log('✅ Company created with pending_payment status:', companyId);
+            
+            // Redirect to payment page
+            navigate('/payment', {
+                state: {
+                    companyId: companyId,
+                    subscriptionLevel: formData.plan
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error creating company:', error);
+            toast.error('Failed to process payment. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
     const handleSubmit = async () => {
         console.log('🚀 Начинаю отправку формы...');
         console.log('FormData:', formData);

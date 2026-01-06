@@ -10,7 +10,7 @@ function PaymentSuccess() {
     const sessionId = searchParams.get('session_id');
     
     useEffect(() => {
-        // Countdown redirect
+        // Countdown redirect to dashboard (users can manually add photos/social from there)
         const timer = setInterval(() => {
             setCountdown((prev) => {
                 if (prev <= 1) {
@@ -53,7 +53,7 @@ function PaymentSuccess() {
                     </div>
                     <div className="detail-item">
                         <span className="detail-icon">✓</span>
-                        <span>Подтверждение отправлено на email</span>
+                        <span>Добавьте фото и соцсети в панели управления</span>
                     </div>
                 </div>
                 
@@ -65,6 +65,7 @@ function PaymentSuccess() {
                 
                 <div className="redirect-info">
                     <p>Перенаправление в панель управления через {countdown} сек...</p>
+                    <p className="hint-text">Там вы сможете добавить фото, соцсети и другую информацию</p>
                 </div>
                 
                 <button 

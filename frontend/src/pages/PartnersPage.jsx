@@ -91,16 +91,29 @@ function PartnersPage() {
       // For basic plan, always go to add business form
       navigate('/add-business');
     } else {
-      // For pro/enterprise, use first company for payment
-      const firstCompany = userCompanies[0];
+      // For pro/enterprise
+      // Check if user has a basic plan company
+      const basicCompany = userCompanies.find(c => c.subscriptionLevel === 'basic');
       
-      // Create payment button component dynamically or navigate with state
-      navigate('/payment', { 
-        state: { 
-          companyId: firstCompany._id,
-          subscriptionLevel: plan 
-        } 
-      });
+      if (basicCompany) {
+        // Upgrade existing basic company
+        navigate('/payment', { 
+          state: { 
+            companyId: basicCompany._id,
+            subscriptionLevel: plan,
+            isUpgrade: true
+          } 
+        });
+      } else {
+        // User already has paid plan or just use first company
+        const firstCompany = userCompanies[0];
+        navigate('/payment', { 
+          state: { 
+            companyId: firstCompany._id,
+            subscriptionLevel: plan 
+          } 
+        });
+      }
     }
   };
 
@@ -444,8 +457,24 @@ function PartnersPage() {
         </div>
       </section>
 
-      {/* Contact Form Section */}
-      <section id="contact" className="partners-contact">
+      {/* Footer CTA Section */}
+      <section className="partners-footer-cta">
+        <div className="partners-container">
+          <h2>{t('ready_to_grow')}</h2>
+          <p>{t('join_verified_businesses')}</p>
+          <button 
+            onClick={() => handlePlanClick('basic')}
+            className="cta-button-large"
+          >
+            {t('get_started')}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export default PartnersPage;
         <div className="partners-container">
           <div className="contact-header">
             <h2 className="section-title">{t('get_in_touch_title')}</h2>
