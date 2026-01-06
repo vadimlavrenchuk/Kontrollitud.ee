@@ -1,0 +1,175 @@
+/* PaymentCancelled.css */
+
+.payment-cancelled-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    padding: 20px;
+}
+
+.payment-cancelled-container {
+    background: white;
+    border-radius: 16px;
+    padding: 60px 40px;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cancelled-icon {
+    margin-bottom: 30px;
+    animation: shake 0.6s ease-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+.payment-cancelled-container h1 {
+    color: #2c3e50;
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.cancelled-message {
+    margin-bottom: 40px;
+}
+
+.cancelled-message p {
+    color: #7f8c8d;
+    font-size: 18px;
+    margin: 10px 0;
+}
+
+.cancelled-options {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.cancelled-options h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.cancelled-options ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.cancelled-options li {
+    padding: 10px 0;
+    padding-left: 30px;
+    position: relative;
+    color: #2c3e50;
+}
+
+.cancelled-options li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.retry-button {
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.dashboard-button {
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #7f8c8d;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dashboard-button:hover {
+    border-color: #7f8c8d;
+    color: #2c3e50;
+}
+
+.support-info {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.support-info a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.support-info a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .payment-cancelled-container {
+        padding: 40px 20px;
+    }
+    
+    .payment-cancelled-container h1 {
+        font-size: 24px;
+    }
+    
+    .cancelled-message p {
+        font-size: 16px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .retry-button,
+    .dashboard-button {
+        width: 100%;
+    }
+}

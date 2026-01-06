@@ -1,0 +1,145 @@
+/* PaymentSuccess.css */
+
+.payment-success-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+}
+
+.payment-success-container {
+    background: white;
+    border-radius: 16px;
+    padding: 60px 40px;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.success-icon {
+    margin-bottom: 30px;
+    animation: scaleIn 0.6s ease-out 0.2s both;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.payment-success-container h1 {
+    color: #2c3e50;
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.success-message {
+    margin-bottom: 40px;
+}
+
+.success-message p {
+    color: #7f8c8d;
+    font-size: 18px;
+    margin: 10px 0;
+}
+
+.success-details {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 15px 0;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.detail-icon {
+    width: 30px;
+    height: 30px;
+    background: #27ae60;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.session-info {
+    margin-bottom: 20px;
+    color: #95a5a6;
+    font-size: 12px;
+}
+
+.redirect-info {
+    margin-bottom: 30px;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.dashboard-button {
+    padding: 15px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dashboard-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.dashboard-button:active {
+    transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .payment-success-container {
+        padding: 40px 20px;
+    }
+    
+    .payment-success-container h1 {
+        font-size: 24px;
+    }
+    
+    .success-message p {
+        font-size: 16px;
+    }
+    
+    .detail-item {
+        font-size: 14px;
+    }
+}

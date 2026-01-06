@@ -653,6 +653,16 @@ const companySchema = new mongoose.Schema({
     planDowngradedAt: {
         type: Date // When plan was auto-downgraded to basic
     },
+    // Stripe payment fields
+    stripeSessionId: {
+        type: String // Checkout session ID
+    },
+    stripeSubscriptionId: {
+        type: String // Subscription ID for recurring payments
+    },
+    stripeCustomerId: {
+        type: String // Customer ID in Stripe
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -660,6 +670,14 @@ const companySchema = new mongoose.Schema({
 });
 
 const Company = mongoose.model('Company', companySchema);
+
+// ===== PAYMENT ROUTES SETUP =====
+// Import and initialize payment routes
+const { initializePaymentRoutes } = require('./routes/payment');
+const paymentRouter = initializePaymentRoutes(Company);
+
+// Mount payment routes (must be before other middleware for webhook)
+app.use('/api', paymentRouter);
 
 // ===== HELPER FUNCTIONS =====
 

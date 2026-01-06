@@ -1,0 +1,145 @@
+/* PaymentButton.css */
+
+.payment-button-container {
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+}
+
+.plan-info {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.plan-info h3 {
+    color: #2c3e50;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.plan-price {
+    font-size: 32px;
+    font-weight: bold;
+    color: #27ae60;
+    margin-bottom: 20px;
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    margin: 0 auto;
+    max-width: 300px;
+}
+
+.plan-features li {
+    padding: 8px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.plan-features li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.payment-button {
+    width: 100%;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.payment-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.payment-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.payment-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.payment-button.loading {
+    background: linear-gradient(135deg, #95a5eb 0%, #a48bc4 100%);
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.payment-error {
+    margin-top: 15px;
+    padding: 12px;
+    background: #fee;
+    color: #c33;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.payment-secure-badge {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.current-plan-badge {
+    padding: 15px;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .payment-button-container {
+        padding: 15px;
+    }
+    
+    .plan-info h3 {
+        font-size: 20px;
+    }
+    
+    .plan-price {
+        font-size: 28px;
+    }
+    
+    .payment-button {
+        font-size: 16px;
+        padding: 12px 20px;
+    }
+}
