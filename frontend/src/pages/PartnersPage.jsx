@@ -206,42 +206,160 @@ function PartnersPage() {
             {t('pricing_subtitle')}
           </p>
           
-          <div className="pricing-grid">
-            {pricingPlans.map((plan, index) => (
-              <div key={index} className={`pricing-card ${plan.popular ? 'popular' : ''}`}>
-                {plan.popular && <div className="popular-badge">{t('most_popular')}</div>}
-                
-                <div className="pricing-icon">
-                  <FontAwesomeIcon icon={plan.icon} />
-                </div>
-                
-                <h3 className="pricing-name">{plan.name}</h3>
-                
-                <div className="pricing-price">
-                  <span className="price">{plan.price}</span>
-                  {plan.period && <span className="period">{plan.period}</span>}
-                </div>
-                
-                <ul className="pricing-features">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx}>
-                      <FontAwesomeIcon icon={faCheckCircle} className="check-icon" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                
-                {plan.ctaLink.startsWith('#') ? (
-                  <a href={plan.ctaLink} className={`pricing-cta ${plan.popular ? 'cta-popular' : ''}`}>
-                    {plan.ctaText}
-                  </a>
-                ) : (
-                  <Link to={plan.ctaLink} className={`pricing-cta ${plan.popular ? 'cta-popular' : ''}`}>
-                    {plan.ctaText}
-                  </Link>
-                )}
+          <div className="pricing-preview-grid">
+            {/* BASIC PLAN */}
+            <div className="pricing-preview-card basic-preview">
+              {/* Header */}
+              <div className="preview-header">
+                <span className="plan-badge">
+                  <FontAwesomeIcon icon={faRocket} /> {t('basic_plan')}
+                </span>
+                <span className="plan-price-tag">{t('free')}</span>
               </div>
-            ))}
+
+              {/* Preview Card */}
+              <div className="business-card-preview">
+                <div className="preview-image basic-image">
+                  <i className="fas fa-building" style={{ fontSize: '4rem', color: '#9ca3af' }}></i>
+                </div>
+                <div className="preview-content">
+                  <h3 className="preview-business-name">{t('your_business') || 'Ваш Бизнес'}</h3>
+                  <div className="preview-meta">
+                    <span>{t('category') || 'Категория'}</span>
+                    <span>{t('city') || 'Город'}</span>
+                  </div>
+                  <p className="preview-description">
+                    {t('feature_simple_listing')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Features Footer */}
+              <div className="preview-footer">
+                <small>
+                  ✗ {t('no_photo') || 'Без фото'} • ✗ {t('no_rating') || 'Без рейтинга'} • ✗ {t('no_social') || 'Без соцсетей'}
+                </small>
+              </div>
+
+              {/* CTA */}
+              <Link to="/add-business" className="pricing-cta">
+                <FontAwesomeIcon icon={faRocket} /> {t('get_started')}
+              </Link>
+            </div>
+
+            {/* PRO PLAN */}
+            <div className="pricing-preview-card pro-preview popular">
+              <div className="popular-badge">{t('most_popular')}</div>
+              
+              {/* Header */}
+              <div className="preview-header">
+                <span className="plan-badge pro-badge">
+                  <FontAwesomeIcon icon={faBolt} /> {t('pro_plan')}
+                </span>
+                <span className="plan-price-tag">€29/{t('per_month')}</span>
+              </div>
+
+              {/* Preview Card */}
+              <div className="business-card-preview verified-preview">
+                <div className="preview-image pro-image">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%233b82f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='white' font-weight='bold'%3E%D0%92%D0%B0%D1%88%D0%B5 %D1%84%D0%BE%D1%82%D0%BE%3C/text%3E%3C/svg%3E" alt="Preview" />
+                  <div className="preview-verified-badge">
+                    <FontAwesomeIcon icon={faShieldAlt} />
+                    <span>Verified</span>
+                  </div>
+                </div>
+                <div className="preview-content">
+                  <h3 className="preview-business-name">
+                    {t('your_business') || 'Ваш Бизнес'} <span className="pro-checkmark">✔️</span>
+                  </h3>
+                  <div className="preview-meta">
+                    <span>{t('category') || 'Категория'}</span>
+                    <span>{t('city') || 'Город'}</span>
+                  </div>
+                  <div className="preview-rating">
+                    <span className="stars">★★★★★</span>
+                    <span className="rating-text">5.0 (10 {t('reviews') || 'отзывов'})</span>
+                  </div>
+                  <p className="preview-description">
+                    {t('feature_priority_search')}
+                  </p>
+                  <div className="preview-social">
+                    <span className="social-icon instagram"><i className="fab fa-instagram"></i></span>
+                    <span className="social-icon tiktok"><i className="fab fa-tiktok"></i></span>
+                    <span className="social-icon youtube"><i className="fab fa-youtube"></i></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Features Footer */}
+              <div className="preview-footer">
+                <small>
+                  ✓ {t('photo') || 'Фото'} • ✓ {t('rating') || 'Рейтинг'} • ✓ {t('social') || 'Соцсети'} • ✓ {t('blue_checkmark') || 'Синяя галочка'}
+                </small>
+              </div>
+
+              {/* CTA */}
+              <a href="#contact" className="pricing-cta cta-popular">
+                <FontAwesomeIcon icon={faBolt} /> {t('upgrade_to_pro')}
+              </a>
+            </div>
+
+            {/* ENTERPRISE PLAN */}
+            <div className="pricing-preview-card enterprise-preview">
+              {/* Header */}
+              <div className="preview-header">
+                <span className="plan-badge enterprise-badge">
+                  <FontAwesomeIcon icon={faCrown} /> {t('enterprise_plan')}
+                </span>
+                <span className="plan-price-tag">{t('custom')}</span>
+              </div>
+
+              {/* Preview Card */}
+              <div className="business-card-preview enterprise-card">
+                <div className="preview-image enterprise-image">
+                  <div className="top-priority-badge">
+                    <FontAwesomeIcon icon={faCrown} /> TOP Priority
+                  </div>
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Cdefs%3E%3ClinearGradient id='gold' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23fbbf24'/%3E%3Cstop offset='100%25' style='stop-color:%23f59e0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='200' fill='url(%23gold)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white' font-weight='bold'%3E%D0%9F%D0%A0%D0%95%D0%9C%D0%98%D0%A3%D0%9C %D0%91%D0%90%D0%9D%D0%9D%D0%95%D0%A0%3C/text%3E%3C/svg%3E" alt="Premium" />
+                </div>
+                <div className="preview-content">
+                  <h3 className="preview-business-name">
+                    {t('your_business') || 'Ваш Бизнес'} <span className="enterprise-crown">🏆</span>
+                  </h3>
+                  <div className="preview-meta">
+                    <span>{t('category') || 'Категория'}</span>
+                    <span>{t('city') || 'Город'}</span>
+                  </div>
+                  <div className="preview-rating">
+                    <span className="stars gold-stars">★★★★★</span>
+                    <span className="rating-text">5.0 (50+ {t('reviews') || 'отзывов'})</span>
+                  </div>
+                  <p className="preview-description">
+                    {t('feature_featured_homepage')}
+                  </p>
+                  <div className="preview-social">
+                    <span className="social-icon instagram"><i className="fab fa-instagram"></i></span>
+                    <span className="social-icon tiktok"><i className="fab fa-tiktok"></i></span>
+                    <span className="social-icon youtube"><i className="fab fa-youtube"></i></span>
+                  </div>
+                  <button className="preview-blog-button" type="button">
+                    📰 {t('read_blog_review') || 'Читать обзор в блоге'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Features Footer */}
+              <div className="preview-footer">
+                <small>
+                  ✓ {t('all_from_pro') || 'Все из Pro'} • ✓ {t('gold_frame') || 'Золотая рамка'} • ✓ {t('blog') || 'Блог'} • ✓ {t('top_1') || 'ТОП-1'}
+                </small>
+              </div>
+
+              {/* CTA */}
+              <a href="#contact" className="pricing-cta">
+                <FontAwesomeIcon icon={faCrown} /> {t('contact_sales')}
+              </a>
+            </div>
           </div>
         </div>
       </section>
