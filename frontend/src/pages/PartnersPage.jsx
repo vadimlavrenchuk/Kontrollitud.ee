@@ -249,7 +249,6 @@ function PartnersPage() {
 
             {/* PRO PLAN */}
             <div className="pricing-preview-card pro-preview popular">
-              <div className="popular-badge">{t('most_popular')}</div>
               
               {/* Header */}
               <div className="preview-header">
