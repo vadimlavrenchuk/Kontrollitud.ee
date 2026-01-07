@@ -491,7 +491,15 @@ function CompanyDetails() {
                             {company.address && (
                                 <div className="info-item">
                                     <i className="fas fa-map-marker-alt"></i>
-                                    <span>{company.address}</span>
+                                    <a 
+                                        href={`https://www.google.com/maps/dir/?api=1&destination=${company.location?.lat},${company.location?.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="address-link"
+                                        title={t('get_directions')}
+                                    >
+                                        {company.address}
+                                    </a>
                                 </div>
                             )}
                         </div>
