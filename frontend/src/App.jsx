@@ -11,6 +11,7 @@ import logo from './assets/logokontroll.jpg';
 import CompanyList from './CompanyList.jsx'; 
 import CompanyDetails from './CompanyDetails.jsx';
 import AddBusiness from './AddBusiness.jsx'; // Business submission form (public)
+import EditCompany from './EditCompany.jsx'; // Edit company form (user)
 import AdminDashboard from './AdminDashboard.jsx';
 import UserDashboard from './UserDashboard.jsx';
 import AuthPage from './AuthPage.jsx';
@@ -349,6 +350,11 @@ function AppContent() {
                     <Route path="/dashboard" element={
                         <RequireAuth>
                             <UserDashboard />
+                        </RequireAuth>
+                    } />
+                    <Route path="/edit-business/:id" element={
+                        <RequireAuth>
+                            <EditCompany />
                         </RequireAuth>
                     } />
                     <Route path="/admin" element={

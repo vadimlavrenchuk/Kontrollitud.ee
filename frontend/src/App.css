@@ -352,7 +352,7 @@ body {
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   min-width: 220px;
-  z-index: 1000;
+  z-index: 9999;
   animation: slideDown 0.2s ease;
 }
 

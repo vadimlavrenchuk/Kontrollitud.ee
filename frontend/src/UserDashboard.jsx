@@ -13,7 +13,9 @@ import {
     faHourglassHalf, 
     faTimesCircle,
     faCalendarAlt,
-    faArrowLeft
+    faArrowLeft,
+    faEye,
+    faTrash
 } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-toastify';
 import { useAuth } from './AuthContext';
@@ -114,6 +116,39 @@ function UserDashboard() {
         navigate(`/edit-business/${companyId}`);
     };
 
+    const handleDelete = async (companyId, companyName) => {
+        if (!window.confirm(`${t('confirm_delete_company')} "${companyName}"?`)) {
+            return;
+        }
+        
+        try {
+            const token = localStorage.getItem('authToken');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const response = await fetch(`${apiUrl}/api/user/companies/${companyId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete company');
+            }
+            
+            toast.success(t('company_deleted_successfully'));
+            // Refresh submissions list
+            fetchUserSubmissions();
+        } catch (error) {
+            console.error('Error deleting company:', error);
+            toast.error(t('failed_to_delete_company'));
+        }
+    };
+
+    const getWeeklyViews = (weeklyViews) => {
+        if (!weeklyViews || weeklyViews.length === 0) return 0;
+        return weeklyViews.reduce((sum, entry) => sum + (entry.count || 0), 0);
+    };
+
     if (loading) {
         return (
             <div className="user-dashboard">
@@ -194,6 +229,17 @@ function UserDashboard() {
                                             <span className="meta-city">{submission.city}</span>
                                         </div>
 
+                                        {/* Views Statistics - Счетчик кипиша */}
+                                        {submission.approvalStatus === 'approved' && (
+                                            <div className="views-stats">
+                                                <FontAwesomeIcon icon={faEye} className="views-icon" />
+                                                <div className="views-info">
+                                                    <span className="views-count">{getWeeklyViews(submission.weeklyViews)}</span>
+                                                    <span className="views-label">{t('views_this_week')}</span>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <p className="status-description">
                                             {statusConfig.description}
                                         </p>
@@ -201,13 +247,29 @@ function UserDashboard() {
                                         {/* Action Buttons */}
                                         <div className="card-actions">
                                             {submission.approvalStatus === 'approved' && (
-                                                <button 
-                                                    onClick={() => handleViewOnMap(submission._id)}
-                                                    className="btn-action btn-view"
-                                                >
-                                                    <FontAwesomeIcon icon={faMapMarkerAlt} />
-                                                    {t('view_on_map')}
-                                                </button>
+                                                <>
+                                                    <button 
+                                                        onClick={() => handleViewOnMap(submission._id)}
+                                                        className="btn-action btn-view"
+                                                    >
+                                                        <FontAwesomeIcon icon={faMapMarkerAlt} />
+                                                        {t('view_on_map')}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleEdit(submission._id)}
+                                                        className="btn-action btn-edit"
+                                                    >
+                                                        <FontAwesomeIcon icon={faEdit} />
+                                                        {t('edit')}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDelete(submission._id, submission.name)}
+                                                        className="btn-action btn-delete"
+                                                    >
+                                                        <FontAwesomeIcon icon={faTrash} />
+                                                        {t('delete')}
+                                                    </button>
+                                                </>
                                             )}
                                             
                                             {submission.approvalStatus === 'rejected' && (

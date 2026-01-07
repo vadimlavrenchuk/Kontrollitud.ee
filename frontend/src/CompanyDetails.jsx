@@ -70,11 +70,28 @@ function CompanyDetails() {
             console.log('✅ Company loaded:', companyData);
             setCompany(companyData);
             setError(null);
+            
+            // Track view
+            trackCompanyView(companyData._id || companyData.id);
         } catch (err) {
             console.error('❌ Error fetching company:', err);
             setError(err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Track company view
+    const trackCompanyView = async (companyId) => {
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            await fetch(`${apiUrl}/api/companies/${companyId}/view`, {
+                method: 'POST'
+            });
+            console.log('👁️ View tracked for company:', companyId);
+        } catch (error) {
+            console.error('Failed to track view:', error);
+            // Don't show error to user, just log it
         }
     };
 

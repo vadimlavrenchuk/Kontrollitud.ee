@@ -663,6 +663,15 @@ const companySchema = new mongoose.Schema({
     stripeCustomerId: {
         type: String // Customer ID in Stripe
     },
+    // View statistics
+    views: {
+        type: Number,
+        default: 0 // Total views all time
+    },
+    weeklyViews: [{
+        date: Date, // Date of view
+        count: { type: Number, default: 1 } // Count of views that day
+    }],
     createdAt: {
         type: Date,
         default: Date.now
@@ -1525,6 +1534,168 @@ app.get('/api/user/submissions', verifyToken, async (req, res) => {
     } catch (error) {
         console.error("Error fetching user submissions:", error);
         res.status(500).json({ error: 'Failed to fetch user submissions' });
+    }
+});
+
+// POST /api/companies/:id/view - Track company view
+app.post('/api/companies/:id/view', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const company = await Company.findById(id);
+        if (!company) {
+            return res.status(404).json({ error: 'Company not found' });
+        }
+        
+        // Increment total views
+        company.views = (company.views || 0) + 1;
+        
+        // Track weekly views
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of day
+        
+        // Find or create entry for today
+        const todayEntry = company.weeklyViews.find(entry => {
+            const entryDate = new Date(entry.date);
+            entryDate.setHours(0, 0, 0, 0);
+            return entryDate.getTime() === today.getTime();
+        });
+        
+        if (todayEntry) {
+            todayEntry.count += 1;
+        } else {
+            company.weeklyViews.push({ date: today, count: 1 });
+        }
+        
+        // Keep only last 7 days
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        company.weeklyViews = company.weeklyViews.filter(entry => 
+            new Date(entry.date) >= weekAgo
+        );
+        
+        await company.save();
+        
+        res.json({ success: true, views: company.views });
+    } catch (error) {
+        console.error("Error tracking view:", error);
+        res.status(500).json({ error: 'Failed to track view' });
+    }
+});
+
+// PUT /api/user/companies/:id - Update user's company
+app.put('/api/user/companies/:id', verifyToken, upload.single('logo'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.uid;
+        
+        // Find company and verify ownership
+        const company = await Company.findById(id);
+        if (!company) {
+            return res.status(404).json({ error: 'Company not found' });
+        }
+        
+        if (company.userId !== userId) {
+            return res.status(403).json({ error: 'You can only edit your own companies' });
+        }
+        
+        // Parse JSON fields from form data
+        const updateData = {};
+        
+        // Simple text fields
+        if (req.body.name) updateData.name = req.body.name;
+        if (req.body.phone) updateData.phone = req.body.phone;
+        if (req.body.email) updateData.email = req.body.email;
+        if (req.body.website) updateData.website = req.body.website;
+        if (req.body.instagramUrl) updateData.instagramUrl = req.body.instagramUrl;
+        if (req.body.tiktokUrl) updateData.tiktokUrl = req.body.tiktokUrl;
+        if (req.body.youtubeUrl) updateData.youtubeUrl = req.body.youtubeUrl;
+        
+        // Multi-language description
+        if (req.body.description) {
+            try {
+                updateData.description = JSON.parse(req.body.description);
+            } catch (e) {
+                // If not JSON, treat as single language
+                updateData.description = {
+                    et: req.body.description,
+                    en: req.body.description,
+                    ru: req.body.description
+                };
+            }
+        }
+        
+        // Working hours
+        if (req.body.workingHours) {
+            try {
+                updateData.workingHours = JSON.parse(req.body.workingHours);
+            } catch (e) {
+                console.error('Error parsing workingHours:', e);
+            }
+        }
+        
+        // Handle logo upload
+        if (req.file) {
+            try {
+                const b64 = Buffer.from(req.file.buffer).toString('base64');
+                const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+                
+                const uploadResult = await cloudinary.uploader.upload(dataURI, {
+                    folder: 'kontrollitud',
+                    resource_type: 'auto'
+                });
+                
+                updateData.image = uploadResult.secure_url;
+            } catch (uploadError) {
+                console.error('Error uploading logo:', uploadError);
+                return res.status(500).json({ error: 'Failed to upload logo' });
+            }
+        }
+        
+        // Update company
+        const updatedCompany = await Company.findByIdAndUpdate(
+            id,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+        
+        res.json({ 
+            success: true, 
+            message: 'Company updated successfully',
+            company: updatedCompany 
+        });
+    } catch (error) {
+        console.error("Error updating company:", error);
+        res.status(500).json({ error: 'Failed to update company' });
+    }
+});
+
+// DELETE /api/user/companies/:id - Delete user's company
+app.delete('/api/user/companies/:id', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.uid;
+        
+        // Find company and verify ownership
+        const company = await Company.findById(id);
+        if (!company) {
+            return res.status(404).json({ error: 'Company not found' });
+        }
+        
+        if (company.userId !== userId) {
+            return res.status(403).json({ error: 'You can only delete your own companies' });
+        }
+        
+        // Delete company
+        await Company.findByIdAndDelete(id);
+        
+        res.json({ 
+            success: true, 
+            message: 'Company deleted successfully' 
+        });
+    } catch (error) {
+        console.error("Error deleting company:", error);
+        res.status(500).json({ error: 'Failed to delete company' });
     }
 });
 

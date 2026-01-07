@@ -312,6 +312,43 @@
         border-radius: 8px;
         border-left: 3px solid #d1d5db;
     }
+    
+    // Views Statistics (Счетчик кипиша)
+    .views-stats {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        border: 2px solid #93c5fd;
+        
+        .views-icon {
+            font-size: 2rem;
+            color: #3b82f6;
+        }
+        
+        .views-info {
+            display: flex;
+            flex-direction: column;
+            
+            .views-count {
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: #1e40af;
+                line-height: 1;
+            }
+            
+            .views-label {
+                font-size: 0.85rem;
+                color: #3b82f6;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+        }
+    }
 }
 
 // ========================================
@@ -320,14 +357,16 @@
 
 .card-actions {
     display: flex;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
     
     .btn-action {
         flex: 1;
-        padding: 12px 20px;
+        min-width: 100px;
+        padding: 12px 16px;
         border: none;
         border-radius: 8px;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
         cursor: pointer;
         display: flex;
@@ -344,6 +383,29 @@
             &:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+            }
+        }
+        
+        &.btn-edit {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+            }
+        }
+        
+        &.btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            flex: 0 1 auto;
+            
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
             }
         }
         
