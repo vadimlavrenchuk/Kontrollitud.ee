@@ -4,6 +4,18 @@
   padding: 0;
 }
 
+body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Force cache busting - v2 */
+.app-main {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 /* ========================================
    STICKY NAVBAR
    ======================================== */
@@ -35,6 +47,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 24px;
+  overflow-x: hidden;
 }
 
 /* Logo/Brand Section */
@@ -79,6 +92,7 @@
   align-items: center;
   gap: 16px;
   margin-left: auto;
+  flex-wrap: wrap;
 }
 
 /* Admin Link - Outlined Style */
@@ -558,8 +572,118 @@
   transform: translateY(-2px);
 }
 
+/* Hamburger Menu Button */
+.hamburger-menu {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.hamburger-menu span {
+  width: 24px;
+  height: 3px;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.hamburger-menu.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-menu.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* Mobile Navigation Menu */
+.mobile-nav-menu {
+  display: none;
+  position: fixed;
+  top: 72px;
+  left: 0;
+  right: 0;
+  background: rgba(17, 24, 39, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-nav-menu.open {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  pointer-events: auto;
+}
+
+.mobile-nav-menu a,
+.mobile-nav-menu .user-profile-button {
+  width: 100%;
+  margin-bottom: 12px;
+  justify-content: flex-start;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.mobile-nav-menu .language-switcher {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: center;
+}
+
+.mobile-nav-menu .user-dropdown {
+  position: static;
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 12px;
+}
+
 /* Responsive design for mobile */
 @media (max-width: 768px) {
+  .hamburger-menu {
+    display: flex;
+  }
+  
+  .navbar-right {
+    gap: 12px;
+  }
+  
+  /* Hide navigation links on mobile, show only hamburger */
+  .navbar-right > .catalog-link,
+  .navbar-right > .partners-link,
+  .navbar-right > .blog-link,
+  .navbar-right > .add-business-link,
+  .navbar-right > .login-link,
+  .navbar-right > .user-menu-container,
+  .navbar-right > .language-switcher {
+    display: none;
+  }
+  
   .language-switcher {
     gap: 6px;
   }

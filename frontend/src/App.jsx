@@ -33,6 +33,7 @@ function AppContent() {
     const { user, logout, isAuthenticated } = useAuth();
     const [isScrolled, setIsScrolled] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
     
     // Admin email - replace with your actual admin email
     const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@kontrollitud.ee';
@@ -56,6 +57,33 @@ function AppContent() {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+    
+    // Close mobile menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showMobileMenu && 
+                !event.target.closest('.mobile-nav-menu') && 
+                !event.target.closest('.hamburger-menu')) {
+                setShowMobileMenu(false);
+            }
+        };
+        
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showMobileMenu]);
+    
+    // Close mobile menu on route change and prevent body scroll when open
+    useEffect(() => {
+        if (showMobileMenu) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showMobileMenu]);
 
     return (
         <BrowserRouter> 
@@ -83,6 +111,18 @@ function AppContent() {
 
                         {/* Right: User Menu + Language Switcher */}
                         <div className="navbar-right">
+                            {/* Hamburger Menu Button (Mobile Only) */}
+                            <button 
+                                className={`hamburger-menu ${showMobileMenu ? 'open' : ''}`}
+                                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                                aria-label="Toggle menu"
+                            >
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </button>
+                            
+                            {/* Desktop Navigation Links */}
                             {/* Catalog Link */}
                             <Link to="/catalog" className="catalog-link">
                                 <i className="fas fa-list"></i>
@@ -177,6 +217,104 @@ function AppContent() {
                                     RU
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                    
+                    {/* Mobile Navigation Menu */}
+                    <div className={`mobile-nav-menu ${showMobileMenu ? 'open' : ''}`}>
+                        {/* Catalog Link */}
+                        <Link to="/catalog" className="catalog-link" onClick={() => setShowMobileMenu(false)}>
+                            <i className="fas fa-list"></i>
+                            <span>{t('catalog')}</span>
+                        </Link>
+                        
+                        {/* Partners Link */}
+                        <Link to="/partners" className="partners-link" onClick={() => setShowMobileMenu(false)}>
+                            <i className="fas fa-handshake"></i>
+                            <span>{t('for_business')}</span>
+                        </Link>
+                        
+                        {/* Blog Link */}
+                        <Link to="/blog" className="blog-link" onClick={() => setShowMobileMenu(false)}>
+                            <i className="fas fa-newspaper"></i>
+                            <span>{t('blog')}</span>
+                        </Link>
+                        
+                        {/* Add Business Link */}
+                        <Link to="/add-business" className="add-business-link" onClick={() => setShowMobileMenu(false)}>
+                            <i className="fas fa-plus-circle"></i>
+                            <span>{t('add_business')}</span>
+                        </Link>
+
+                        {/* User Authentication */}
+                        {!isAuthenticated ? (
+                            <Link to="/auth" className="login-link" onClick={() => setShowMobileMenu(false)}>
+                                <i className="fas fa-sign-in-alt"></i>
+                                <span>{t('login')}</span>
+                            </Link>
+                        ) : (
+                            <div className="user-menu-container">
+                                <button 
+                                    className="user-profile-button"
+                                    onClick={() => setShowUserMenu(!showUserMenu)}
+                                >
+                                    {user.photoURL ? (
+                                        <img src={user.photoURL} alt={user.displayName} className="user-avatar" />
+                                    ) : (
+                                        <div className="user-avatar-placeholder">
+                                            {(user.displayName || user.email)?.[0]?.toUpperCase()}
+                                        </div>
+                                    )}
+                                    <span className="user-name">{user.displayName || user.email?.split('@')[0]}</span>
+                                    <i className={`fas fa-chevron-down ${showUserMenu ? 'rotated' : ''}`}></i>
+                                </button>
+                                
+                                {showUserMenu && (
+                                    <div className="user-dropdown">
+                                        <div className="dropdown-header">
+                                            <p className="user-email">{user.email}</p>
+                                        </div>
+                                        <div className="dropdown-divider"></div>
+                                        {isAdmin && (
+                                            <Link to="/admin" className="dropdown-item" onClick={() => { setShowUserMenu(false); setShowMobileMenu(false); }}>
+                                                <i className="fas fa-shield-alt"></i>
+                                                <span>Admin Dashboard</span>
+                                            </Link>
+                                        )}
+                                        <Link to="/dashboard" className="dropdown-item" onClick={() => { setShowUserMenu(false); setShowMobileMenu(false); }}>
+                                            <i className="fas fa-clipboard-list"></i>
+                                            <span>{t('my_dashboard')}</span>
+                                        </Link>
+                                        <div className="dropdown-divider"></div>
+                                        <button onClick={() => { logout(); setShowUserMenu(false); setShowMobileMenu(false); }} className="dropdown-item logout-item">
+                                            <i className="fas fa-sign-out-alt"></i>
+                                            <span>{t('logout')}</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Language Switcher */}
+                        <div className="language-switcher">
+                            <button 
+                                onClick={() => { changeLanguage('et'); setShowMobileMenu(false); }} 
+                                className={`language-button ${i18n.language === 'et' ? 'active' : ''}`}
+                            >
+                                ET
+                            </button>
+                            <button 
+                                onClick={() => { changeLanguage('en'); setShowMobileMenu(false); }} 
+                                className={`language-button ${i18n.language === 'en' ? 'active' : ''}`}
+                            >
+                                EN
+                            </button>
+                            <button 
+                                onClick={() => { changeLanguage('ru'); setShowMobileMenu(false); }} 
+                                className={`language-button ${i18n.language === 'ru' ? 'active' : ''}`}
+                            >
+                                RU
+                            </button>
                         </div>
                     </div>
                 </header>
