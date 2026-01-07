@@ -38,9 +38,19 @@ const CompanyCard = ({ company, isSelected, onClick }) => {
   
   const companyUrl = `/companies/${company.slug || company._id || company.id}`;
   
+  const handleCardClick = (e) => {
+    // If onClick is provided (from CatalogPage), use it to show on map
+    if (onClick) {
+      e.preventDefault();
+      onClick(company._id || company.id);
+    }
+    // Otherwise, let the Link navigate normally (for CompanyList homepage)
+  };
+  
   return (
     <Link 
       to={companyUrl}
+      onClick={handleCardClick}
       className={`company-card ${company.isVerified ? 'verified-card' : ''} ${isSelected ? 'selected' : ''} ${company.subscriptionLevel === 'enterprise' ? 'enterprise-card' : ''}`}
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
