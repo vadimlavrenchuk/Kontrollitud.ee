@@ -424,6 +424,50 @@
                         text-decoration: underline;
                     }
                 }
+
+                // Address item with button
+                &.address-item {
+                    flex-direction: row;
+                    align-items: flex-start;
+                    
+                    .address-content {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        flex: 1;
+                        
+                        .address-text {
+                            color: #495057;
+                            line-height: 1.5;
+                        }
+                        
+                        .directions-button {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 6px 12px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            border-radius: 6px;
+                            font-size: 0.85em;
+                            font-weight: 500;
+                            text-decoration: none;
+                            transition: all 0.3s;
+                            align-self: flex-start;
+                            
+                            i {
+                                color: white;
+                                width: auto;
+                            }
+                            
+                            &:hover {
+                                transform: translateY(-2px);
+                                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                                text-decoration: none;
+                            }
+                        }
+                    }
+                }
             }
         }
 

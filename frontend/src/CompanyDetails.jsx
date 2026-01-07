@@ -489,17 +489,24 @@ function CompanyDetails() {
                             )}
                             
                             {company.address && (
-                                <div className="info-item">
+                                <div className="info-item address-item">
                                     <i className="fas fa-map-marker-alt"></i>
-                                    <a 
-                                        href={`https://www.google.com/maps/dir/?api=1&destination=${company.location?.lat},${company.location?.lng}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="address-link"
-                                        title={t('get_directions')}
-                                    >
-                                        {company.address}
-                                    </a>
+                                    <div className="address-content">
+                                        <span className="address-text">{company.address}</span>
+                                        <a 
+                                            href={
+                                                company.location?.lat && company.location?.lng
+                                                    ? `https://www.google.com/maps/dir/?api=1&destination=${company.location.lat},${company.location.lng}`
+                                                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(company.address)}`
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="directions-button"
+                                            title={t('get_directions')}
+                                        >
+                                            <i className="fas fa-directions"></i> {t('get_directions')}
+                                        </a>
+                                    </div>
                                 </div>
                             )}
                         </div>
