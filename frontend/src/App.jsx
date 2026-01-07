@@ -27,6 +27,7 @@ import AboutPage from './pages/AboutPage.jsx';
 import PaymentSuccess from './pages/PaymentSuccess.jsx';
 import PaymentCancelled from './pages/PaymentCancelled.jsx';
 import PaymentPage from './pages/PaymentPage.jsx';
+import PWAInstall from './components/PWAInstall.jsx';
 
 function AppContent() {
     const { t, i18n } = useTranslation();
@@ -367,6 +368,9 @@ function AppContent() {
                 </Routes>
                 
                 <Footer />
+                
+                {/* PWA Install Prompt */}
+                <PWAInstall />
             </div>
         </BrowserRouter>
     );

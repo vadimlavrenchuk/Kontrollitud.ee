@@ -1,0 +1,167 @@
+/* PWA Install Prompt Styles */
+.pwa-install-prompt {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.pwa-install-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+  max-width: 360px;
+  position: relative;
+}
+
+.pwa-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s;
+}
+
+.pwa-close-btn:hover {
+  color: #333;
+}
+
+.pwa-install-icon {
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.pwa-install-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+  text-align: center;
+}
+
+.pwa-install-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 20px 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.pwa-install-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.pwa-benefit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #555;
+}
+
+.pwa-benefit-icon {
+  font-size: 20px;
+  width: 32px;
+  text-align: center;
+}
+
+.pwa-install-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pwa-install-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.pwa-install-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.pwa-remind-btn {
+  background: transparent;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pwa-remind-btn:hover {
+  background: #667eea;
+  color: white;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .pwa-install-prompt {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .pwa-install-card {
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  .pwa-install-title {
+    font-size: 18px;
+  }
+
+  .pwa-install-description {
+    font-size: 13px;
+  }
+
+  .pwa-benefit {
+    font-size: 13px;
+  }
+}
+
+/* iOS Safari specific styles */
+@supports (-webkit-touch-callout: none) {
+  .pwa-install-prompt {
+    bottom: 80px; /* Above Safari toolbar */
+  }
+}
