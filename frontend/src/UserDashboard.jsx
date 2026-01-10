@@ -156,6 +156,12 @@ function UserDashboard() {
         return weeklyViews.reduce((sum, entry) => sum + (entry.count || 0), 0);
     };
 
+    const getTotalViews = () => {
+        return submissions.reduce((total, submission) => {
+            return total + getWeeklyViews(submission.weeklyViews);
+        }, 0);
+    };
+
     if (loading) {
         return (
             <div className="user-dashboard">
@@ -188,9 +194,18 @@ function UserDashboard() {
                             <p className="user-email">{user?.email}</p>
                         </div>
                     </div>
-                    <div className="submissions-count">
-                        <span className="count-number">{submissions.length}</span>
-                        <span className="count-label">{t('my_submissions')}</span>
+                    <div className="header-stats">
+                        <div className="stat-box">
+                            <span className="count-number">{submissions.length}</span>
+                            <span className="count-label">{t('my_submissions')}</span>
+                        </div>
+                        <div className="stat-box views-stat-box">
+                            <FontAwesomeIcon icon={faEye} className="stat-icon" />
+                            <div>
+                                <span className="count-number">{getTotalViews()}</span>
+                                <span className="count-label">{t('total_views')}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -282,11 +297,11 @@ function UserDashboard() {
                                             {submission.approvalStatus === 'pending_payment' && (
                                                 <>
                                                     <button 
-                                                        onClick={() => navigate(`/payment/${submission._id}`)}
+                                                        onClick={() => handleEdit(submission._id)}
                                                         className="btn-action btn-upgrade"
                                                     >
-                                                        <FontAwesomeIcon icon={faCheckCircle} />
-                                                        {t('choose_plan')}
+                                                        <FontAwesomeIcon icon={faEdit} />
+                                                        {t('edit_company_and_plan')}
                                                     </button>
                                                 </>
                                             )}
