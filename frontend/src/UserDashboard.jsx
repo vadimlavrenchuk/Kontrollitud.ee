@@ -74,6 +74,13 @@ function UserDashboard() {
                     text: t('status_pending'),
                     description: t('status_pending_desc')
                 };
+            case 'pending_payment':
+                return {
+                    color: 'status-pending',
+                    icon: faHourglassHalf,
+                    text: t('status_pending_payment'),
+                    description: t('status_pending_payment_desc')
+                };
             case 'approved':
                 return {
                     color: 'status-approved',
@@ -268,6 +275,18 @@ function UserDashboard() {
                                                     >
                                                         <FontAwesomeIcon icon={faTrash} />
                                                         {t('delete')}
+                                                    </button>
+                                                </>
+                                            )}
+                                            
+                                            {submission.approvalStatus === 'pending_payment' && (
+                                                <>
+                                                    <button 
+                                                        onClick={() => navigate(`/payment/${submission._id}`)}
+                                                        className="btn-action btn-upgrade"
+                                                    >
+                                                        <FontAwesomeIcon icon={faCheckCircle} />
+                                                        {t('choose_plan')}
                                                     </button>
                                                 </>
                                             )}

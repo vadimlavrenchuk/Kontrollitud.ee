@@ -419,6 +419,18 @@
                 box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
             }
         }
+        
+        &.btn-upgrade {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            flex: 1;
+            
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+            }
+        }
     }
     
     .pending-info {
