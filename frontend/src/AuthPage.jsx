@@ -124,26 +124,13 @@ function AuthPage() {
                 <title>{isLogin ? t('login') : t('register')} - Kontrollitud.ee</title>
             </Helmet>
 
-            <div className="auth-container" style={{
-                width: '100%',
-                maxWidth: '480px',
-                padding: '0',
-                margin: '0 auto',
-                boxSizing: 'border-box'
-            }}>
+            <div className="auth-container">
                 <button onClick={() => navigate(-1)} className="back-button">
                     <FontAwesomeIcon icon={faArrowLeft} />
                     <span>{t('back')}</span>
                 </button>
 
-                <div className="auth-card" style={{
-                    margin: '0 16px',
-                    width: 'calc(100% - 32px)',
-                    maxWidth: '448px',
-                    boxSizing: 'border-box',
-                    overflow: 'hidden',
-                    padding: window.innerWidth <= 768 ? '24px 12px' : '48px'
-                }}>
+                <div className="auth-card">
                     <div className="auth-header">
                         <h1>{isLogin ? t('login') : t('register')}</h1>
                         <p>{isLogin ? t('login_subtitle') : t('register_subtitle')}</p>
@@ -194,10 +181,7 @@ function AuthPage() {
                             </div>
                         )}
 
-                        <div className="form-group" style={{
-                            width: '100%',
-                            boxSizing: 'border-box'
-                        }}>
+                        <div className="form-group">
                             <label htmlFor="email">
                                 <FontAwesomeIcon icon={faEnvelope} />
                                 {t('email')}
@@ -210,22 +194,10 @@ function AuthPage() {
                                 onChange={handleInputChange}
                                 placeholder={t('enter_email')}
                                 required
-                                style={{
-                                    width: '100%',
-                                    maxWidth: '100%',
-                                    boxSizing: 'border-box',
-                                    margin: '0',
-                                    padding: '10px 12px',
-                                    border: '2px solid #e5e7eb',
-                                    borderRadius: '8px'
-                                }}
                             />
                         </div>
 
-                        <div className="form-group" style={{
-                            width: '100%',
-                            boxSizing: 'border-box'
-                        }}>
+                        <div className="form-group">
                             <label htmlFor="password">
                                 <FontAwesomeIcon icon={faLock} />
                                 {t('password')}
@@ -239,15 +211,6 @@ function AuthPage() {
                                 placeholder={t('enter_password')}
                                 required
                                 minLength={6}
-                                style={{
-                                    width: '100%',
-                                    maxWidth: '100%',
-                                    boxSizing: 'border-box',
-                                    margin: '0',
-                                    padding: '10px 12px',
-                                    border: '2px solid #e5e7eb',
-                                    borderRadius: '8px'
-                                }}
                             />
                         </div>
 
