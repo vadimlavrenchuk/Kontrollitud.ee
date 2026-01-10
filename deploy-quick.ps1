@@ -4,13 +4,12 @@
 Write-Host "Quick deployment..." -ForegroundColor Green
 
 $SERVER = "root@kontrollitud.ee"
-$REMOTE_DIR = "/root/Kontrollitud.ee"
 
 # Build frontend
 Write-Host "`nBuilding..." -ForegroundColor Yellow
-cd frontend
+Set-Location frontend
 npm run build
-cd ..
+Set-Location ..
 
 # Create archive WITHOUT node_modules
 Write-Host "`nCreating archive (no node_modules)..." -ForegroundColor Yellow
