@@ -1,20 +1,18 @@
 /* Global box-sizing reset */
-* {
+*, *:before, *:after {
   box-sizing: border-box !important;
 }
 
 /* Auth card mobile fix */
 .auth-card {
-  width: 95% !important;
+  width: 90% !important;
   max-width: 400px !important;
   margin: 0 auto !important;
-  overflow: hidden !important;
 }
 
-.auth-card input,
-.auth-card button {
+.auth-card input {
+  display: block !important;
   width: 100% !important;
-  max-width: 100% !important;
 }
 
 #root {
