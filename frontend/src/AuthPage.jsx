@@ -127,7 +127,8 @@ function AuthPage() {
             <div className="auth-container" style={{
                 width: '100%',
                 maxWidth: '480px',
-                padding: '0 16px',
+                padding: '0',
+                margin: '0 auto',
                 boxSizing: 'border-box'
             }}>
                 <button onClick={() => navigate(-1)} className="back-button">
@@ -136,8 +137,9 @@ function AuthPage() {
                 </button>
 
                 <div className="auth-card" style={{
-                    maxWidth: '100%',
-                    width: '100%',
+                    margin: '0 16px',
+                    width: 'calc(100% - 32px)',
+                    maxWidth: '448px',
                     boxSizing: 'border-box',
                     overflow: 'hidden',
                     padding: window.innerWidth <= 768 ? '24px 12px' : '48px'
@@ -211,7 +213,11 @@ function AuthPage() {
                                 style={{
                                     width: '100%',
                                     maxWidth: '100%',
-                                    boxSizing: 'border-box'
+                                    boxSizing: 'border-box',
+                                    margin: '0',
+                                    padding: '10px 12px',
+                                    border: '2px solid #e5e7eb',
+                                    borderRadius: '8px'
                                 }}
                             />
                         </div>
@@ -236,7 +242,11 @@ function AuthPage() {
                                 style={{
                                     width: '100%',
                                     maxWidth: '100%',
-                                    boxSizing: 'border-box'
+                                    boxSizing: 'border-box',
+                                    margin: '0',
+                                    padding: '10px 12px',
+                                    border: '2px solid #e5e7eb',
+                                    borderRadius: '8px'
                                 }}
                             />
                         </div>
