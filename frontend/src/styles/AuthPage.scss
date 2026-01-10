@@ -53,15 +53,14 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.auth-card form,
+.auth-card form {
+    width: 100%;
+}
+
 .auth-card input,
 .auth-card button {
-    width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    left: 0 !important;
-    transform: none !important;
-    box-sizing: border-box !important;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .auth-header {
