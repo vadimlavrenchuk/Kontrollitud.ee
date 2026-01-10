@@ -130,7 +130,12 @@ function AuthPage() {
                     <span>{t('back')}</span>
                 </button>
 
-                <div className="auth-card">
+                <div className="auth-card" style={{
+                    maxWidth: '100%',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    overflow: 'hidden'
+                }}>
                     <div className="auth-header">
                         <h1>{isLogin ? t('login') : t('register')}</h1>
                         <p>{isLogin ? t('login_subtitle') : t('register_subtitle')}</p>
