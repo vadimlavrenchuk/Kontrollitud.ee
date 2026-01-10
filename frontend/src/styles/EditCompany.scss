@@ -10,23 +10,27 @@
     max-width: 900px;
     margin: 0 auto;
     position: relative;
+    padding-top: 20px;
 }
 
 .back-button {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #667eea;
+    color: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     text-decoration: none;
     font-weight: 600;
-    margin-bottom: 24px;
-    padding: 8px 16px;
+    margin-bottom: 32px;
+    padding: 12px 20px;
     border-radius: 8px;
     transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     
     &:hover {
-        background: rgba(102, 126, 234, 0.1);
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         transform: translateX(-4px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 }
 
