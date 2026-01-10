@@ -31,6 +31,7 @@ body {
   transition: all 0.3s ease;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 0;
+  overflow: visible;
 }
 
 .sticky-navbar.scrolled {
@@ -47,7 +48,7 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 24px;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 /* Logo/Brand Section */
@@ -346,9 +347,9 @@ body {
 }
 
 .user-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  position: fixed;
+  top: 70px;
+  right: 32px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
