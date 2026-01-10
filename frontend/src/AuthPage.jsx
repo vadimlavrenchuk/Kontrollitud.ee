@@ -131,196 +131,51 @@ function AuthPage() {
                 </button>
 
                 <div className="auth-card">
-                    <div className="auth-header">
-                        <h1>{isLogin ? t('login') : t('register')}</h1>
-                        <p>{isLogin ? t('login_subtitle') : t('register_subtitle')}</p>
-                    </div>
-
-                    {/* Social Login Buttons */}
-                    <div className="social-auth">
-                        <button 
-                            onClick={handleGoogleSignIn}
-                            disabled={loading}
-                            className="social-button google-button"
-                        >
-                            <FontAwesomeIcon icon={faGoogle} />
-                            <span>{t('continue_with_google')}</span>
-                        </button>
-
-                        <button 
-                            onClick={handleFacebookSignIn}
-                            disabled={loading}
-                            className="social-button facebook-button"
-                        >
-                            <FontAwesomeIcon icon={faFacebook} />
-                            <span>{t('continue_with_facebook')}</span>
-                        </button>
-                    </div>
-
-                    <div className="divider">
-                        <span>{t('or')}</span>
-                    </div>
-
-                    {/* Email/Password Form */}
-                    <form onSubmit={handleEmailAuth} className="auth-form">
-                        {!isLogin && (
-                            <div className="form-group">
-                                <label htmlFor="displayName">
-                                    <FontAwesomeIcon icon={faUser} />
-                                    {t('full_name')}
-                                </label>
-                                <input
-                                    type="text"
-                                    id="displayName"
-                                    name="displayName"
-                                    value={formData.displayName}
-                                    onChange={handleInputChange}
-                                    placeholder={t('enter_name')}
-                                    required={!isLogin}
-                                />
-                            </div>
-                        )}
-
-                        <div className="form-group">
-                            <label htmlFor="email">
-                                <FontAwesomeIcon icon={faEnvelope} />
-                                {t('email')}
-                            </label>
-                            <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                placeholder={t('enter_email')}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="password">
-                                <FontAwesomeIcon icon={faLock} />
-                                {t('password')}
-                            </label>
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleInputChange}
-                                placeholder={t('enter_password')}
-                                required
-                                minLength={6}
-                            />
-                        </div>
-
-                        {!isLogin && (
-                            <div className="form-group">
-                                <label htmlFor="confirmPassword">
-                                    <FontAwesomeIcon icon={faLock} />
-                                    {t('confirm_password')}
-                                </label>
-                                <input
-                                    type="password"
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleInputChange}
-                                    placeholder={t('confirm_password_placeholder')}
-                                    required={!isLogin}
-                                    minLength={6}
-                                />
-                            </div>
-                        )}
-
-                        {/* Plan Selection - Only for Registration */}
-                        {!isLogin && (
-                            <div className="form-group plan-selection">
-                                <label className="plan-label">
-                                    {t('choose_plan') || 'Выберите тип аккаунта'} *
-                                </label>
-                                <div className="plan-options">
-                                    <label className={`plan-option ${formData.plan === 'basic' ? 'selected' : ''}`}>
-                                        <input
-                                            type="radio"
-                                            name="plan"
-                                            value="basic"
-                                            checked={formData.plan === 'basic'}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                        <div className="plan-card">
-                                            <span className="plan-icon">📄</span>
-                                            <span className="plan-name">Basic</span>
-                                            <span className="plan-price">{t('free') || 'Бесплатно'}</span>
-                                            <span className="plan-description">{t('basic_plan_desc') || 'Простой листинг'}</span>
-                                        </div>
-                                    </label>
-
-                                    <label className={`plan-option ${formData.plan === 'pro' ? 'selected' : ''}`}>
-                                        <input
-                                            type="radio"
-                                            name="plan"
-                                            value="pro"
-                                            checked={formData.plan === 'pro'}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                        <div className="plan-card">
-                                            <span className="plan-icon">⚡</span>
-                                            <span className="plan-name">Pro</span>
-                                            <span className="plan-price">€29/{t('month') || 'месяц'}</span>
-                                            <span className="plan-description">{t('pro_plan_desc') || 'Быстрый старт + соцсети'}</span>
-                                        </div>
-                                    </label>
-
-                                    <label className={`plan-option ${formData.plan === 'enterprise' ? 'selected' : ''}`}>
-                                        <input
-                                            type="radio"
-                                            name="plan"
-                                            value="enterprise"
-                                            checked={formData.plan === 'enterprise'}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                        <div className="plan-card">
-                                            <span className="plan-icon">💎</span>
-                                            <span className="plan-name">Enterprise</span>
-                                            <span className="plan-price">€50/{t('month') || 'месяц'}</span>
-                                            <span className="plan-description">{t('enterprise_plan_desc') || 'Максимальный охват + топ'}</span>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-                        )}
-
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="submit-button"
-                        >
-                            {loading ? (
-                                <>
-                                    <i className="fas fa-spinner fa-spin"></i>
-                                    {isLogin ? t('logging_in') : t('creating_account')}
-                                </>
-                            ) : (
-                                isLogin ? t('login') : t('register')
-                            )}
+                    <h2>{isLogin ? 'Войти' : 'Регистрация'}</h2>
+                    
+                    <button 
+                        onClick={handleGoogleSignIn}
+                        disabled={loading}
+                        className="google-btn"
+                    >
+                        Google
+                    </button>
+                    
+                    <div className="separator">или</div>
+                    
+                    <form onSubmit={handleEmailAuth}>
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            placeholder="Email"
+                            required
+                        />
+                        <input
+                            type="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            placeholder="Пароль"
+                            required
+                            minLength={6}
+                        />
+                        <button type="submit" disabled={loading}>
+                            {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
                         </button>
                     </form>
-
-                    <div className="auth-switch">
-                        <p>
-                            {isLogin ? t('dont_have_account') : t('already_have_account')}
-                            <button 
-                                onClick={() => setIsLogin(!isLogin)}
-                                className="switch-button"
-                            >
-                                {isLogin ? t('register') : t('login')}
-                            </button>
-                        </p>
-                    </div>
+                    
+                    <p className="switch-text">
+                        {isLogin ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}
+                        <button 
+                            onClick={() => setIsLogin(!isLogin)}
+                            className="switch-button"
+                            type="button"
+                        >
+                            {isLogin ? 'Регистрация' : 'Войти'}
+                        </button>
+                    </p>
                 </div>
             </div>
         </div>
@@ -328,3 +183,4 @@ function AuthPage() {
 }
 
 export default AuthPage;
+
