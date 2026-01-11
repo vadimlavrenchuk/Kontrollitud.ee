@@ -6,8 +6,7 @@ import { Helmet } from 'react-helmet-async';
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-    faGoogle, 
-    faFacebook 
+    faGoogle
 } from '@fortawesome/free-brands-svg-icons';
 import { 
     faEnvelope, 
@@ -17,7 +16,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { 
     signInWithGoogle, 
-    signInWithFacebook, 
     signInWithEmail, 
     signUpWithEmail 
 } from './firebase';
@@ -61,18 +59,7 @@ function AuthPage() {
         }
     };
 
-    const handleFacebookSignIn = async () => {
-        setLoading(true);
-        const { user, error } = await signInWithFacebook();
-        setLoading(false);
 
-        if (error) {
-            toast.error(`❌ ${error}`);
-        } else if (user) {
-            toast.success(`✅ ${t('welcome_back')}, ${user.displayName || user.email}!`);
-            navigate(from, { replace: true });
-        }
-    };
 
     const handleEmailAuth = async (e) => {
         e.preventDefault();

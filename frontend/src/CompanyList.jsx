@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async';
 import CompanyCard from './CompanyCard';
 import CategoryGrid from './components/CategoryGrid';
 import SearchBar from './components/SearchBar';
+import TrialPromoBanner from './components/TrialPromoBanner';
 import './styles/CompanyList.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpa, faUtensils, faShoppingBag, faChild, faPlane, faCar, faCogs, faSearchLocation, faComments, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
@@ -27,6 +28,11 @@ function CompanyList() {
     setError(null);
 
     try {
+      // Check if db is initialized
+      if (!db) {
+        throw new Error('Firebase is not initialized');
+      }
+      
       const companiesRef = collection(db, 'companies');
       const q = query(companiesRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
@@ -103,6 +109,9 @@ function CompanyList() {
         <meta name="keywords" content="Estonia, Eesti, business directory, kontrollitud, verified businesses, Tallinn, Tartu, Pärnu" />
         <link rel="canonical" href="https://kontrollitud.ee/" />
       </Helmet>
+      
+      {/* Trial Promo Banner */}
+      <TrialPromoBanner />
       
       {/* Hero Section */}
       <section className="hero">

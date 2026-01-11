@@ -235,6 +235,135 @@
     }
 }
 
+// Subscription Section Styles
+.subscription-section {
+    .trial-notice {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        
+        .trial-badge {
+            display: inline-block;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        
+        p {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+    }
+    
+    .plan-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .plan-card {
+        background: white;
+        border: 3px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        &.selected {
+            border-color: #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            transform: translateY(-4px);
+        }
+        
+        &.pro.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        }
+        
+        &.enterprise.selected {
+            border-color: #fbbf24;
+            box-shadow: 0 8px 24px rgba(251, 191, 36, 0.3);
+        }
+        
+        .plan-header {
+            margin-bottom: 20px;
+            
+            h3 {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #111827;
+                margin-bottom: 12px;
+            }
+            
+            .plan-price {
+                display: flex;
+                align-items: baseline;
+                gap: 4px;
+                
+                .price {
+                    font-size: 2rem;
+                    font-weight: 700;
+                    color: #667eea;
+                }
+                
+                .period {
+                    font-size: 1rem;
+                    color: #6b7280;
+                }
+            }
+        }
+        
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            
+            li {
+                padding: 10px 0;
+                color: #374151;
+                font-size: 0.95rem;
+                border-bottom: 1px solid #f3f4f6;
+                
+                &:last-child {
+                    border-bottom: none;
+                }
+            }
+        }
+        
+        .current-plan-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    }
+    
+    .plan-notice {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 14px 18px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-top: 16px;
+        border-left: 4px solid #fbbf24;
+    }
+}
+
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -263,3 +392,4 @@
         transform: rotate(360deg);
     }
 }
+

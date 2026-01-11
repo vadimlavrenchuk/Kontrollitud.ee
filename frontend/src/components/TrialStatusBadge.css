@@ -1,0 +1,134 @@
+/* Trial Status Badge Styles */
+.trial-status-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+  margin: 16px 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+  }
+}
+
+.trial-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.trial-badge-icon {
+  font-size: 24px;
+  animation: rotate-star 3s linear infinite;
+}
+
+@keyframes rotate-star {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.trial-badge-label {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.trial-badge-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.trial-days-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 12px 20px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.trial-days-number {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.trial-days-label {
+  font-size: 13px;
+  opacity: 0.95;
+  margin-top: 4px;
+}
+
+.trial-expires {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trial-expires-label {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.trial-expires-date {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.trial-upgrade-button {
+  display: block;
+  width: 100%;
+  background: white;
+  color: #667eea;
+  text-align: center;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 12px;
+  transition: all 0.3s ease;
+}
+
+.trial-upgrade-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  color: #764ba2;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .trial-badge-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .trial-days-left {
+    width: 100%;
+  }
+
+  .trial-expires {
+    width: 100%;
+    text-align: center;
+  }
+
+  .trial-days-number {
+    font-size: 28px;
+  }
+}

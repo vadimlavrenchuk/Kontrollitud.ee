@@ -6,7 +6,7 @@ import './PaymentButton.css';
 // Initialize Stripe with publishable key
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic' }) {
+function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic', compact = false }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     
@@ -37,8 +37,13 @@ function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic' })
     const plan = planDetails[subscriptionLevel];
     
     const handlePayment = async () => {
+        console.log('🔵 Payment button clicked');
+        console.log('Company ID:', companyId);
+        console.log('Subscription Level:', subscriptionLevel);
+        
         if (!companyId || !subscriptionLevel) {
             setError('Недостаточно данных для оплаты');
+            console.error('❌ Missing companyId or subscriptionLevel');
             return;
         }
         
@@ -51,10 +56,15 @@ function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic' })
                 throw new Error('Вы должны быть авторизованы для оплаты');
             }
             
+            console.log('🔵 Getting auth token...');
             const token = await auth.currentUser.getIdToken();
+            console.log('✅ Auth token received');
             
             // Create checkout session
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            console.log('🔵 API URL:', apiUrl);
+            console.log('🔵 Creating checkout session...');
+            
             const response = await fetch(`${apiUrl}/api/create-checkout-session`, {
                 method: 'POST',
                 headers: {
@@ -67,18 +77,23 @@ function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic' })
                 })
             });
             
+            console.log('🔵 Response status:', response.status);
+            
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('❌ API Error:', errorData);
                 throw new Error(errorData.error || 'Ошибка создания сессии оплаты');
             }
             
             const { url } = await response.json();
+            console.log('✅ Checkout URL received:', url);
             
             // Redirect to Stripe Checkout
+            console.log('🔵 Redirecting to Stripe...');
             window.location.href = url;
             
         } catch (err) {
-            console.error('Payment error:', err);
+            console.error('❌ Payment error:', err);
             setError(err.message || 'Не удалось начать процесс оплаты');
             setLoading(false);
         }
@@ -95,6 +110,39 @@ function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic' })
         );
     }
     
+    // Compact mode - only button
+    if (compact) {
+        return (
+            <div className="payment-button-container compact">
+                <button 
+                    onClick={handlePayment}
+                    disabled={loading}
+                    className={`payment-button ${loading ? 'loading' : ''}`}
+                >
+                    {loading ? (
+                        <>
+                            <span className="spinner"></span>
+                            Обработка...
+                        </>
+                    ) : (
+                        `Подписаться на ${plan?.name || subscriptionLevel}`
+                    )}
+                </button>
+                
+                {error && (
+                    <div className="payment-error">
+                        ⚠️ {error}
+                    </div>
+                )}
+                
+                <div className="payment-secure-badge">
+                    🔒 Защищенная оплата через Stripe
+                </div>
+            </div>
+        );
+    }
+    
+    // Full mode - with plan info
     return (
         <div className="payment-button-container">
             {plan && (

@@ -19,6 +19,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-toastify';
 import { useAuth } from './AuthContext';
+import TrialStatusBadge from './components/TrialStatusBadge';
 import './styles/UserDashboard.scss';
 
 // SVG placeholder for images
@@ -261,6 +262,9 @@ function UserDashboard() {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Trial Status Badge */}
+                                        {submission.trialActive && <TrialStatusBadge company={submission} />}
 
                                         <p className="status-description">
                                             {statusConfig.description}

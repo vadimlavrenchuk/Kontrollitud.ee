@@ -28,7 +28,7 @@ import AboutPage from './pages/AboutPage.jsx';
 import PaymentSuccess from './pages/PaymentSuccess.jsx';
 import PaymentCancelled from './pages/PaymentCancelled.jsx';
 import PaymentPage from './pages/PaymentPage.jsx';
-import PWAInstall from './components/PWAInstall.jsx';
+import PWAInstall, { PWAProvider, PWAInstallButton } from './components/PWAInstall.jsx';
 
 function AppContent() {
     const { t, i18n } = useTranslation();
@@ -189,6 +189,8 @@ function AppContent() {
                                                 <span>{t('my_dashboard')}</span>
                                             </Link>
                                             <div className="dropdown-divider"></div>
+                                            <PWAInstallButton />
+                                            <div className="dropdown-divider"></div>
                                             <button onClick={() => { logout(); setShowUserMenu(false); }} className="dropdown-item logout-item">
                                                 <i className="fas fa-sign-out-alt"></i>
                                                 <span>{t('logout')}</span>
@@ -288,6 +290,8 @@ function AppContent() {
                                             <span>{t('my_dashboard')}</span>
                                         </Link>
                                         <div className="dropdown-divider"></div>
+                                        <PWAInstallButton />
+                                        <div className="dropdown-divider"></div>
                                         <button onClick={() => { logout(); setShowUserMenu(false); setShowMobileMenu(false); }} className="dropdown-item logout-item">
                                             <i className="fas fa-sign-out-alt"></i>
                                             <span>{t('logout')}</span>
@@ -385,7 +389,9 @@ function AppContent() {
 function App() {
     return (
         <AuthProvider>
-            <AppContent />
+            <PWAProvider>
+                <AppContent />
+            </PWAProvider>
         </AuthProvider>
     );
 }

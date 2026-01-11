@@ -1,0 +1,141 @@
+/* Trial Promo Banner Styles */
+.trial-promo-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px 20px;
+  margin: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  /* Резервируем высоту для предотвращения layout shift */
+  min-height: 80px;
+  /* Оптимизация для GPU */
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Убираем тяжелую анимацию pulse, она вызывает reflow */
+.trial-promo-banner::before {
+  display: none;
+}
+
+.trial-promo-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  position: relative;
+}
+
+.trial-promo-icon {
+  font-size: 48px;
+  flex-shrink: 0;
+  /* Оптимизируем анимацию через transform для GPU */
+  animation: bounce 2s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Упрощенная bounce анимация только через transform */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0) translateZ(0);
+  }
+  50% {
+    transform: translateY(-10px) translateZ(0);
+  }
+}
+
+.trial-promo-text {
+  flex: 1;
+  color: white;
+}
+
+.trial-promo-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.trial-promo-subtitle {
+  font-size: 16px;
+  margin: 0;
+  opacity: 0.95;
+  line-height: 1.5;
+}
+
+.trial-promo-button {
+  background: white;
+  color: #667eea;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: inline-block;
+  /* Оптимизация для GPU */
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.trial-promo-button:hover {
+  transform: translateY(-3px) scale(1.05) translateZ(0);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  color: #764ba2;
+}
+
+.trial-promo-button:active {
+  transform: translateY(-1px) scale(1.02) translateZ(0);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .trial-promo-banner {
+    padding: 16px;
+    min-height: 140px; /* Резервируем высоту для мобильных */
+  }
+
+  .trial-promo-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .trial-promo-icon {
+    font-size: 40px;
+  }
+
+  .trial-promo-title {
+    font-size: 20px;
+  }
+
+  .trial-promo-subtitle {
+    font-size: 14px;
+  }
+
+  .trial-promo-button {
+    width: 100%;
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .trial-promo-title {
+    font-size: 18px;
+  }
+
+  .trial-promo-subtitle {
+    font-size: 13px;
+  }
+
+  .trial-promo-icon {
+    font-size: 36px;
+  }
+}

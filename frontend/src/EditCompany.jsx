@@ -33,7 +33,14 @@ function EditCompany() {
         descriptionEt: '',
         descriptionEn: '',
         descriptionRu: '',
-        image: ''
+        image: '',
+        subscriptionLevel: 'basic'
+    });
+    
+    const [trialInfo, setTrialInfo] = useState({
+        trialActive: false,
+        trialEndDate: null,
+        trialUsed: false
     });
 
     useEffect(() => {
@@ -80,7 +87,15 @@ function EditCompany() {
                 descriptionEt: company.description?.et || '',
                 descriptionEn: company.description?.en || '',
                 descriptionRu: company.description?.ru || '',
-                image: company.image || ''
+                image: company.image || '',
+                subscriptionLevel: company.subscriptionLevel || 'basic'
+            });
+            
+            // Set trial info
+            setTrialInfo({
+                trialActive: company.trialActive || false,
+                trialEndDate: company.trialEndDate || null,
+                trialUsed: company.trialUsed || false
             });
             
             setImagePreview(company.image || PLACEHOLDER_IMAGE);
@@ -140,6 +155,7 @@ function EditCompany() {
             formDataToSend.append('instagramUrl', formData.instagramUrl);
             formDataToSend.append('tiktokUrl', formData.tiktokUrl);
             formDataToSend.append('youtubeUrl', formData.youtubeUrl);
+            formDataToSend.append('subscriptionLevel', formData.subscriptionLevel);
             
             // Multi-language description
             const description = {
@@ -330,6 +346,95 @@ function EditCompany() {
                                 placeholder={t('describe_business_russian')}
                             />
                         </div>
+                    </div>
+
+                    {/* Subscription Plan */}
+                    <div className="form-section subscription-section">
+                        <h2>{t('subscription_plan')}</h2>
+                        
+                        {trialInfo.trialActive && (
+                            <div className="trial-notice">
+                                <span className="trial-badge">🎉 {t('trial_active')}</span>
+                                <p>
+                                    {t('trial_expires')}: {new Date(trialInfo.trialEndDate).toLocaleDateString('et-EE')}
+                                </p>
+                            </div>
+                        )}
+                        
+                        <div className="plan-cards">
+                            <div 
+                                className={`plan-card ${formData.subscriptionLevel === 'basic' ? 'selected' : ''}`}
+                                onClick={() => setFormData({ ...formData, subscriptionLevel: 'basic' })}
+                            >
+                                <div className="plan-header">
+                                    <h3>{t('basic_plan')}</h3>
+                                    <div className="plan-price">
+                                        <span className="price">€0</span>
+                                        <span className="period">/{t('month')}</span>
+                                    </div>
+                                </div>
+                                <ul className="plan-features">
+                                    <li>✓ {t('basic_listing')}</li>
+                                    <li>✓ {t('basic_profile')}</li>
+                                    <li>✓ {t('customer_reviews')}</li>
+                                </ul>
+                                {formData.subscriptionLevel === 'basic' && (
+                                    <div className="current-plan-badge">{t('current_plan')}</div>
+                                )}
+                            </div>
+                            
+                            <div 
+                                className={`plan-card pro ${formData.subscriptionLevel === 'pro' ? 'selected' : ''}`}
+                                onClick={() => setFormData({ ...formData, subscriptionLevel: 'pro' })}
+                            >
+                                <div className="plan-header">
+                                    <h3>{t('pro_plan')}</h3>
+                                    <div className="plan-price">
+                                        <span className="price">€29.99</span>
+                                        <span className="period">/{t('month')}</span>
+                                    </div>
+                                </div>
+                                <ul className="plan-features">
+                                    <li>✓ {t('all_basic_features')}</li>
+                                    <li>✓ {t('priority_placement')}</li>
+                                    <li>✓ {t('analytics_dashboard')}</li>
+                                    <li>✓ {t('social_media_links')}</li>
+                                    <li>✓ {t('custom_branding')}</li>
+                                </ul>
+                                {formData.subscriptionLevel === 'pro' && (
+                                    <div className="current-plan-badge">{t('current_plan')}</div>
+                                )}
+                            </div>
+                            
+                            <div 
+                                className={`plan-card enterprise ${formData.subscriptionLevel === 'enterprise' ? 'selected' : ''}`}
+                                onClick={() => setFormData({ ...formData, subscriptionLevel: 'enterprise' })}
+                            >
+                                <div className="plan-header">
+                                    <h3>{t('enterprise_plan')}</h3>
+                                    <div className="plan-price">
+                                        <span className="price">€99.99</span>
+                                        <span className="period">/{t('month')}</span>
+                                    </div>
+                                </div>
+                                <ul className="plan-features">
+                                    <li>✓ {t('all_pro_features')}</li>
+                                    <li>✓ {t('dedicated_support')}</li>
+                                    <li>✓ {t('api_access')}</li>
+                                    <li>✓ {t('custom_integrations')}</li>
+                                    <li>✓ {t('priority_support')}</li>
+                                </ul>
+                                {formData.subscriptionLevel === 'enterprise' && (
+                                    <div className="current-plan-badge">{t('current_plan')}</div>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {formData.subscriptionLevel !== 'basic' && !trialInfo.trialActive && (
+                            <p className="plan-notice">
+                                {t('plan_change_billing_info')}
+                            </p>
+                        )}
                     </div>
 
                     {/* Logo */}
