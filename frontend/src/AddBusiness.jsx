@@ -235,6 +235,8 @@ function AddBusiness() {
                 userEmail: user.email
             };
             
+            console.log('🔵 Creating company with pending_payment status...', companyData);
+            
             // Send to backend
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const response = await fetch(`${apiUrl}/api/companies`, {
@@ -246,26 +248,56 @@ function AddBusiness() {
                 body: JSON.stringify(companyData)
             });
             
+            console.log('🔵 Response status:', response.status);
+            
             if (!response.ok) {
-                throw new Error('Failed to create company');
+                const errorData = await response.json();
+                console.error('❌ Failed to create company:', errorData);
+                throw new Error(errorData.error || 'Failed to create company');
             }
             
             const result = await response.json();
+            console.log('✅ Backend response:', result);
+            
             const companyId = result.company?._id || result.company?.id || result._id || result.id;
             
-            console.log('✅ Company created with pending_payment status:', companyId);
+            if (!companyId) {
+                console.error('❌ No company ID in response:', result);
+                throw new Error('Company ID not found in response');
+            }
             
-            // Redirect to payment page
-            navigate('/payment', {
-                state: {
+            console.log('✅ Company created with ID:', companyId);
+            console.log('🔵 Creating Stripe checkout session...');
+            
+            // Сразу создаем Stripe checkout session
+            const checkoutResponse = await fetch(`${apiUrl}/api/create-checkout-session`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
                     companyId: companyId,
                     subscriptionLevel: formData.plan
-                }
+                })
             });
             
+            if (!checkoutResponse.ok) {
+                const errorData = await checkoutResponse.json();
+                console.error('❌ Failed to create checkout session:', errorData);
+                throw new Error(errorData.error || 'Failed to create payment session');
+            }
+            
+            const { url } = await checkoutResponse.json();
+            console.log('✅ Stripe checkout URL:', url);
+            
+            // Редирект на Stripe Checkout
+            console.log('🔵 Redirecting to Stripe...');
+            window.location.href = url;
+            
         } catch (error) {
-            console.error('Error creating company:', error);
-            toast.error('Failed to process payment. Please try again.');
+            console.error('❌ Error:', error);
+            toast.error(error.message || 'Не удалось создать сессию оплаты. Попробуйте еще раз.');
         } finally {
             setLoading(false);
         }
