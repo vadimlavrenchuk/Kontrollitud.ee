@@ -179,6 +179,126 @@ async function sendAdminNotification(companyName, action, subscriptionLevel) {
     // });
 }
 
+// Function to activate 30-day trial period for new companies
+function activateTrial(companyData) {
+    const now = new Date();
+    const trialEndDate = new Date(now);
+    trialEndDate.setDate(trialEndDate.getDate() + 30); // 30 days from now
+    
+    return {
+        ...companyData,
+        subscriptionLevel: 'pro', // Upgrade to Pro during trial
+        trialActive: true,
+        trialStartDate: now,
+        trialEndDate: trialEndDate,
+        trialUsed: true, // Mark as used to prevent reactivation
+        trialReminderSent: false,
+        isVerified: true // Pro benefits include verified badge
+    };
+}
+
+// Function to check if trial has expired and downgrade if needed
+async function checkTrialExpiration(company) {
+    if (!company.trialActive) {
+        return company;
+    }
+    
+    const now = new Date();
+    if (now >= company.trialEndDate) {
+        console.log(`⏰ Trial expired for ${company.name}, downgrading to basic`);
+        
+        // Downgrade to basic
+        company.subscriptionLevel = 'basic';
+        company.trialActive = false;
+        company.isVerified = false;
+        company.planDowngradedAt = now;
+        
+        await company.save();
+        
+        // Send expiration email
+        await sendTrialExpirationEmail(company);
+    }
+    
+    return company;
+}
+
+// Function to send trial expiration reminder (3 days before end)
+async function sendTrialReminderEmail(company) {
+    const transporter = getEmailTransporter();
+    
+    if (!transporter || !company.userEmail) {
+        console.log(`⚠️ Cannot send trial reminder: transporter or email missing for ${company.name}`);
+        return false;
+    }
+    
+    const daysLeft = Math.ceil((company.trialEndDate - new Date()) / (1000 * 60 * 60 * 24));
+    
+    const message = {
+        from: `"Kontrollitud.ee" <${process.env.SMTP_USER}>`,
+        to: company.userEmail,
+        subject: 'Ваш пробный период Pro заканчивается через 3 дня',
+        html: `
+            <h2>Привет, ${company.name}!</h2>
+            <p>Ваш 30-дневный пробный период Pro заканчивается через <strong>${daysLeft} дня</strong>.</p>
+            <p>Не упустите возможность продолжить использовать все преимущества Pro:</p>
+            <ul>
+                <li>✅ Приоритет в результатах поиска</li>
+                <li>✅ Значок верификации</li>
+                <li>✅ Выделение в каталоге</li>
+                <li>✅ Расширенная аналитика</li>
+            </ul>
+            <p><a href="https://kontrollitud.ee/partners#pricing" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">Перейти на Pro</a></p>
+            <p>С уважением,<br>Команда Kontrollitud.ee</p>
+        `
+    };
+    
+    try {
+        await transporter.sendMail(message);
+        console.log(`✅ Trial reminder email sent to ${company.userEmail}`);
+        
+        // Mark reminder as sent
+        company.trialReminderSent = true;
+        await company.save();
+        
+        return true;
+    } catch (error) {
+        console.error(`❌ Error sending trial reminder email:`, error);
+        return false;
+    }
+}
+
+// Function to send trial expiration email
+async function sendTrialExpirationEmail(company) {
+    const transporter = getEmailTransporter();
+    
+    if (!transporter || !company.userEmail) {
+        return false;
+    }
+    
+    const message = {
+        from: `"Kontrollitud.ee" <${process.env.SMTP_USER}>`,
+        to: company.userEmail,
+        subject: 'Ваш пробный период Pro завершился',
+        html: `
+            <h2>Привет, ${company.name}!</h2>
+            <p>Ваш 30-дневный пробный период Pro завершился.</p>
+            <p>Ваша компания была переведена на базовый тариф.</p>
+            <p>Чтобы вернуть все преимущества Pro, выберите подходящий тариф:</p>
+            <p><a href="https://kontrollitud.ee/partners#pricing" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">Выбрать тариф</a></p>
+            <p>С уважением,<br>Команда Kontrollitud.ee</p>
+        `
+    };
+    
+    try {
+        await transporter.sendMail(message);
+        console.log(`✅ Trial expiration email sent to ${company.userEmail}`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Error sending trial expiration email:`, error);
+        return false;
+    }
+}
+
 // Function to normalize company name (fix excessive CAPS)
 function normalizeName(name) {
     if (!name) return name;
@@ -652,6 +772,25 @@ const companySchema = new mongoose.Schema({
     },
     planDowngradedAt: {
         type: Date // When plan was auto-downgraded to basic
+    },
+    // Trial period management
+    trialActive: {
+        type: Boolean,
+        default: false // Is trial period currently active
+    },
+    trialStartDate: {
+        type: Date // When trial started
+    },
+    trialEndDate: {
+        type: Date // When trial expires
+    },
+    trialUsed: {
+        type: Boolean,
+        default: false // Has company used trial before (prevent reactivation)
+    },
+    trialReminderSent: {
+        type: Boolean,
+        default: false // Track if 3-day trial ending reminder was sent
     },
     // Stripe payment fields
     stripeSessionId: {
@@ -1166,14 +1305,19 @@ app.post('/api/companies', async (req, res) => {
         const subscriptionLevel = sanitizedData.subscriptionLevel || 'basic';
         let finalApprovalStatus = 'pending';
         let isVerified = false;
+        let companyData = { ...sanitizedData, slug };
         
         if (subscriptionLevel === 'basic') {
-            // ✅ Basic tier: Auto-approve immediately if blacklist passed
+            // ✅ Basic tier: Auto-approve and activate 30-day Pro trial
             finalApprovalStatus = 'approved';
-            console.log(`✅ Basic company auto-approved: ${sanitizedData.name}`);
+            
+            // 🎁 Activate 30-day trial for new companies
+            companyData = activateTrial(companyData);
+            
+            console.log(`✅ Basic company auto-approved with 30-day Pro trial: ${sanitizedData.name}`);
             
             // Send notification to admin with sanitized name
-            await sendAdminNotification(sanitizedData.name, 'approved', 'basic');
+            await sendAdminNotification(sanitizedData.name, 'approved', 'basic (30-day Pro trial)');
             
         } else if (subscriptionLevel === 'pro' || subscriptionLevel === 'enterprise') {
             // 💰 Paid tiers: Set to pending_payment (will be approved after payment webhook)
@@ -1182,14 +1326,11 @@ app.post('/api/companies', async (req, res) => {
             console.log(`💰 ${subscriptionLevel} company set to pending_payment: ${sanitizedData.name}`);
         }
         
-        // Create company with automated status
-        const companyData = { 
-            ...sanitizedData, 
-            slug,
-            subscriptionLevel,
-            approvalStatus: finalApprovalStatus,
-            isVerified
-        };
+        // Set final approval status
+        companyData.approvalStatus = finalApprovalStatus;
+        if (!companyData.hasOwnProperty('isVerified')) {
+            companyData.isVerified = isVerified;
+        }
         
         const newCompany = new Company(companyData);
         const savedCompany = await newCompany.save();
@@ -1610,6 +1751,7 @@ app.put('/api/user/companies/:id', verifyToken, upload.single('logo'), async (re
         if (req.body.instagramUrl) updateData.instagramUrl = req.body.instagramUrl;
         if (req.body.tiktokUrl) updateData.tiktokUrl = req.body.tiktokUrl;
         if (req.body.youtubeUrl) updateData.youtubeUrl = req.body.youtubeUrl;
+        if (req.body.subscriptionLevel) updateData.subscriptionLevel = req.body.subscriptionLevel;
         
         // Multi-language description
         if (req.body.description) {
@@ -1904,12 +2046,64 @@ app.get('/sitemap.xml', async (req, res) => {
     }
 });
 
+// Function to check trial periods daily
+async function checkTrialPeriods() {
+    try {
+        const now = new Date();
+        const threeDaysFromNow = new Date(now);
+        threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+        
+        // Find all companies with active trial
+        const companiesWithTrial = await Company.find({ trialActive: true });
+        
+        console.log(`📋 Found ${companiesWithTrial.length} companies with active trial period`);
+        
+        for (const company of companiesWithTrial) {
+            // Check if trial has expired
+            if (now >= company.trialEndDate) {
+                console.log(`⏰ Trial expired for ${company.name}, downgrading to basic`);
+                
+                company.subscriptionLevel = 'basic';
+                company.trialActive = false;
+                company.isVerified = false;
+                company.planDowngradedAt = now;
+                
+                await company.save();
+                await sendTrialExpirationEmail(company);
+                
+            } else if (
+                now >= threeDaysFromNow && 
+                company.trialEndDate <= threeDaysFromNow && 
+                !company.trialReminderSent
+            ) {
+                // Send 3-day reminder
+                console.log(`📧 Sending 3-day trial reminder to ${company.name}`);
+                await sendTrialReminderEmail(company);
+            }
+        }
+        
+        console.log('✅ Trial period check completed');
+    } catch (error) {
+        console.error('❌ Error during trial period check:', error);
+    }
+}
+
 // 🕐 CRON JOB: Daily subscription check at 3:00 AM
 // Schedule: '0 3 * * *' = Every day at 3:00 AM (Europe/Tallinn timezone)
 // For testing: '*/5 * * * *' = Every 5 minutes
 // For testing: '* * * * *' = Every minute
 // For testing: '0 * * * *' = Every hour
 
+// Daily check for trial period expiration and reminders
+cron.schedule('0 2 * * *', async () => {
+    console.log('⏰ Cron job triggered: Daily trial period check');
+    await checkTrialPeriods();
+}, {
+    scheduled: true,
+    timezone: "Europe/Tallinn"
+});
+
+// Daily check for subscriptions
 cron.schedule('0 3 * * *', async () => {
     console.log('⏰ Cron job triggered: Daily subscription check');
     await checkSubscriptions();
@@ -1918,6 +2112,7 @@ cron.schedule('0 3 * * *', async () => {
     timezone: "Europe/Tallinn"
 });
 
+console.log('✅ Cron job scheduled: Trial period check at 2:00 AM (Europe/Tallinn)');
 console.log('✅ Cron job scheduled: Daily subscription check at 3:00 AM (Europe/Tallinn)');
 
 // Run initial check on server startup (optional, for testing)

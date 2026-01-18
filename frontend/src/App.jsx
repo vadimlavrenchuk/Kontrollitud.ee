@@ -30,6 +30,9 @@ import PaymentCancelled from './pages/PaymentCancelled.jsx';
 import PaymentPage from './pages/PaymentPage.jsx';
 import PWAInstall, { PWAProvider, PWAInstallButton } from './components/PWAInstall.jsx';
 
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
+import TermsOfUsePage from './pages/TermsOfUsePage.jsx';
+
 function AppContent() {
     const { t, i18n } = useTranslation();
     const { user, logout, isAuthenticated } = useAuth();
@@ -88,7 +91,7 @@ function AppContent() {
     }, [showMobileMenu]);
 
     return (
-        <BrowserRouter> 
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}> 
             <div className="app-main">
                 {/* Default SEO Meta Tags */}
                 <Helmet>
@@ -330,6 +333,8 @@ function AppContent() {
                     <Route path="/catalog" element={<CatalogPage />} />
                     <Route path="/partners" element={<PartnersPage />} />
                     <Route path="/about" element={<AboutPage />} />
+                        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                        <Route path="/terms" element={<TermsOfUsePage />} />
                     <Route path="/blog" element={<BlogPage />} />
                     <Route path="/blog/:id" element={<BlogPostDetail />} />
                     <Route path="/auth" element={<AuthPage />} />

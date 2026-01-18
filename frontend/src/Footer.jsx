@@ -29,6 +29,7 @@ function Footer() {
                             <li><Link to="/">{t('home')}</Link></li>
                             <li><Link to="/add-business">{t('add_business')}</Link></li>
                             <li><Link to="/terms">{t('footer_terms')}</Link></li>
+                            <li><Link to="/privacy">{t('footer_privacy')}</Link></li>
                         </ul>
                     </div>
 

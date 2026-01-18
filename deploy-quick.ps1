@@ -5,8 +5,12 @@ Write-Host "Quick deployment..." -ForegroundColor Green
 
 $SERVER = "root@kontrollitud.ee"
 
-# Build frontend
-Write-Host "`nBuilding..." -ForegroundColor Yellow
+# Clean old build and build fresh
+Write-Host "`nCleaning old build..." -ForegroundColor Yellow
+Remove-Item frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item frontend/node_modules/.vite -Recurse -Force -ErrorAction SilentlyContinue
+
+Write-Host "Building fresh..." -ForegroundColor Yellow
 Set-Location frontend
 npm run build
 Set-Location ..
@@ -34,9 +38,18 @@ Write-Host "Archive ready" -ForegroundColor Green
 Write-Host "`nUploading..." -ForegroundColor Yellow
 scp deploy.tar.gz ${SERVER}:/tmp/
 
-# Deploy
+# Deploy with forced rebuild (no Docker cache)
 Write-Host "`nDeploying..." -ForegroundColor Yellow
-$commands = "cd /root/Kontrollitud.ee && tar -xzf /tmp/deploy.tar.gz && rm /tmp/deploy.tar.gz && docker-compose down && docker-compose build --no-cache && docker-compose up -d && docker image prune -f && echo 'Done!'"
+$commands = @"
+cd /root/Kontrollitud.ee
+tar -xzf /tmp/deploy.tar.gz
+rm /tmp/deploy.tar.gz
+docker-compose down
+docker-compose build --no-cache frontend
+docker-compose up -d
+docker image prune -f
+echo '✅ Deployment complete!'
+"@
 ssh $SERVER $commands
 
 Remove-Item deploy.tar.gz

@@ -1,0 +1,109 @@
+// Legal pages styles (Privacy Policy, Terms of Use)
+
+.legal-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.7;
+  color: #2d3748;
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 40px;
+    color: #1a202c;
+    text-align: center;
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 20px;
+
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
+  }
+
+  h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    color: #667eea;
+    border-left: 4px solid #667eea;
+    padding-left: 15px;
+
+    @media (max-width: 768px) {
+      font-size: 1.5rem;
+    }
+  }
+
+  h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: #4a5568;
+  }
+
+  p {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: #4a5568;
+
+    b {
+      color: #2d3748;
+      font-weight: 600;
+    }
+  }
+
+  ul {
+    list-style: disc;
+    margin-left: 30px;
+    margin-bottom: 20px;
+
+    li {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: #4a5568;
+    }
+  }
+
+  a {
+    color: #667eea;
+    text-decoration: underline;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #5a67d8;
+    }
+  }
+
+  // Section spacing
+  section {
+    margin-bottom: 50px;
+  }
+
+  // Back button
+  .back-button {
+    display: inline-block;
+    margin-bottom: 30px;
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #5a67d8;
+    }
+  }
+
+  // Mobile responsive
+  @media (max-width: 768px) {
+    padding: 40px 15px;
+
+    p, li {
+      font-size: 1rem;
+    }
+  }
+}
