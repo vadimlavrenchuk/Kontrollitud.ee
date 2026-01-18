@@ -55,7 +55,7 @@ function EditCompany() {
     const fetchCompanyData = async () => {
         try {
             const token = localStorage.getItem('authToken');
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const apiUrl = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${apiUrl}/api/user/submissions?userId=${user.uid}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -145,7 +145,7 @@ function EditCompany() {
         
         try {
             const token = localStorage.getItem('authToken');
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const apiUrl = import.meta.env.VITE_API_URL || '';
             
             const formDataToSend = new FormData();
             formDataToSend.append('name', formData.name);

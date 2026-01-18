@@ -45,7 +45,7 @@ function UserDashboard() {
         try {
             setLoading(true);
             const token = localStorage.getItem('authToken');
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const apiUrl = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${apiUrl}/api/user/submissions?userId=${user.uid}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -131,7 +131,7 @@ function UserDashboard() {
         
         try {
             const token = localStorage.getItem('authToken');
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const apiUrl = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${apiUrl}/api/user/companies/${companyId}`, {
                 method: 'DELETE',
                 headers: {

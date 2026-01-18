@@ -238,7 +238,7 @@ function AddBusiness() {
             console.log('🔵 Creating company with pending_payment status...', companyData);
             
             // Send to backend
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const apiUrl = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${apiUrl}/api/companies`, {
                 method: 'POST',
                 headers: {

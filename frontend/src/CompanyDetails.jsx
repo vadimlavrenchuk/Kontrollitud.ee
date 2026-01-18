@@ -84,7 +84,7 @@ function CompanyDetails() {
     // Track company view
     const trackCompanyView = async (companyId) => {
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const apiUrl = import.meta.env.VITE_API_URL || '';
             await fetch(`${apiUrl}/api/companies/${companyId}/view`, {
                 method: 'POST'
             });

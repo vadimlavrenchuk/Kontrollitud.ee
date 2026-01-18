@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './styles/CompanyList.scss';
 
-const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/companies`;
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || ''}/api/companies`;
 
 function CompanyForm() {
     const { t } = useTranslation();

@@ -61,7 +61,7 @@ function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic', c
             console.log('✅ Auth token received');
             
             // Create checkout session
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const apiUrl = import.meta.env.VITE_API_URL || '';
             console.log('🔵 API URL:', apiUrl);
             console.log('🔵 Creating checkout session...');
             
