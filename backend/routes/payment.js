@@ -82,19 +82,13 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
                 price: priceId,
                 quantity: 1,
             }],
-            mode: 'subscription',
+            mode: 'payment', // Changed from 'subscription' to 'payment' for one-time payment
             success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.FRONTEND_URL}/payment-cancelled?company_id=${companyId}`,
             metadata: {
                 companyId: companyId,
                 subscriptionLevel: subscriptionLevel,
                 userId: company.userId
-            },
-            subscription_data: {
-                metadata: {
-                    companyId: companyId,
-                    subscriptionLevel: subscriptionLevel
-                }
             }
         });
         
@@ -195,7 +189,7 @@ async function handleCheckoutCompleted(session) {
         company.approvalStatus = 'approved';
         company.isVerified = true;
         company.subscriptionLevel = subscriptionLevel;
-        company.stripeSubscriptionId = session.subscription;
+        company.stripePaymentIntentId = session.payment_intent; // For one-time payment mode
         company.paymentConfirmedAt = new Date();
         
         // Set subscription expiration (1 month from now)
