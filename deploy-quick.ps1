@@ -22,14 +22,10 @@ tar --exclude='node_modules' `
     --exclude='.git' `
     --exclude='*.tar*' `
     --exclude='ssl' `
-    --exclude='frontend/src' `
-    --exclude='frontend/public' `
     -czf deploy.tar.gz `
     backend `
-    frontend/dist `
-    frontend/nginx.conf `
+    frontend `
     .env `
-    frontend/.env `
     docker-compose.yml
 
 Write-Host "Archive ready" -ForegroundColor Green
