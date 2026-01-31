@@ -16,40 +16,40 @@ body {
   padding: 0;
 }
 
-/* CSS Grid layout для Sticky Footer */
+/* Flexbox layout для Sticky Footer - предотвращает прыжок футера */
 html {
   height: 100%;
 }
 
 body {
-  display: grid;
-  grid-template-rows: auto 1fr auto; /* Navbar, Content (тянется), Footer */
-  min-height: 100vh;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
-/* Root контейнер */
+/* Root контейнер - flex контейнер на всю высоту экрана */
 #root {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* App контейнер - занимает центральную область grid */
+/* App контейнер */
 .app-main {
   display: flex;
   flex-direction: column;
   width: 100%;
   overflow-x: hidden;
+  flex: 1; /* Растягивается, отодвигая футер вниз */
 }
 
-/* Main content area - резервируем минимальную высоту для предотвращения прыжка футера */
+/* Main content area - растягивается, чтобы футер был внизу */
 main,
 .app-content-root {
-  min-height: 70vh !important;
-  flex: 1;
+  flex: 1 0 auto; /* Растягивается, минимум auto */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Navbar - фиксированная высота для предотвращения CLS */

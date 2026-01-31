@@ -40,11 +40,24 @@
     <meta name="twitter:description" content="Find and review verified businesses in Estonia" />
     <meta name="twitter:image" content="https://kontrollitud.ee/og-default.jpg" />
     
+    <!-- Critical CSS - загружается первым для предотвращения CLS -->
+    <link rel="stylesheet" href="/critical.css">
+    
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   </head>
-  <body>
+  <body class="app-main">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Force Service Worker update on page load
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.update();
+          });
+        });
+      }
+    </script>
   </body>
 </html>
