@@ -32,8 +32,8 @@ export const PWAProvider = ({ children }) => {
                       document.referrer.includes('android-app://');
     setIsStandalone(standalone);
 
-    // Register Service Worker
-    if ('serviceWorker' in navigator && !standalone) {
+    // Register Service Worker (только в production)
+    if ('serviceWorker' in navigator && !standalone && import.meta.env.PROD) {
       window.addEventListener('load', () => {
         navigator.serviceWorker
           .register('/service-worker.js')

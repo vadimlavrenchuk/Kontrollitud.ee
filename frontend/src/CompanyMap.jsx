@@ -176,12 +176,15 @@ const CompanyMap = ({ companies, selectedCompanyId, onMarkerClick }) => {
                     };
                     
                     // Only add icon prop if verified
+                    const markerKey = markerProps.key;
+                    delete markerProps.key;
+                    
                     if (isVerified && verifiedIconRef.current) {
                         markerProps.icon = verifiedIconRef.current;
                     }
                     
                     return (
-                        <Marker {...markerProps}>
+                        <Marker key={markerKey} {...markerProps}>
                             <Popup>
                                 <div className="map-popup">
                                     {/* Image preview */}

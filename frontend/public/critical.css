@@ -1,0 +1,215 @@
+/* Critical CSS - загружается первым для предотвращения CLS */
+/* Только базовая раскладка, без декоративных стилей */
+
+/* Предотвращаем FOIT (Flash of Invisible Text) */
+/* Используем системные шрифты до загрузки веб-шрифтов */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+/* Сброс отступов */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* CSS Grid layout для Sticky Footer */
+html {
+  height: 100%;
+}
+
+body {
+  display: grid;
+  grid-template-rows: auto 1fr auto; /* Navbar, Content (тянется), Footer */
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Root контейнер */
+#root {
+  display: contents; /* Делает #root "прозрачным" для grid-раскладки */
+}
+
+/* App контейнер - занимает центральную область grid */
+.app-main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Navbar - фиксированная высота для предотвращения CLS */
+.sticky-navbar {
+  min-height: 72px !important;
+  height: 72px !important;
+  position: sticky;
+  top: 0;
+  z-index: 10000;
+  width: 100%;
+}
+
+/* Navbar container - фиксированные размеры */
+.navbar-container {
+  height: 72px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+}
+
+/* Navbar right - фиксированная ширина для предотвращения сдвига */
+html body .navbar-right {
+  display: flex !important;
+  align-items: center;
+  gap: 16px;
+  /* КРИТИЧНО: Фиксированная ширина предотвращает CLS при загрузке кнопок */
+  min-width: 500px !important;
+  width: 500px !important;
+  height: 40px !important;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  /* Принудительный CSS containment */
+  contain: strict;
+  overflow: hidden;
+}
+
+/* Скелетон-плейсхолдеры для navbar-right до загрузки JS */
+.navbar-right:empty::before {
+  content: '';
+  display: block;
+  width: 480px;
+  height: 40px;
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0.05) 0%, 
+    rgba(255,255,255,0.1) 50%, 
+    rgba(255,255,255,0.05) 100%);
+  border-radius: 8px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Logo фиксированные размеры */
+.logo-image {
+  width: 40px !important;
+  height: 40px !important;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  min-width: 180px;
+  white-space: nowrap;
+}
+
+/* User avatar - фиксированные размеры для предотвращения CLS */
+.user-avatar {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-avatar-placeholder {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Footer - фиксированные размеры */
+html body footer.footer,
+html body .footer {
+  margin-top: auto;
+  /* КРИТИЧНО: Точная минимальная высота на основе реального контента */
+  min-height: 320px !important;
+  height: 320px !important;
+  width: 100%;
+  flex-shrink: 0;
+  padding-top: 140px;
+  padding-bottom: 20px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  /* Предотвращаем layout shift при появлении контента */
+  contain: strict;
+  overflow: hidden;
+}
+
+/* Footer container - предотвращаем layout shift */
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Footer content - фиксированная структура grid */
+.footer-content {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 40px !important;
+  min-height: 120px !important;
+}
+
+/* Скелетон для footer до загрузки контента */
+.footer-content:empty::before {
+  content: '';
+  display: block;
+  grid-column: 1 / -1;
+  height: 120px;
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0.05) 0%, 
+    rgba(255,255,255,0.1) 50%, 
+    rgba(255,255,255,0.05) 100%);
+  border-radius: 8px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* Mobile navbar */
+@media (max-width: 768px) {
+  .navbar-right {
+    min-width: auto !important;
+    width: auto !important;
+    gap: 12px;
+  }
+  
+  .footer {
+    min-height: 280px !important;
+  }
+  
+  .footer-content {
+    grid-template-columns: 1fr !important;
+    gap: 30px;
+  }
+}
+
+/* Базовая структура для контента */
+.content-wrapper,
+main {
+  flex: 1;
+  width: 100%;
+  /* Оптимизация рендеринга - браузер откладывает рендеринг невидимого контента */
+  content-visibility: auto;
+  contain-intrinsic-size: 1000px;
+}
+
+/* Секции с фиксированными размерами */
+section.hero,
+.catalog-section,
+.company-grid {
+  content-visibility: auto;
+  contain-intrinsic-size: 600px;
+}

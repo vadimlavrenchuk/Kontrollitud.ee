@@ -1,7 +1,7 @@
 // Service Worker for Kontrollitud.ee PWA
-const CACHE_NAME = 'kontrollitud-v6';
-const STATIC_CACHE_NAME = 'kontrollitud-static-v6';
-const DYNAMIC_CACHE_NAME = 'kontrollitud-dynamic-v6';
+const CACHE_NAME = 'kontrollitud-v7';
+const STATIC_CACHE_NAME = 'kontrollitud-static-v7';
+const DYNAMIC_CACHE_NAME = 'kontrollitud-dynamic-v7';
 
 // Static assets to cache immediately
 const STATIC_ASSETS = [

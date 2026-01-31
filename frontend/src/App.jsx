@@ -1,37 +1,39 @@
 // Kontrollitud.ee/frontend/src/App.jsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import './App.css';
 import logo from './assets/logokontroll.jpg';
 
-// 🟢 ОБЯЗАТЕЛЬНО ПРОВЕРЬ, ЧТО ЭТИ ИМПОРТЫ ЕСТЬ:
-import CompanyList from './CompanyList.jsx'; 
+// Eager load critical pages
+import CompanyList from './CompanyList.jsx';
 import CompanyDetails from './CompanyDetails.jsx';
-import AddBusiness from './AddBusiness.jsx'; // Business submission form (public)
-import EditCompany from './EditCompany.jsx'; // Edit company form (user)
-import AdminDashboard from './AdminDashboard.jsx';
-import UserDashboard from './UserDashboard.jsx';
 import AuthPage from './AuthPage.jsx';
-import Login from './Login.jsx';
+
+// Lazy load heavy components
+const AddBusiness = lazy(() => import('./AddBusiness.jsx'));
+const EditCompany = lazy(() => import('./EditCompany.jsx'));
+const AdminDashboard = lazy(() => import('./AdminDashboard.jsx'));
+const UserDashboard = lazy(() => import('./UserDashboard.jsx'));
+const CatalogPage = lazy(() => import('./pages/CatalogPage.jsx'));
+const PartnersPage = lazy(() => import('./pages/PartnersPage.jsx'));
+const BlogPage = lazy(() => import('./pages/BlogPage.jsx'));
+const BlogPostDetail = lazy(() => import('./pages/BlogPostDetail.jsx'));
+const AboutPage = lazy(() => import('./pages/AboutPage.jsx'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess.jsx'));
+const PaymentCancelled = lazy(() => import('./pages/PaymentCancelled.jsx'));
+const PaymentPage = lazy(() => import('./pages/PaymentPage.jsx'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage.jsx'));
+const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage.jsx'));
+
+// Keep critical components eager
 import ProtectedRoute from './ProtectedRoute.jsx';
 import RequireAuth from './RequireAuth.jsx';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
 import Footer from './Footer.jsx';
-import CatalogPage from './pages/CatalogPage.jsx';
-import PartnersPage from './pages/PartnersPage.jsx';
-import BlogPage from './pages/BlogPage.jsx';
-import BlogPostDetail from './pages/BlogPostDetail.jsx';
-import AboutPage from './pages/AboutPage.jsx';
-import PaymentSuccess from './pages/PaymentSuccess.jsx';
-import PaymentCancelled from './pages/PaymentCancelled.jsx';
-import PaymentPage from './pages/PaymentPage.jsx';
 import PWAInstall, { PWAProvider, PWAInstallButton } from './components/PWAInstall.jsx';
-
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
-import TermsOfUsePage from './pages/TermsOfUsePage.jsx';
 
 function AppContent() {
     const { t, i18n } = useTranslation();
@@ -328,7 +330,9 @@ function AppContent() {
                     </div>
                 </header>
 
-                <Routes>
+                <main style={{minHeight: 'calc(100vh - 80px)'}}>
+                <Suspense fallback={<div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center'}}>Loading...</div>}>
+                  <Routes>
                     <Route path="/" element={<CompanyList />} />
                     <Route path="/catalog" element={<CatalogPage />} />
                     <Route path="/partners" element={<PartnersPage />} />
@@ -380,7 +384,9 @@ function AppContent() {
                             <p>{t('return_home')}</p>
                         </div>
                     } />
-                </Routes>
+                  </Routes>
+                </Suspense>
+                </main>
                 
                 <Footer />
                 

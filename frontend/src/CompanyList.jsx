@@ -119,6 +119,10 @@ function CompanyList() {
           src={tallinnBg}
           alt="Tallinn cityscape"
           className="hero__bg-image"
+          width="1920"
+          height="1080"
+          loading="eager"
+          fetchpriority="high"
         />
         
         <div className="hero__overlay"></div>
