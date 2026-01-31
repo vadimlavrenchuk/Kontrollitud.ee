@@ -78,13 +78,10 @@ html body .navbar-right {
   gap: 16px;
   /* КРИТИЧНО: Фиксированная ширина предотвращает CLS при загрузке кнопок */
   min-width: 500px !important;
-  width: 500px !important;
+  width: auto !important;
   height: 40px !important;
   justify-content: flex-end;
   flex-shrink: 0;
-  /* Принудительный CSS containment */
-  contain: strict;
-  overflow: hidden;
 }
 
 /* Скелетон-плейсхолдеры для navbar-right до загрузки JS */

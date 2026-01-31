@@ -350,7 +350,9 @@ function PartnersPage() {
               {/* Preview Card */}
               <div className="business-card-preview verified-preview">
                 <div className="preview-image pro-image">
-                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%233b82f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='white' font-weight='bold'%3E%D0%92%D0%B0%D1%88%D0%B5 %D1%84%D0%BE%D1%82%D0%BE%3C/text%3E%3C/svg%3E" alt="Preview" />
+                  <div className="preview-placeholder-text">
+                    {t('your_photo')}
+                  </div>
                   <div className="preview-verified-badge">
                     <FontAwesomeIcon icon={faShieldAlt} />
                     <span>Verified</span>
@@ -411,7 +413,9 @@ function PartnersPage() {
                   <div className="top-priority-badge">
                     <FontAwesomeIcon icon={faCrown} /> TOP Priority
                   </div>
-                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Cdefs%3E%3ClinearGradient id='gold' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23fbbf24'/%3E%3Cstop offset='100%25' style='stop-color:%23f59e0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='200' fill='url(%23gold)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white' font-weight='bold'%3E%D0%9F%D0%A0%D0%95%D0%9C%D0%98%D0%A3%D0%9C %D0%91%D0%90%D0%9D%D0%9D%D0%95%D0%A0%3C/text%3E%3C/svg%3E" alt="Premium" />
+                  <div className="preview-placeholder-text enterprise-banner">
+                    {t('premium_banner')}
+                  </div>
                 </div>
                 <div className="preview-content">
                   <h3 className="preview-business-name">
