@@ -330,11 +330,11 @@ function AppContent() {
                     </div>
                 </header>
 
-                <main style={{minHeight: 'calc(100vh - 80px)'}}>
-                <Suspense fallback={<div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center'}}>Loading...</div>}>
-                  <Routes>
-                    <Route path="/" element={<CompanyList />} />
-                    <Route path="/catalog" element={<CatalogPage />} />
+                <main className="app-content-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                  <Suspense fallback={<div style={{ minHeight: '100vh', background: 'transparent' }} />}>
+                    <Routes>
+                      <Route path="/" element={<CompanyList />} />
+                      <Route path="/catalog" element={<CatalogPage />} />
                     <Route path="/partners" element={<PartnersPage />} />
                     <Route path="/about" element={<AboutPage />} />
                         <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -384,8 +384,8 @@ function AppContent() {
                             <p>{t('return_home')}</p>
                         </div>
                     } />
-                  </Routes>
-                </Suspense>
+                    </Routes>
+                  </Suspense>
                 </main>
                 
                 <Footer />

@@ -93,7 +93,17 @@ function CompanyList() {
   }, []);
 
   if (loading) {
-    return <div className="container">{t('loading')}</div>;
+    return (
+      <div className="main-content-loader">
+        <section className="hero skeleton-hero" style={{ minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
+          <div className="container">
+            <div className="skeleton-text" style={{ height: '40px', width: '300px', background: '#e0e0e0', margin: '0 auto 20px' }}></div>
+            <div className="skeleton-text" style={{ height: '20px', width: '200px', background: '#e0e0e0', margin: '0 auto' }}></div>
+          </div>
+        </section>
+        <div className="container" style={{ minHeight: '500px' }}></div>
+      </div>
+    );
   }
 
   if (error) {

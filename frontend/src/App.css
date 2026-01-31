@@ -33,6 +33,17 @@ body {
   width: 100%;
 }
 
+/* Hero section optimization */
+.hero {
+  min-height: 600px;
+  contain: layout size style; /* Помогает браузеру заранее выделить место */
+}
+
+.hero__bg-image {
+  object-fit: cover;
+  aspect-ratio: 16 / 9; /* Защищает от изменения высоты при загрузке картинки */
+}
+
 /* ========================================
    STICKY NAVBAR
    ======================================== */

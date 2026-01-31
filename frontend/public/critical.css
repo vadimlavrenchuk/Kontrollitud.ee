@@ -136,17 +136,16 @@ html body .navbar-right {
 html body footer.footer,
 html body .footer {
   margin-top: auto;
-  /* КРИТИЧНО: Точная минимальная высота на основе реального контента */
+  /* Минимальная высота для резервирования места */
   min-height: 320px !important;
-  height: 320px !important;
   width: 100%;
   flex-shrink: 0;
-  padding-top: 140px;
+  padding-top: 60px !important;
   padding-bottom: 20px;
   background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
   /* Предотвращаем layout shift при появлении контента */
-  contain: strict;
-  overflow: hidden;
+  contain: layout size style !important;
+  position: relative;
 }
 
 /* Footer container - предотвращаем layout shift */
@@ -161,7 +160,7 @@ html body .footer {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
   gap: 40px !important;
-  min-height: 120px !important;
+  min-height: 200px !important;
 }
 
 /* Скелетон для footer до загрузки контента */
@@ -212,4 +211,41 @@ section.hero,
 .company-grid {
   content-visibility: auto;
   contain-intrinsic-size: 600px;
+}
+
+/* Hero section - фиксированная высота для предотвращения CLS */
+.hero {
+  min-height: 600px !important;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hero content - резервируем место для текста */
+.hero__content {
+  min-height: 300px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 2;
+}
+
+/* Hero title - резервируем высоту */
+.hero__title {
+  min-height: 80px;
+}
+
+/* Hero subtitle */
+.hero__subtitle {
+  min-height: 40px;
+}
+
+/* Hero search wrapper */
+.hero__search-wrapper {
+  min-height: 60px;
+  width: 100%;
+  max-width: 600px;
 }
