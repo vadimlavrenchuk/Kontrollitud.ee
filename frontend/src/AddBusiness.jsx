@@ -684,7 +684,7 @@ function AddBusiness() {
                         <div className="business-card-preview verified-preview">
                             {/* Image with verified badge */}
                             <div className="preview-image pro-image">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%233b82f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='white'%3EВаше фото%3C/text%3E%3C/svg%3E" alt="Preview" />
+                                <img src={`data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%233b82f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='white'%3E${encodeURIComponent(t('your_photo') || 'Your Photo')}%3C/text%3E%3C/svg%3E`} alt="Preview" />
                                 <div className="preview-verified-badge">
                                     <i className="fas fa-shield-alt"></i>
                                     <span>Verified</span>
@@ -739,7 +739,7 @@ function AddBusiness() {
                             </div>
                             {/* Image */}
                             <div className="preview-image enterprise-image">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Cdefs%3E%3ClinearGradient id='gold' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23fbbf24'/%3E%3Cstop offset='100%25' style='stop-color:%23f59e0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='200' fill='url(%23gold)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white' font-weight='bold'%3EПРЕМИУМ БАННЕР%3C/text%3E%3C/svg%3E" alt="Premium" />
+                                <img src={`data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Cdefs%3E%3ClinearGradient id='gold' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23fbbf24'/%3E%3Cstop offset='100%25' style='stop-color:%23f59e0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='200' fill='url(%23gold)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='white' font-weight='bold'%3E${encodeURIComponent(t('premium_banner') || 'PREMIUM BANNER')}%3C/text%3E%3C/svg%3E`} alt="Premium" />
                             </div>
                             {/* Content */}
                             <div className="preview-content">

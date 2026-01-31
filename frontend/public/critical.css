@@ -32,7 +32,9 @@ body {
 
 /* Root контейнер */
 #root {
-  display: contents; /* Делает #root "прозрачным" для grid-раскладки */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* App контейнер - занимает центральную область grid */
@@ -41,6 +43,13 @@ body {
   flex-direction: column;
   width: 100%;
   overflow-x: hidden;
+}
+
+/* Main content area - резервируем минимальную высоту для предотвращения прыжка футера */
+main,
+.app-content-root {
+  min-height: 70vh !important;
+  flex: 1;
 }
 
 /* Navbar - фиксированная высота для предотвращения CLS */
