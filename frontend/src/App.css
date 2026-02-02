@@ -602,23 +602,8 @@ body {
   transform: translateY(-2px);
 }
 
-/* Hamburger Menu Button */
-.hamburger-menu {
-  display: none;
-  flex-direction: column;
-  gap: 4px;
-  background: transparent;
-  border: none;
-  padding: 8px;
-  cursor: pointer;
-  z-index: 1001;
-}
-
+/* Hamburger Menu Button - базовые стили дополняют critical.css */
 .hamburger-menu span {
-  width: 24px;
-  height: 3px;
-  background: white;
-  border-radius: 2px;
   transition: all 0.3s ease;
 }
 
@@ -695,10 +680,6 @@ body {
 
 /* Responsive design for mobile */
 @media (max-width: 768px) {
-  .hamburger-menu {
-    display: flex;
-  }
-  
   .navbar-right {
     gap: 12px;
   }

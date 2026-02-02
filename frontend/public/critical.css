@@ -255,3 +255,51 @@ section.hero,
   width: 100%;
   max-width: 600px;
 }
+
+/* Mobile hamburger menu - резервируем место для предотвращения CLS */
+.hamburger-menu {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10005;
+}
+
+.hamburger-menu span {
+  width: 24px;
+  height: 3px;
+  background: white;
+  display: block;
+  border-radius: 2px;
+}
+
+/* Показываем только на мобильных */
+@media (max-width: 768px) {
+  /* Сбрасываем десктопную ширину, которая выталкивает меню */
+  html body .navbar-right {
+    min-width: 0 !important; 
+    width: auto !important;
+    flex: 0 1 auto !important;
+    display: flex !important;
+  }
+
+  .hamburger-menu {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 44px !important;
+    height: 44px !important;
+    z-index: 10005 !important;
+    order: 10;
+  }
+}
