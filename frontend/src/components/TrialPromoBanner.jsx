@@ -12,7 +12,7 @@ const TrialPromoBanner = () => {
       <div className="trial-promo-content">
         <div className="trial-promo-icon">🎁</div>
         <div className="trial-promo-text">
-          <h3 className="trial-promo-title">{t('trial_banner_title')}</h3>
+          <h2 className="trial-promo-title">{t('trial_banner_title')}</h2>
           <p className="trial-promo-subtitle">{t('trial_banner_subtitle')}</p>
         </div>
         <Link to="/partners#pricing" className="trial-promo-button">

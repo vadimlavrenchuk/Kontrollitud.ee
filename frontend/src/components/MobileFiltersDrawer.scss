@@ -1,0 +1,355 @@
+// Kontrollitud.ee/frontend/src/components/MobileFiltersDrawer.scss
+// Стили для полноэкранного drawer фильтров (мобилка)
+
+.mobile-filters-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-filters-drawer {
+  width: 100%;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+// Header
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+  flex-shrink: 0;
+  
+  .drawer-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .drawer-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #374151;
+    transition: all 0.2s;
+    
+    &:active {
+      background: #e5e7eb;
+      transform: scale(0.95);
+    }
+  }
+}
+
+// Content (scrollable)
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.drawer-section {
+  margin-bottom: 2rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  .section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+// Поиск
+.drawer-search {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+}
+
+// Категории (сетка 2 колонки)
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.category-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  transition: all 0.2s;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    
+    .category-icon {
+      filter: brightness(2);
+    }
+  }
+  
+  .category-icon {
+    font-size: 1.75rem;
+  }
+}
+
+// Подкатегории (chips)
+.subcategory-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  padding: 0.625rem 1rem;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+}
+
+// Города (сетка 2 колонки)
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.city-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  input[type="checkbox"] {
+    display: none;
+    
+    &:checked + .checkbox-custom {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      
+      &::after {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  }
+  
+  .checkbox-custom {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+    
+    &::after {
+      content: '✓';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.2s;
+    }
+  }
+  
+  .city-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+  }
+}
+
+// Верифицированные toggle
+.verified-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #15803d;
+  transition: all 0.2s;
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  input[type="checkbox"] {
+    display: none;
+    
+    &:checked + .checkbox-custom.verified {
+      background: #10b981;
+      border-color: #10b981;
+      
+      &::after {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  }
+  
+  .checkbox-custom.verified {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #86efac;
+    border-radius: 6px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+    
+    &::after {
+      content: '✓';
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.2s;
+    }
+  }
+}
+
+// Footer (кнопки)
+.drawer-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 2px solid #e5e7eb;
+  flex-shrink: 0;
+  background: white;
+  
+  button {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+  
+  .btn-reset {
+    background: #f3f4f6;
+    color: #374151;
+    
+    &:active {
+      background: #e5e7eb;
+    }
+  }
+  
+  .btn-apply {
+    background: #3b82f6;
+    color: white;
+    
+    &:active {
+      background: #2563eb;
+    }
+  }
+}

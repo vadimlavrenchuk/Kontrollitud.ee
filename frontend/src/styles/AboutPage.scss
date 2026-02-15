@@ -101,7 +101,7 @@
       
       .section-icon {
         font-size: 3rem;
-        color: #667eea;
+        color: #4338ca;
       }
       
       h2 {
@@ -353,14 +353,14 @@
           
           &.btn-secondary {
             background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
+            color: #4338ca;
+            border: 2px solid #4338ca;
             
             &:hover {
-              background: #667eea;
+              background: #4338ca;
               color: white;
               transform: translateY(-3px);
-              box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+              box-shadow: 0 4px 16px rgba(67, 56, 202, 0.3);
             }
           }
         }

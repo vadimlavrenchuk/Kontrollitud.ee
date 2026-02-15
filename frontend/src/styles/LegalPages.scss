@@ -27,8 +27,8 @@
     font-weight: 600;
     margin-top: 40px;
     margin-bottom: 20px;
-    color: #667eea;
-    border-left: 4px solid #667eea;
+    color: #4338ca;
+    border-left: 4px solid #4338ca;
     padding-left: 15px;
 
     @media (max-width: 768px) {
@@ -68,12 +68,12 @@
   }
 
   a {
-    color: #667eea;
+    color: #4338ca;
     text-decoration: underline;
     transition: color 0.2s;
 
     &:hover {
-      color: #5a67d8;
+      color: #3730a3;
     }
   }
 

@@ -1,6 +1,6 @@
 // Kontrollitud.ee/frontend/src/CompanyMap.jsx
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -42,8 +42,9 @@ const MapController = ({ selectedCompanyId, companies }) => {
     const prevSelectedId = useRef(selectedCompanyId);
     const hasAutoFitted = useRef(false);
     
-    // FlyTo selected company when card is clicked
+    // FlyTo ТОЛЬКО для selected company (клик), НЕ для hover
     useEffect(() => {
+        // Летим к компании ТОЛЬКО при клике (selectedCompanyId)
         if (selectedCompanyId && selectedCompanyId !== prevSelectedId.current) {
             const selectedCompany = companies.find(c => (c._id || c.id) === selectedCompanyId);
             
@@ -65,8 +66,6 @@ const MapController = ({ selectedCompanyId, companies }) => {
                         easeLinearity: 0.25
                     });
                 }, delay);
-            } else {
-                console.warn('Invalid coordinates for company:', selectedCompany?.name, { lat, lng });
             }
             prevSelectedId.current = selectedCompanyId;
         }
@@ -105,10 +104,26 @@ const MapController = ({ selectedCompanyId, companies }) => {
     return null;
 };
 
-const CompanyMap = ({ companies, selectedCompanyId, onMarkerClick }) => {
+const CompanyMap = ({ companies, selectedCompanyId, hoveredCompanyId, onMarkerClick }) => {
     const { t } = useTranslation();
     const markerRefs = useRef({});
     const verifiedIconRef = useRef(null);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isInteractive, setIsInteractive] = useState(false);
+    const mapRef = useRef(null);
+    
+    // Определяем мобильное устройство (обновляется в реальном времени)
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
+    
+    // Слушаем изменение размера окна
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     
     // Create verified icon once
     if (!verifiedIconRef.current) {
@@ -127,28 +142,86 @@ const CompanyMap = ({ companies, selectedCompanyId, onMarkerClick }) => {
         return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
     });
     
-    // Open popup for selected marker
+    // Debug: проверяем, сколько компаний с координатами (только один раз)
+    useEffect(() => {
+        if (companiesWithCoords.length !== companies.length) {
+            const withoutCoords = companies.filter(c => {
+                const lat = parseFloat(c.location?.lat || c.latitude);
+                const lng = parseFloat(c.location?.lng || c.longitude);
+                return isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0;
+            });
+            console.warn('⚠️', withoutCoords.length, 'companies without coordinates');
+        }
+    }, [companies.length, companiesWithCoords.length]);
+    
+    // Open popup ТОЛЬКО для selected marker (клик)
+    // Hover НЕ открывает popup, чтобы не конфликтовать с selected
     useEffect(() => {
         if (selectedCompanyId && markerRefs.current[selectedCompanyId]) {
             markerRefs.current[selectedCompanyId].openPopup();
         }
     }, [selectedCompanyId]);
+    
+    // Подсветка hovered marker (опционально, можно добавить стиль)
+    
+    // Включение интерактивности по клику на карту (мобилка)
+    const handleMapClick = () => {
+        if (isMobile && !isInteractive) {
+            setIsInteractive(true);
+        }
+    };
+    
+    // Переключение развернутого состояния
+    const toggleExpanded = (e) => {
+        e.stopPropagation();
+        setIsExpanded(!isExpanded);
+        // При развертывании автоматически включаем интерактивность
+        if (!isExpanded && !isInteractive) {
+            setIsInteractive(true);
+        }
+    };
 
     return (
-        <div className="company-map-container">
-            <MapContainer
-                center={defaultCenter}
-                zoom={defaultZoom}
-                style={{ height: '100%', width: '100%', borderRadius: '12px' }}
-                scrollWheelZoom={true}
+        <div className={`company-map-wrapper ${isExpanded ? 'expanded' : ''}`}>
+            {/* Кнопка развернуть/свернуть (только на мобилке) */}
+            {isMobile && (
+                <button className="map-expand-btn" onClick={toggleExpanded}>
+                    {isExpanded ? '▼ ' + (t('collapse_map') || 'Свернуть карту') : '▶ ' + (t('expand_map') || 'Развернуть карту')}
+                </button>
+            )}
+            
+            {/* Подсказка по интерактивности (мобилка) - только для неразвернутой карты */}
+            {isMobile && !isInteractive && !isExpanded && (
+                <div className="map-tap-hint">
+                    {t('tap_to_interact') || 'Нажмите для взаимодействия'}
+                </div>
+            )}
+            
+            <div 
+                className="company-map-container" 
+                onClick={handleMapClick}
+                style={{ 
+                    cursor: isMobile && !isInteractive ? 'pointer' : 'default',
+                    position: 'relative'
+                }}
             >
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                
-                {/* Controller component to handle map panning and auto-bounds */}
-                <MapController selectedCompanyId={selectedCompanyId} companies={companies} />
+                <MapContainer
+                    center={defaultCenter}
+                    zoom={defaultZoom}
+                    style={{ height: '100%', width: '100%', borderRadius: '12px' }}
+                    scrollWheelZoom={isMobile ? (isInteractive || isExpanded) : true}
+                    dragging={isMobile ? (isInteractive || isExpanded) : true}
+                    touchZoom={isMobile ? (isInteractive || isExpanded) : true}
+                    doubleClickZoom={true}
+                    ref={mapRef}
+                >
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    
+                    {/* Controller component to handle map panning and auto-bounds */}
+                    <MapController selectedCompanyId={selectedCompanyId} companies={companiesWithCoords} />
                 
                 {companiesWithCoords.map(company => {
                     // Support both coordinate formats and ensure they're numbers
@@ -168,6 +241,7 @@ const CompanyMap = ({ companies, selectedCompanyId, onMarkerClick }) => {
                         },
                         eventHandlers: {
                             click: () => {
+                                console.log('🖱️ Marker clicked:', companyId);
                                 if (onMarkerClick) {
                                     onMarkerClick(companyId);
                                 }
@@ -247,7 +321,8 @@ const CompanyMap = ({ companies, selectedCompanyId, onMarkerClick }) => {
                         </Marker>
                     );
                 })}
-            </MapContainer>
+                </MapContainer>
+            </div>
         </div>
     );
 };

@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faShieldAlt, faExclamationCircle, faLock, faSpinner, faSignInAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import './styles/Login.scss';
 
 function Login() {
@@ -52,14 +54,14 @@ function Login() {
             <div className="login-container">
                 <div className="login-card">
                     <div className="login-header">
-                        <i className="fas fa-shield-alt"></i>
+                        <FontAwesomeIcon icon={faShieldAlt} />
                         <h1>Admin Login</h1>
                         <p>Enter your password to access the admin dashboard</p>
                     </div>
 
                     {error && (
                         <div className="alert alert-error">
-                            <i className="fas fa-exclamation-circle"></i>
+                            <FontAwesomeIcon icon={faExclamationCircle} />
                             {error}
                         </div>
                     )}
@@ -67,7 +69,7 @@ function Login() {
                     <form onSubmit={handleSubmit} className="login-form">
                         <div className="form-group">
                             <label htmlFor="password">
-                                <i className="fas fa-lock"></i> Password
+                                <FontAwesomeIcon icon={faLock} /> Password
                             </label>
                             <input
                                 type="password"
@@ -84,11 +86,11 @@ function Login() {
                         <button type="submit" disabled={loading} className="btn-login">
                             {loading ? (
                                 <>
-                                    <i className="fas fa-spinner fa-spin"></i> Logging in...
+                                    <FontAwesomeIcon icon={faSpinner} spin /> Logging in...
                                 </>
                             ) : (
                                 <>
-                                    <i className="fas fa-sign-in-alt"></i> Login
+                                    <FontAwesomeIcon icon={faSignInAlt} /> Login
                                 </>
                             )}
                         </button>
@@ -96,7 +98,7 @@ function Login() {
 
                     <div className="login-footer">
                         <p>
-                            <i className="fas fa-info-circle"></i>
+                            <FontAwesomeIcon icon={faInfoCircle} />
                             Default password: <code>admin123</code>
                         </p>
                     </div>

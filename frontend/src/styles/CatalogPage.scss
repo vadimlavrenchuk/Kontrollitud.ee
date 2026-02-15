@@ -1,0 +1,632 @@
+// Kontrollitud.ee/frontend/src/styles/CatalogPage.scss
+// Стили для переписанной архитектуры каталога
+
+.catalog-page {
+  display: flex;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  min-height: 100vh;
+  background-color: #f4f7f9; /* Мягкий серо-голубой фон для глубины */
+  overflow: visible; /* КРИТИЧНО для sticky! */
+  
+  /* Расширяем фон на всю ширину экрана */
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f4f7f9;
+    z-index: -1;
+  }
+  
+  // ========================================
+  // SIDEBAR (LEFT) - 300px фиксированная ширина
+  // ========================================
+  .catalog-sidebar {
+    flex: 0 0 280px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Объемная тень */
+    height: fit-content;
+    position: sticky;
+    top: 90px; // Под navbar
+    border: none;
+    
+    .sidebar-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      
+      &:last-of-type {
+        border-bottom: none;
+      }
+    }
+    
+    .sidebar-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .sidebar-search {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+      
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+      }
+    }
+    
+    // Категории
+    .category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: #f9fafb;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #374151;
+      transition: all 0.2s;
+      text-align: left;
+      
+      &:hover {
+        background: #f3f4f6;
+        transform: translateX(2px);
+      }
+      
+      &.active {
+        background: #3b82f6;
+        color: white;
+        font-weight: 600;
+      }
+      
+      .category-icon {
+        font-size: 1.2rem;
+      }
+    }
+    
+    // Подкатегории
+    .subcategory-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .subcategory-item {
+      padding: 0.5rem 0.75rem;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        background: #e5e7eb;
+      }
+      
+      &.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+      }
+    }
+    
+    // Чекбоксы городов
+    .city-checkboxes {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #374151;
+      
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #3b82f6;
+      }
+      
+      &.verified-filter {
+        font-weight: 600;
+        color: #10b981;
+      }
+    }
+    
+    // Кнопка сброса
+    .reset-filters-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      
+      &:hover {
+        background: #dc2626;
+      }
+    }
+  }
+  
+  // ========================================
+  // MAIN CONTENT (RIGHT) - занимает оставшееся пространство
+  // ========================================
+  .catalog-main {
+    flex: 1;
+    position: relative;
+    overflow: visible; // Критично для sticky!
+    
+    // Кнопка фильтров для мобилок (скрыта на десктопе)
+    .mobile-filters-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 1rem;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transition: all 0.2s;
+      
+      &:active {
+        transform: scale(0.98);
+      }
+      
+      .filters-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #ef4444;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border: 2px solid white;
+      }
+    }
+    
+    // Показываем кнопку фильтров только на мобилках
+    @media (max-width: 768px) {
+      .mobile-filters-btn {
+        display: flex;
+      }
+    }
+    
+    // Золотой виджет для мобилок (скрыт на десктопе)
+    .golden-widget-mobile {
+      display: none;
+      margin-bottom: 1.5rem;
+      
+      @media (max-width: 768px) {
+        display: block;
+      }
+    }
+    
+    // Кнопка показать/скрыть карту (только на мобилках)
+    .mobile-show-map-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transition: all 0.2s;
+      
+      &:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+      }
+      
+      @media (max-width: 768px) {
+        display: flex;
+      }
+    }
+    
+    .catalog-header {
+      margin-bottom: 1.5rem;
+      
+      .catalog-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: #111827;
+      }
+      
+      .catalog-count {
+        font-size: 0.95rem;
+        color: #6b7280;
+        
+        strong {
+          color: #3b82f6;
+          font-weight: 700;
+        }
+      }
+    }
+    
+    // ========================================
+    // TOP FLEX AREA (карта + золотой виджет) - STICKY
+    // ========================================
+    .catalog-top-flex {
+      position: -webkit-sticky; // Safari
+      position: sticky;
+      top: 80px; // Под navbar (уменьшено для лучшего эффекта)
+      z-index: 100; // Повышен для надёжности
+      display: flex !important; // Всегда flex
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 2rem;
+      background: #f4f7f9; // Чтобы не просвечивали карточки снизу
+      padding-bottom: 1rem;
+      transition: all 0.3s ease;
+      will-change: transform; // Оптимизация для анимации
+      min-height: 470px; // Минимальная высота для предотвращения схлопывания
+      
+      // Скрытие карты ТОЛЬКО на мобилке когда пользователь нажал "Скрыть"
+      &.map-hidden {
+        @media (max-width: 768px) {
+          display: none !important;
+        }
+      }
+      
+      // Тонкая граница снизу для визуального отделения при sticky
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, 
+          transparent 0%,
+          rgba(59, 130, 246, 0.2) 20%,
+          rgba(59, 130, 246, 0.2) 80%,
+          transparent 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      // Когда панель sticky (прилипла к верху)
+      &.is-stuck {
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        background: rgba(244, 247, 249, 0.98); // Полупрозрачный для эффекта
+        backdrop-filter: blur(8px);
+        padding-top: 0.5rem;
+        
+        &::after {
+          opacity: 1;
+          height: 2px;
+          background: linear-gradient(90deg, 
+            transparent 0%,
+            #3b82f6 20%,
+            #3b82f6 80%,
+            transparent 100%
+          );
+        }
+        
+        .catalog-map-container,
+        .golden-widget-container {
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+          transform: scale(0.98);
+        }
+      }
+      
+      // Карта слева (70% / flex: 2)
+      .catalog-map-container {
+        flex: 2;
+        height: 470px;
+        min-height: 470px;
+        width: 100%; // Гарантируем ширину
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        border: none;
+        transition: box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        
+        .map-title {
+          padding: 0.75rem;
+          background: #3b82f6;
+          color: white;
+          font-size: 0.9rem;
+          font-weight: 600;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-shrink: 0;
+        }
+        
+        // CompanyMap контейнер
+        .company-map-wrapper {
+          flex: 1;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          
+          .company-map-container {
+            flex: 1;
+            height: 100%;
+            position: relative;
+          }
+        }
+      }
+      
+      // Золотой виджет справа (компактный, как карточка)
+      .golden-widget-container {
+        flex: 0 0 380px;
+        height: 470px;
+        transition: box-shadow 0.3s ease;
+        
+        // Скрываем на мобилках (там свой контейнер .golden-widget-mobile)
+        @media (max-width: 768px) {
+          display: none;
+        }
+      }
+    }
+    
+    // ========================================
+    // COMPANY GRID - 3 в ряд
+    // ========================================
+    .company-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 0; // Виджеты и карта теперь inline, не нужен большой отступ
+      
+      // Подсветка выбранной карточки (при клике)
+      .company-card.is-selected {
+        border: 2px solid #3b82f6 !important;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.3), 0 8px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+      }
+      
+      @media (max-width: 1200px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        margin-top: 0;
+      }
+    }
+    
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      color: #6b7280;
+      font-size: 1.1rem;
+      margin-top: 480px;
+    }
+  }
+}
+
+// ========================================
+// LOADER & ERROR
+// ========================================
+.catalog-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+}
+
+.catalog-error {
+  text-align: center;
+  padding: 3rem;
+  color: #ef4444;
+  font-size: 1.1rem;
+}
+
+// ========================================
+// АДАПТИВНОСТЬ
+// ========================================
+@media (max-width: 1024px) {
+  .catalog-page {
+    flex-direction: column;
+    
+    .catalog-sidebar {
+      position: static;
+      flex: none;
+      width: 100%;
+    }
+    
+    .catalog-main {
+      .catalog-top-flex {
+        position: static; // Отключаем sticky на планшетах
+        flex-direction: column;
+        display: flex !important; // Явно показываем на планшетах
+        
+        .catalog-map-container {
+          width: 100%;
+          height: 400px;
+        }
+        
+        .golden-widget-container {
+          flex: none;
+          width: 100%;
+          height: 450px;
+        }
+      }
+      
+      .company-grid,
+      .no-results {
+        margin-top: 0;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .catalog-page {
+    padding: 1rem;
+    gap: 1rem;
+    
+    // Скрываем sidebar на мобилках (используем drawer)
+    .catalog-sidebar {
+      display: none;
+    }
+    
+    .catalog-main {
+      .catalog-title {
+        font-size: 1.5rem;
+      }
+      
+      .catalog-top-flex {
+        position: static; // Отключаем sticky на мобильных
+        gap: 1rem;
+        margin-bottom: 1rem;
+        
+        .catalog-map-container {
+          height: 200px; // Компактная карта по умолчанию
+          
+          .map-title {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+          }
+          
+          .map-wrapper {
+            height: calc(100% - 35px);
+          }
+        }
+      }
+    }
+  }
+  
+  // Styles for mobile map wrapper
+  .company-map-wrapper {
+    position: relative;
+    
+    &.expanded {
+      .company-map-container {
+        height: 500px !important;
+      }
+      
+      .map-expand-btn {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+      }
+    }
+    
+    .map-expand-btn {
+      display: none; /* Скрыта на десктопе */
+      width: 100%;
+      padding: 0.75rem;
+      background: #f3f4f6;
+      color: #374151;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+      transition: all 0.2s;
+      
+      @media (max-width: 768px) {
+        display: block;
+      }
+      
+      &:active {
+        background: #e5e7eb;
+        transform: scale(0.98);
+      }
+    }
+    
+    .map-tap-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(59, 130, 246, 0.95);
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      z-index: 1000;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
+    }
+  }
+}
+

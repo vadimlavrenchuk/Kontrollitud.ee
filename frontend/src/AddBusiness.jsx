@@ -185,18 +185,11 @@ function AddBusiness() {
                 return;
             }
         } else if (currentStep === 4) {
-            // Step 4 is plan selection
-            // For paid plans (pro/enterprise), create company and redirect to payment
-            if (formData.plan === 'pro' || formData.plan === 'enterprise') {
-                await createPendingCompanyAndRedirectToPayment();
-                return; // Stop here, don't move to next step
-            }
-            // For basic plan, no validation needed, continue to submission
+            // Step 4 is confirmation - no validation needed, ready to submit
         }
         
-        // Move to next step
-        // Max step is 5 if pro/enterprise, 4 if basic
-        const maxStep = formData.plan === 'basic' ? 4 : 5;
+        // Move to next step (max 4 steps for basic free plan)
+        const maxStep = 4;
         if (currentStep < maxStep) {
             setCurrentStep(currentStep + 1);
         }
@@ -628,257 +621,15 @@ function AddBusiness() {
 
     const renderStep4 = () => (
         <div className="form-step">
-            <h2>{t('choose_plan') || 'Выберите тарифный план'}</h2>
-            <p className="step-hint">{t('plan_preview_hint') || 'Посмотрите, как будет выглядеть ваша карточка бизнеса'}</p>
-            
-            <div className="plan-selection-form">
-                <div className="plan-preview-grid">
-                    {/* BASIC PLAN PREVIEW */}
-                    <label className={`plan-preview-card basic-preview ${formData.plan === 'basic' ? 'selected' : ''}`}>
-                        <input
-                            type="radio"
-                            name="plan"
-                            value="basic"
-                            checked={formData.plan === 'basic'}
-                            onChange={handleInputChange}
-                        />
-                        <div className="preview-header">
-                            <span className="plan-badge">📄 Basic</span>
-                            <span className="plan-price-tag">{t('free') || 'Бесплатно'}</span>
-                        </div>
-                        <div className="business-card-preview">
-                            {/* Image placeholder with icon */}
-                            <div className="preview-image basic-image">
-                                <i className="fas fa-building" style={{ fontSize: '3rem', color: '#9ca3af' }}></i>
-                            </div>
-                            {/* Content */}
-                            <div className="preview-content">
-                                <h3 className="preview-business-name">Ваш Бизнес</h3>
-                                <div className="preview-meta">
-                                    <span className="preview-category">Категория</span>
-                                    <span className="preview-city">Город</span>
-                                </div>
-                                <p className="preview-description">
-                                    Краткое описание вашего бизнеса будет отображаться здесь...
-                                </p>
-                            </div>
-                        </div>
-                        <div className="preview-footer">
-                            <small>✗ Без фото • ✗ Без рейтинга • ✗ Без соцсетей</small>
-                        </div>
-                    </label>
-
-                    {/* PRO PLAN PREVIEW */}
-                    <label className={`plan-preview-card pro-preview ${formData.plan === 'pro' ? 'selected' : ''}`}>
-                        <input
-                            type="radio"
-                            name="plan"
-                            value="pro"
-                            checked={formData.plan === 'pro'}
-                            onChange={handleInputChange}
-                        />
-                        <div className="preview-header">
-                            <span className="plan-badge pro-badge">⚡ Pro</span>
-                            <span className="plan-price-tag">€29/{t('month') || 'мес'}</span>
-                        </div>
-                        <div className="business-card-preview verified-preview">
-                            {/* Image with verified badge */}
-                            <div className="preview-image pro-image">
-                                <div className="preview-placeholder-text">
-                                    {t('your_photo') || 'your_photo key missing'}
-                                </div>
-                                <div className="preview-verified-badge">
-                                    <i className="fas fa-shield-alt"></i>
-                                    <span>Verified</span>
-                                </div>
-                            </div>
-                            {/* Content */}
-                            <div className="preview-content">
-                                <h3 className="preview-business-name">
-                                    Ваш Бизнес <span className="pro-checkmark">✔️</span>
-                                </h3>
-                                <div className="preview-meta">
-                                    <span className="preview-category">Категория</span>
-                                    <span className="preview-city">Город</span>
-                                </div>
-                                {/* Rating */}
-                                <div className="preview-rating">
-                                    <span className="stars">★★★★★</span>
-                                    <span className="rating-text">5.0 (10 отзывов)</span>
-                                </div>
-                                <p className="preview-description">
-                                    Ваше описание с приоритетом в поиске...
-                                </p>
-                                {/* Social icons */}
-                                <div className="preview-social">
-                                    <span className="social-icon instagram"><i className="fab fa-instagram"></i></span>
-                                    <span className="social-icon tiktok"><i className="fab fa-tiktok"></i></span>
-                                    <span className="social-icon youtube"><i className="fab fa-youtube"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="preview-footer">
-                            <small>✓ Фото • ✓ Рейтинг • ✓ Соцсети • ✓ Синяя галочка</small>
-                        </div>
-                    </label>
-
-                    {/* ENTERPRISE PLAN PREVIEW */}
-                    <label className={`plan-preview-card enterprise-preview ${formData.plan === 'enterprise' ? 'selected' : ''}`}>
-                        <input
-                            type="radio"
-                            name="plan"
-                            value="enterprise"
-                            checked={formData.plan === 'enterprise'}
-                            onChange={handleInputChange}
-                        />
-                        <div className="preview-header">
-                            <span className="plan-badge enterprise-badge">💎 Enterprise</span>
-                            <span className="plan-price-tag">€50/{t('month') || 'мес'}</span>
-                        </div>
-                        <div className="business-card-preview enterprise-card">
-                            <div className="top-priority-badge">
-                                <i className="fas fa-crown"></i> TOP Priority
-                            </div>
-                            {/* Image */}
-                            <div className="preview-image enterprise-image">
-                                <div className="preview-placeholder-text enterprise-banner">
-                                    {t('premium_banner') || 'premium_banner key missing'}
-                                </div>
-                            </div>
-                            {/* Content */}
-                            <div className="preview-content">
-                                <h3 className="preview-business-name">
-                                    Ваш Бизнес <span className="enterprise-crown">🏆</span>
-                                </h3>
-                                <div className="preview-meta">
-                                    <span className="preview-category">Категория</span>
-                                    <span className="preview-city">Город</span>
-                                </div>
-                                {/* Rating */}
-                                <div className="preview-rating">
-                                    <span className="stars gold-stars">★★★★★</span>
-                                    <span className="rating-text">5.0 (50+ отзывов)</span>
-                                </div>
-                                <p className="preview-description">
-                                    Премиум описание с максимальным охватом и топовым размещением...
-                                </p>
-                                {/* Social icons */}
-                                <div className="preview-social">
-                                    <span className="social-icon instagram"><i className="fab fa-instagram"></i></span>
-                                    <span className="social-icon tiktok"><i className="fab fa-tiktok"></i></span>
-                                    <span className="social-icon youtube"><i className="fab fa-youtube"></i></span>
-                                </div>
-                                {/* Blog button */}
-                                <button className="preview-blog-button" type="button">
-                                    📰 Читать обзор в блоге
-                                </button>
-                            </div>
-                        </div>
-                        <div className="preview-footer">
-                            <small>✓ Все из Pro • ✓ Золотая рамка • ✓ Блог • ✓ ТОП-1</small>
-                        </div>
-                    </label>
+            <div className="free-listing-info">
+                <h2>{t('simple_transparent_pricing')}</h2>
+                <p className="free-listing-description">
+                    {t('pricing_subtitle')}
+                </p>
+                <div className="free-badge">
+                    <span className="badge-icon">🎉</span>
+                    <span className="badge-text">{t('free')} </span>
                 </div>
-                
-                {formData.plan === 'basic' && (
-                    <div className="plan-notice">
-                        <i className="fas fa-info-circle"></i>
-                        <p>{t('basic_plan_notice') || 'С планом Basic ваш бизнес будет отображаться с иконкой категории вместо фото'}</p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-
-    const renderStep5 = () => (
-        <div className="form-step">
-            <h2>{t('additional_information')}</h2>
-            <p className="step-hint">{t('upload_photo_and_social_links')}</p>
-            
-            <div className="form-group">
-                <label htmlFor="imageFile">{t('upload_logo_or_photo')}</label>
-                <input
-                    type="file"
-                    id="imageFile"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="form-input"
-                />
-                <small className="form-hint">{t('max_file_size_5mb')}</small>
-                
-                {imagePreview && (
-                    <div className="image-preview">
-                        <img src={imagePreview} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
-                    </div>
-                )}
-                
-                {uploadingImage && (
-                    <div className="uploading-indicator">
-                        <span>⏳ {t('uploading_image')}...</span>
-                    </div>
-                )}
-            </div>
-            
-            <div className="form-group">
-                <label htmlFor="image">{t('or_paste_image_url')}</label>
-                <input
-                    type="text"
-                    id="image"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleInputChange}
-                    className="form-input"
-                    placeholder="https://example.com/logo.jpg"
-                    disabled={!!imageFile}
-                />
-                <small className="form-hint">{t('image_url_hint')}</small>
-                
-                {!imagePreview && formData.image && formData.image.trim() !== '' && (
-                    <div className="image-preview">
-                        <img src={formData.image} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
-                    </div>
-                )}
-            </div>
-
-            <h3 className="section-subtitle">{t('social_media_optional')}</h3>
-            
-            <div className="form-group">
-                <label htmlFor="instagramUrl">{t('instagram_url')}</label>
-                <input
-                    type="url"
-                    id="instagramUrl"
-                    name="instagramUrl"
-                    value={formData.instagramUrl}
-                    onChange={handleInputChange}
-                    className="form-input"
-                    placeholder={t('instagram_placeholder')}
-                />
-            </div>
-
-            <div className="form-group">
-                <label htmlFor="tiktokUrl">{t('tiktok_url')}</label>
-                <input
-                    type="url"
-                    id="tiktokUrl"
-                    name="tiktokUrl"
-                    value={formData.tiktokUrl}
-                    onChange={handleInputChange}
-                    className="form-input"
-                    placeholder={t('tiktok_placeholder')}
-                />
-            </div>
-
-            <div className="form-group">
-                <label htmlFor="youtubeUrl">{t('youtube_url')}</label>
-                <input
-                    type="url"
-                    id="youtubeUrl"
-                    name="youtubeUrl"
-                    value={formData.youtubeUrl}
-                    onChange={handleInputChange}
-                    className="form-input"
-                    placeholder={t('youtube_placeholder')}
-                />
             </div>
         </div>
     );
@@ -937,7 +688,6 @@ function AddBusiness() {
                             {currentStep === 2 && renderStep2()}
                             {currentStep === 3 && renderStep3()}
                             {currentStep === 4 && renderStep4()}
-                            {currentStep === 5 && renderStep5()}
                         </div>
 
                         <div className="form-actions">
@@ -951,8 +701,8 @@ function AddBusiness() {
                         </button>
                     )}
                     
-                    {/* Show Next button for steps 1-3, and step 4 only if pro/enterprise */}
-                    {(currentStep < 4 || (currentStep === 4 && formData.plan !== 'basic')) ? (
+                    {/* Show Next button for steps 1-3, Submit on step 4 */}
+                    {currentStep < 4 ? (
                         <button 
                             type="button"
                             onClick={handleNextStep}
@@ -961,7 +711,7 @@ function AddBusiness() {
                             {t('btn_next')} <i className="fas fa-arrow-right"></i>
                         </button>
                     ) : (
-                        /* Show Submit button on step 4 for basic, or step 5 for pro/enterprise */
+                        /* Show Submit button on step 4 */
                         <button 
                             type="button"
                             onClick={handleSubmit}

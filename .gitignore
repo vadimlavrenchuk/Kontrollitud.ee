@@ -2,7 +2,7 @@
 node_modules
 **/node_modules/
 
-# Environment variables
+# Environment variables (секретные ключи)
 .env
 backend/.env
 frontend/.env
@@ -10,6 +10,11 @@ frontend/.env
 .env.development.local
 .env.test.local
 .env.production.local
+
+# НЕ игнорируем примеры (без секретов)
+!.env.example
+!backend/.env.example
+!frontend/.env.example
 
 # SSL certificates for local development
 ssl/

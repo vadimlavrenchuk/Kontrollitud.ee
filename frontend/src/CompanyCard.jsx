@@ -1,17 +1,15 @@
-// Kontrollitud.ee/frontend/src/CompanyCard.jsx
-
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getLocalizedContent, getLocaleFromLanguage } from './utils/localization';
+import { getLocalizedContent } from './utils/localization';
 import { getCategoryIcon } from './constants/categories';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShieldAlt, faStar, faStarHalfAlt, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import { faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
 
-// Star rating component
-const StarRating = ({ rating }) => {
+// Мемоизируем звезды, чтобы не пересчитывать их при каждом движении карты
+const StarRating = memo(({ rating }) => {
   const stars = [];
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
@@ -25,167 +23,152 @@ const StarRating = ({ rating }) => {
       stars.push(<FontAwesomeIcon key={i} icon={faStarRegular} className="star-icon empty" />);
     }
   }
-  return <span className="star-rating">{stars}</span>;
-};
+  return <div className="star-rating">{stars}</div>;
+});
 
-// Company Card Component
-const CompanyCard = ({ company, isSelected, onClick }) => {
+const CompanyCard = ({ company, isSelected, onClick, onHover, onLeave, onMapClick }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   
-  // Get description with fallback: current language -> Estonian -> English -> Russian
   const description = getLocalizedContent(company.description, currentLang, '');
-  
   const companyUrl = `/companies/${company.slug || company._id || company.id}`;
-  
+
   const handleCardClick = (e) => {
-    // If onClick is provided (from CatalogPage), use it to show on map
+    // Разрешаем переход по Link только если это НЕ клик на адрес
+    if (e.target.closest('.tag-city')) {
+      e.preventDefault();
+      return;
+    }
+    
     if (onClick) {
       e.preventDefault();
       onClick(company._id || company.id);
     }
-    // Otherwise, let the Link navigate normally (for CompanyList homepage)
   };
   
+  const handleCityClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onMapClick) {
+      onMapClick(company._id || company.id);
+    }
+  };
+  
+  const handleMouseEnter = () => {
+    if (onHover) {
+      onHover(company._id || company.id);
+    }
+  };
+  
+  const handleMouseLeave = () => {
+    if (onLeave) {
+      onLeave();
+    }
+  };
+
+  const subLevel = company.subscriptionLevel || 'basic';
+  const hasImage = company.image && company.image.trim() !== '';
+
   return (
     <Link 
       to={companyUrl}
       onClick={handleCardClick}
-      className={`company-card ${company.isVerified ? 'verified-card' : ''} ${isSelected ? 'selected' : ''} ${company.subscriptionLevel === 'enterprise' ? 'enterprise-card' : ''}`}
-      style={{ textDecoration: 'none', color: 'inherit' }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`company-card tier-${subLevel} ${isSelected ? 'is-selected' : ''} ${company.isVerified ? 'is-verified' : ''}`}
+      data-company-id={company.id || company._id}
     >
-      {/* Image section */}
-      <div className="card-image-container">
-        {company.image ? (
-          <img 
-            src={company.image} 
-            alt={company.name}
-            className="card-image"
-          />
+      {/* HEADER С ГРАДИЕНТОМ ИЛИ ФОТО */}
+      <div className={`card-header ${hasImage ? 'has-image' : 'gradient'}`}>
+        {/* Фото или градиент фон */}
+        {hasImage ? (
+          <>
+            <img src={company.image} alt={company.name} loading="lazy" className="card-header-bg" />
+            <div className="card-header-overlay"></div>
+          </>
         ) : (
-          <div className="card-image-placeholder">
-            <span className="category-icon-large">
-              {getCategoryIcon(company.mainCategory || 'Teenused')}
-            </span>
-            <span className="placeholder-text">{company.name}</span>
+          <div className="card-header-gradient"></div>
+        )}
+        
+        {/* Verified badge в правом верхнем углу */}
+        {company.isVerified && (
+          <div className="verified-badge">
+            <FontAwesomeIcon icon={faShieldAlt} />
           </div>
         )}
-        {/* Verified badge overlay - only for pro and enterprise subscriptions */}
-        {company.isVerified && (company.subscriptionLevel === 'pro' || company.subscriptionLevel === 'enterprise') && (
-          <div className="verified-badge-overlay">
-            <FontAwesomeIcon icon={faShieldAlt} className="shield-icon" />
-            <span>{t('verified')}</span>
+        
+        {/* Контент хedера: иконка + название */}
+        <div className="card-header-content">
+          <div className="category-icon-large">
+            {getCategoryIcon(company.mainCategory || company.category || 'Services')}
           </div>
-        )}
-      </div>
-      
-      {/* Content section */}
-      <div className="card-content">
-        <div className="card-header">
-          <h3 className="company-name">
+          <h3 className="card-title">
             {company.name}
-            {/* Blue checkmark for pro tier */}
-            {company.subscriptionLevel === 'pro' && (
-              <span className="pro-badge" title="Pro Business"> ✔️</span>
-            )}
-            {/* Gold badge for enterprise tier */}
-            {company.subscriptionLevel === 'enterprise' && (
-              <span className="enterprise-badge" title="Enterprise Business"> 🏆</span>
-            )}
+            {subLevel === 'pro' && <span className="badge-pro" title="Pro Business">★</span>}
+            {subLevel === 'enterprise' && <span className="badge-ent" title="Enterprise">👑</span>}
           </h3>
         </div>
-        
-        {/* Category and City */}
-        <div className="card-meta">
-          <span className="company-category-tag">{t(company.category)}</span>
-          {company.city && <span className="company-city-tag">{t(company.city)}</span>}
+      </div>
+
+      {/* НИЖНЯЯ ЧАСТЬ (БЕЛАЯ) */}
+      <div className="card-body">
+        {/* Теги */}
+        <div className="card-tags">
+          {company.city && (
+            <button 
+              className="tag-city clickable" 
+              onClick={handleCityClick}
+              title={t('view_on_map') || 'Посмотреть на карте'}
+            >
+              📍 {company.city}
+            </button>
+          )}
+          <span className="tag-cat">{t(company.category || company.mainCategory)}</span>
         </div>
-        
-        {/* Rating - hide for basic subscription */}
-        {company.subscriptionLevel !== 'basic' && (
-          <div className="rating-container">
+
+        {/* Рейтинг */}
+        {subLevel !== 'basic' && company.rating > 0 && (
+          <div className="card-rating">
             <StarRating rating={company.rating || 0} />
-            <span className="rating-text">
-              {(company.rating || 0).toFixed(1)} ({company.reviewsCount || 0} {t('reviews')})
-            </span>
+            <span className="rating-count">({company.reviewsCount || 0})</span>
           </div>
         )}
-        
-        {/* Description */}
-        {description && (
-          <p className="company-description">{description}</p>
+
+        {/* Описание (только если не basic) */}
+        {subLevel !== 'basic' && description && (
+          <p className="card-desc">{description}</p>
         )}
-        
-        {/* Social Media Icons - only for pro and enterprise subscriptions */}
-        {(company.subscriptionLevel === 'pro' || company.subscriptionLevel === 'enterprise') && 
-         (company.instagramUrl || company.tiktokUrl || company.youtubeUrl) && (
-          <div className="social-media-links">
-            {company.instagramUrl && (
-              <a 
-                href={company.instagramUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="social-icon instagram"
-                title="Instagram"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <FontAwesomeIcon icon={faInstagram} />
-              </a>
-            )}
-            {company.tiktokUrl && (
-              <a 
-                href={company.tiktokUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="social-icon tiktok"
-                title="TikTok"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <FontAwesomeIcon icon={faTiktok} />
-              </a>
-            )}
-            {company.youtubeUrl && (
-              <a 
-                href={company.youtubeUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="social-icon youtube"
-                title="YouTube"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <FontAwesomeIcon icon={faYoutube} />
-              </a>
-            )}
-          </div>
-        )}
-        
-        {/* Reviewer Badge - only for pro and enterprise subscriptions */}
-        {(company.subscriptionLevel === 'pro' || company.subscriptionLevel === 'enterprise') && 
-         company.reviewerName && (
-          <div className="reviewer-badge">
-            <FontAwesomeIcon icon={faUserCheck} className="reviewer-icon" />
-            <span>Checked by {company.reviewerName}</span>
-          </div>
-        )}        
-        {/* Blog Article Button - only for enterprise with blogArticleUrl */}
-        {company.subscriptionLevel === 'enterprise' && company.blogArticleUrl && (
-          <a 
-            href={company.blogArticleUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="blog-article-button"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {t('read_review') || 'Читать обзор'}
-          </a>
-        )}        
-        {/* Details button */}
-        <span className="details-button">
-          {t('details_button')}
-        </span>
+
+        {/* Футер: соцсети + кнопка */}
+        <div className="card-footer">
+          {subLevel !== 'basic' && (
+            <div className="card-socials">
+              {company.instagramUrl && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(company.instagramUrl, '_blank'); }} 
+                  className="soc-link ig" 
+                  title="Instagram"
+                >
+                  <FontAwesomeIcon icon={faInstagram} />
+                </button>
+              )}
+              {company.tiktokUrl && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(company.tiktokUrl, '_blank'); }} 
+                  className="soc-link tt"
+                  title="TikTok"
+                >
+                  <FontAwesomeIcon icon={faTiktok} />
+                </button>
+              )}
+            </div>
+          )}
+
+          <span className="card-more-btn">{t('details_button')} →</span>
+        </div>
       </div>
     </Link>
   );
 };
 
-export default CompanyCard;
+export default memo(CompanyCard);

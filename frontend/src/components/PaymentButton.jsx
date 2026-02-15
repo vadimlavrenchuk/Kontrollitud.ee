@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
+// DISABLED: Stripe library removed from bundle to reduce size
+// import { loadStripe } from '@stripe/stripe-js';
 import { auth } from '../firebase';
 import './PaymentButton.css';
 
+// DISABLED: Stripe initialization not needed - using backend redirect instead
 // Initialize Stripe with publishable key
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 function PaymentButton({ companyId, subscriptionLevel, currentLevel = 'basic', compact = false }) {
     const [loading, setLoading] = useState(false);

@@ -62,7 +62,7 @@
 
 .pwa-banner-btn-install {
   background: white;
-  color: #667eea;
+  color: #4338ca;
   border: none;
   border-radius: 8px;
   padding: 10px 20px;
@@ -235,7 +235,7 @@
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 20px;
-  color: #667eea;
+  color: #4338ca;
 }
 
 .pwa-ios-close-btn {
@@ -262,7 +262,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  color: #667eea !important;
+  color: #4338ca !important;
   font-weight: 500;
 }
 

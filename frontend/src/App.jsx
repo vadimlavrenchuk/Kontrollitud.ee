@@ -1,18 +1,22 @@
-// Kontrollitud.ee/frontend/src/App.jsx
-
 import React, { useEffect, useState, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+    faList, faHandshake, faNewspaper, faPlusCircle, 
+    faSignInAlt, faChevronDown, faShieldAlt, 
+    faClipboardList, faSignOutAlt 
+} from '@fortawesome/free-solid-svg-icons';
+
 import './App.css';
 import logo from './assets/logokontroll.jpg';
 
-// Eager load critical pages
+// Импорты страниц
 import CompanyList from './CompanyList.jsx';
 import CompanyDetails from './CompanyDetails.jsx';
 import AuthPage from './AuthPage.jsx';
 
-// Lazy load heavy components
 const AddBusiness = lazy(() => import('./AddBusiness.jsx'));
 const EditCompany = lazy(() => import('./EditCompany.jsx'));
 const AdminDashboard = lazy(() => import('./AdminDashboard.jsx'));
@@ -28,12 +32,55 @@ const PaymentPage = lazy(() => import('./pages/PaymentPage.jsx'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage.jsx'));
 const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage.jsx'));
 
-// Keep critical components eager
 import ProtectedRoute from './ProtectedRoute.jsx';
 import RequireAuth from './RequireAuth.jsx';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
 import Footer from './Footer.jsx';
 import PWAInstall, { PWAProvider, PWAInstallButton } from './components/PWAInstall.jsx';
+
+// Вспомогательный компонент для прокрутки вверх при смене страницы
+const ScrollToTop = () => {
+    const { pathname } = useLocation();
+    useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+    return null;
+};
+
+// Компонент для роутов с доступом к location
+const AppRoutes = () => {
+    const location = useLocation();
+    
+    return (
+        <Suspense fallback={<div className="page-loader" />}>
+            <Routes>
+                <Route path="/" element={<CompanyList />} />
+                <Route 
+                    path="/catalog" 
+                    element={<CatalogPage />} 
+                    key={location.pathname + location.search}
+                />
+                <Route path="/partners" element={<PartnersPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/terms" element={<TermsOfUsePage />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="/blog/:id" element={<BlogPostDetail />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+                
+                <Route path="/payment" element={<RequireAuth><PaymentPage /></RequireAuth>} />
+                <Route path="/add-business" element={<RequireAuth><AddBusiness /></RequireAuth>} />
+                <Route path="/dashboard" element={<RequireAuth><UserDashboard /></RequireAuth>} />
+                <Route path="/edit-business/:id" element={<RequireAuth><EditCompany /></RequireAuth>} />
+                <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                
+                <Route path="/companies/:slugOrId" element={<CompanyDetails />} />
+                <Route path="/company/:slugOrId" element={<CompanyDetails />} />
+                <Route path="*" element={<div className="container"><h2>404</h2></div>} />
+            </Routes>
+        </Suspense>
+    );
+};
 
 function AppContent() {
     const { t, i18n } = useTranslation();
@@ -42,7 +89,6 @@ function AppContent() {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     
-    // Admin email - replace with your actual admin email
     const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@kontrollitud.ee';
     const isAdmin = user && user.email === ADMIN_EMAIL;
     
@@ -53,349 +99,150 @@ function AppContent() {
 
     useEffect(() => {
         document.documentElement.lang = i18n.language;
-    }, [i18n.language]);
-
-    // Scroll detection for navbar styling
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
-        
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-    
-    // Close mobile menu when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (showMobileMenu && 
-                !event.target.closest('.mobile-nav-menu') && 
-                !event.target.closest('.hamburger-menu')) {
-                setShowMobileMenu(false);
-            }
-        };
-        
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showMobileMenu]);
-    
-    // Close mobile menu on route change and prevent body scroll when open
-    useEffect(() => {
-        if (showMobileMenu) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
-        
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, [showMobileMenu]);
+    }, [i18n.language]);
+
+    // Закрытие меню при клике по ссылке (для мобилок)
+    const closeMenus = () => {
+        setShowMobileMenu(false);
+        setShowUserMenu(false);
+    };
 
     return (
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}> 
-            <div className="app-main">
-                {/* Default SEO Meta Tags */}
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <ScrollToTop />
+            <div className={`app-main ${showMobileMenu ? 'nav-open' : ''}`}>
                 <Helmet>
-                    <html lang={i18n.language} />
-                    <title>Kontrollitud.ee - Verified Companies in Estonia</title>
-                    <meta name="description" content="Discover and review verified companies in Estonia. Browse SPA centers, restaurants, shops, and more trusted businesses across Tallinn, Tartu, Pärnu, and Narva." />
-                    <meta name="keywords" content="Estonia, verified companies, business directory, reviews, Tallinn, Tartu, Pärnu" />
-                    <meta property="og:title" content="Kontrollitud.ee - Verified Companies in Estonia" />
-                    <meta property="og:description" content="Discover and review verified companies in Estonia" />
-                    <meta property="og:type" content="website" />
+                    <title>Kontrollitud.ee - {t('app_title')}</title>
                 </Helmet>
                 
                 <header className={`sticky-navbar ${isScrolled ? 'scrolled' : ''}`}>
                     <div className="navbar-container">
-                        {/* Left: Logo/Brand */}
                         <div className="navbar-brand">
-                            <Link to="/" className="logo-link">
-                                <img src={logo} alt="Kontrollitud.ee Logo" className="logo-image" />
+                            <Link to="/" className="logo-link" onClick={closeMenus}>
+                                <img src={logo} alt="Logo" className="logo-image" />
                                 <h1 className="logo-text">{t('app_title')}</h1>
                             </Link>
                         </div>
 
-                        {/* Right: User Menu + Language Switcher */}
                         <div className="navbar-right">
-                            {/* Hamburger Menu Button (Mobile Only) */}
-                            <button 
-                                className={`hamburger-menu ${showMobileMenu ? 'open' : ''}`}
-                                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                                aria-label="Toggle menu"
-                            >
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </button>
-                            
-                            {/* Desktop Navigation Links */}
-                            {/* Catalog Link */}
-                            <Link to="/catalog" className="catalog-link">
-                                <i className="fas fa-list"></i>
-                                <span>{t('catalog')}</span>
-                            </Link>
-                            
-                            {/* Partners Link */}
-                            <Link to="/partners" className="partners-link">
-                                <i className="fas fa-handshake"></i>
-                                <span>{t('for_business')}</span>
-                            </Link>
-                            
-                            {/* Blog Link */}
-                            <Link to="/blog" className="blog-link">
-                                <i className="fas fa-newspaper"></i>
-                                <span>{t('blog')}</span>
-                            </Link>
-                            
-                            {/* Add Business Link */}
-                            <Link to="/add-business" className="add-business-link">
-                                <i className="fas fa-plus-circle"></i>
-                                <span>{t('add_business')}</span>
-                            </Link>
+                            {/* Десктопное меню */}
+                            <nav className="desktop-nav">
+                                <CatalogLink closeMenus={closeMenus} className="catalog-btn">
+                                    <FontAwesomeIcon icon={faList} /> {t('catalog')}
+                                </CatalogLink>
+                                <Link to="/partners" className="business-btn"><FontAwesomeIcon icon={faHandshake} /> {t('for_business')}</Link>
+                                <Link to="/blog" className="blog-btn"><FontAwesomeIcon icon={faNewspaper} /> {t('blog')}</Link>
+                                <Link to="/add-business" className="add-btn"><FontAwesomeIcon icon={faPlusCircle} /> {t('add_business')}</Link>
+                            </nav>
 
-                            {/* User Authentication */}
-                            {!isAuthenticated ? (
-                                <Link to="/auth" className="login-link">
-                                    <i className="fas fa-sign-in-alt"></i>
-                                    <span>{t('login')}</span>
-                                </Link>
-                            ) : (
-                                <div className="user-menu-container">
-                                    <button 
-                                        className="user-profile-button"
-                                        onClick={() => setShowUserMenu(!showUserMenu)}
-                                    >
-                                        {user.photoURL ? (
-                                            <img src={user.photoURL} alt={user.displayName} className="user-avatar" />
-                                        ) : (
-                                            <div className="user-avatar-placeholder">
-                                                {(user.displayName || user.email)?.[0]?.toUpperCase()}
-                                            </div>
-                                        )}
-                                        <span className="user-name">{user.displayName || user.email?.split('@')[0]}</span>
-                                        <i className={`fas fa-chevron-down ${showUserMenu ? 'rotated' : ''}`}></i>
-                                    </button>
-                                    
-                                    {showUserMenu && (
-                                        <div className="user-dropdown">
-                                            <div className="dropdown-header">
-                                                <p className="user-email">{user.email}</p>
-                                            </div>
-                                            <div className="dropdown-divider"></div>
-                                            {isAdmin && (
-                                                <Link to="/admin" className="dropdown-item" onClick={() => setShowUserMenu(false)}>
-                                                    <i className="fas fa-shield-alt"></i>
-                                                    <span>Admin Dashboard</span>
-                                                </Link>
-                                            )}
-                                            <Link to="/dashboard" className="dropdown-item" onClick={() => setShowUserMenu(false)}>
-                                                <i className="fas fa-clipboard-list"></i>
-                                                <span>{t('my_dashboard')}</span>
-                                            </Link>
-                                            <div className="dropdown-divider"></div>
-                                            <PWAInstallButton />
-                                            <div className="dropdown-divider"></div>
-                                            <button onClick={() => { logout(); setShowUserMenu(false); }} className="dropdown-item logout-item">
-                                                <i className="fas fa-sign-out-alt"></i>
-                                                <span>{t('logout')}</span>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Language Switcher */}
-                            <div className="language-switcher">
-                                <button 
-                                    onClick={() => changeLanguage('et')} 
-                                    className={`language-button ${i18n.language === 'et' ? 'active' : ''}`}
-                                >
-                                    ET
-                                </button>
-                                <button 
-                                    onClick={() => changeLanguage('en')} 
-                                    className={`language-button ${i18n.language === 'en' ? 'active' : ''}`}
-                                >
-                                    EN
-                                </button>
-                                <button 
-                                    onClick={() => changeLanguage('ru')} 
-                                    className={`language-button ${i18n.language === 'ru' ? 'active' : ''}`}
-                                >
-                                    RU
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {/* Mobile Navigation Menu */}
-                    <div className={`mobile-nav-menu ${showMobileMenu ? 'open' : ''}`}>
-                        {/* Catalog Link */}
-                        <Link to="/catalog" className="catalog-link" onClick={() => setShowMobileMenu(false)}>
-                            <i className="fas fa-list"></i>
-                            <span>{t('catalog')}</span>
-                        </Link>
-                        
-                        {/* Partners Link */}
-                        <Link to="/partners" className="partners-link" onClick={() => setShowMobileMenu(false)}>
-                            <i className="fas fa-handshake"></i>
-                            <span>{t('for_business')}</span>
-                        </Link>
-                        
-                        {/* Blog Link */}
-                        <Link to="/blog" className="blog-link" onClick={() => setShowMobileMenu(false)}>
-                            <i className="fas fa-newspaper"></i>
-                            <span>{t('blog')}</span>
-                        </Link>
-                        
-                        {/* Add Business Link */}
-                        <Link to="/add-business" className="add-business-link" onClick={() => setShowMobileMenu(false)}>
-                            <i className="fas fa-plus-circle"></i>
-                            <span>{t('add_business')}</span>
-                        </Link>
-
-                        {/* User Authentication */}
-                        {!isAuthenticated ? (
-                            <Link to="/auth" className="login-link" onClick={() => setShowMobileMenu(false)}>
-                                <i className="fas fa-sign-in-alt"></i>
-                                <span>{t('login')}</span>
-                            </Link>
-                        ) : (
-                            <div className="user-menu-container">
-                                <button 
-                                    className="user-profile-button"
-                                    onClick={() => setShowUserMenu(!showUserMenu)}
-                                >
-                                    {user.photoURL ? (
-                                        <img src={user.photoURL} alt={user.displayName} className="user-avatar" />
-                                    ) : (
-                                        <div className="user-avatar-placeholder">
-                                            {(user.displayName || user.email)?.[0]?.toUpperCase()}
-                                        </div>
-                                    )}
-                                    <span className="user-name">{user.displayName || user.email?.split('@')[0]}</span>
-                                    <i className={`fas fa-chevron-down ${showUserMenu ? 'rotated' : ''}`}></i>
-                                </button>
-                                
-                                {showUserMenu && (
-                                    <div className="user-dropdown">
-                                        <div className="dropdown-header">
-                                            <p className="user-email">{user.email}</p>
-                                        </div>
-                                        <div className="dropdown-divider"></div>
-                                        {isAdmin && (
-                                            <Link to="/admin" className="dropdown-item" onClick={() => { setShowUserMenu(false); setShowMobileMenu(false); }}>
-                                                <i className="fas fa-shield-alt"></i>
-                                                <span>Admin Dashboard</span>
-                                            </Link>
-                                        )}
-                                        <Link to="/dashboard" className="dropdown-item" onClick={() => { setShowUserMenu(false); setShowMobileMenu(false); }}>
-                                            <i className="fas fa-clipboard-list"></i>
-                                            <span>{t('my_dashboard')}</span>
-                                        </Link>
-                                        <div className="dropdown-divider"></div>
-                                        <PWAInstallButton />
-                                        <div className="dropdown-divider"></div>
-                                        <button onClick={() => { logout(); setShowUserMenu(false); setShowMobileMenu(false); }} className="dropdown-item logout-item">
-                                            <i className="fas fa-sign-out-alt"></i>
-                                            <span>{t('logout')}</span>
+                            {/* Блок пользователя */}
+                            <div className="user-section">
+                                {!isAuthenticated ? (
+                                    <Link to="/auth" className="login-link"><FontAwesomeIcon icon={faSignInAlt} /> <span>{t('login')}</span></Link>
+                                ) : (
+                                    <div className="user-menu-container">
+                                        <button className="user-profile-button" onClick={() => setShowUserMenu(!showUserMenu)}>
+                                            <div className="user-avatar-placeholder">{(user.displayName || user.email)?.[0]?.toUpperCase()}</div>
+                                            <FontAwesomeIcon icon={faChevronDown} className={showUserMenu ? 'rotated' : ''} />
                                         </button>
+                                        
+                                        {showUserMenu && (
+                                            <div className="user-dropdown">
+                                                {isAdmin && <Link to="/admin" onClick={closeMenus}><FontAwesomeIcon icon={faShieldAlt} /> Admin</Link>}
+                                                <Link to="/dashboard" onClick={closeMenus}><FontAwesomeIcon icon={faClipboardList} /> {t('my_dashboard')}</Link>
+                                                <div className="dropdown-divider"></div>
+                                                <PWAInstallButton />
+                                                <button onClick={() => { logout(); closeMenus(); }} className="logout-item"><FontAwesomeIcon icon={faSignOutAlt} /> {t('logout')}</button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
-                        )}
 
-                        {/* Language Switcher */}
-                        <div className="language-switcher">
-                            <button 
-                                onClick={() => { changeLanguage('et'); setShowMobileMenu(false); }} 
-                                className={`language-button ${i18n.language === 'et' ? 'active' : ''}`}
-                            >
-                                ET
+                            {/* Переключатель языков */}
+                            <div className="lang-selector">
+                                {['et', 'en', 'ru'].map(lng => (
+                                    <button key={lng} onClick={() => changeLanguage(lng)} className={i18n.language === lng ? 'active' : ''}>
+                                        {lng.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Бургер */}
+                            <button className={`hamburger ${showMobileMenu ? 'is-active' : ''}`} onClick={() => setShowMobileMenu(!showMobileMenu)}>
+                                <span></span><span></span><span></span>
                             </button>
-                            <button 
-                                onClick={() => { changeLanguage('en'); setShowMobileMenu(false); }} 
-                                className={`language-button ${i18n.language === 'en' ? 'active' : ''}`}
-                            >
-                                EN
-                            </button>
-                            <button 
-                                onClick={() => { changeLanguage('ru'); setShowMobileMenu(false); }} 
-                                className={`language-button ${i18n.language === 'ru' ? 'active' : ''}`}
-                            >
-                                RU
-                            </button>
+                        </div>
+                    </div>
+
+                    {/* Мобильное меню */}
+                    <div className={`mobile-nav ${showMobileMenu ? 'active' : ''}`}>
+                        <CatalogLink closeMenus={closeMenus}>
+                            {t('catalog')}
+                        </CatalogLink>
+                        <Link to="/partners" onClick={closeMenus}>{t('for_business')}</Link>
+                        <Link to="/blog" onClick={closeMenus}>{t('blog')}</Link>
+                        <Link to="/add-business" onClick={closeMenus}>{t('add_business')}</Link>
+                        {!isAuthenticated && <Link to="/auth" onClick={closeMenus}>{t('login')}</Link>}
+                        
+                        {/* Переключатель языков в мобильном меню */}
+                        <div className="mobile-lang-selector">
+                            <div className="lang-label">{t('language') || 'Язык'}:</div>
+                            <div className="lang-buttons">
+                                {['et', 'en', 'ru'].map(lng => (
+                                    <button 
+                                        key={lng} 
+                                        onClick={() => { changeLanguage(lng); closeMenus(); }} 
+                                        className={i18n.language === lng ? 'active' : ''}
+                                    >
+                                        {lng === 'et' ? '🇪🇪 Eesti' : lng === 'en' ? '🇬🇧 English' : '🇷🇺 Русский'}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </header>
 
-                <main className="app-content-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                  <Suspense fallback={<div style={{ minHeight: '100vh', background: 'transparent' }} />}>
-                    <Routes>
-                      <Route path="/" element={<CompanyList />} />
-                      <Route path="/catalog" element={<CatalogPage />} />
-                    <Route path="/partners" element={<PartnersPage />} />
-                    <Route path="/about" element={<AboutPage />} />
-                        <Route path="/privacy" element={<PrivacyPolicyPage />} />
-                        <Route path="/terms" element={<TermsOfUsePage />} />
-                    <Route path="/blog" element={<BlogPage />} />
-                    <Route path="/blog/:id" element={<BlogPostDetail />} />
-                    <Route path="/auth" element={<AuthPage />} />
-                    <Route path="/login" element={<AuthPage />} />
-                    <Route path="/payment-success" element={<PaymentSuccess />} />
-                    <Route path="/payment-cancelled" element={<PaymentCancelled />} />
-                    <Route path="/payment" element={
-                        <RequireAuth>
-                            <PaymentPage />
-                        </RequireAuth>
-                    } />
-                    <Route path="/add" element={
-                        <RequireAuth>
-                            <AddBusiness />
-                        </RequireAuth>
-                    } />
-                    <Route path="/add-business" element={
-                        <RequireAuth>
-                            <AddBusiness />
-                        </RequireAuth>
-                    } />
-                    <Route path="/dashboard" element={
-                        <RequireAuth>
-                            <UserDashboard />
-                        </RequireAuth>
-                    } />
-                    <Route path="/edit-business/:id" element={
-                        <RequireAuth>
-                            <EditCompany />
-                        </RequireAuth>
-                    } />
-                    <Route path="/admin" element={
-                        <ProtectedRoute>
-                            <AdminDashboard />
-                        </ProtectedRoute>
-                    } />
-                    {/* Company routes - support both slug and ID */}
-                    <Route path="/companies/:slugOrId" element={<CompanyDetails />} />
-                    <Route path="/company/:slugOrId" element={<CompanyDetails />} />
-                    <Route path="*" element={
-                        <div style={{ padding: '20px' }}>
-                            <h2>404 - {t('page_not_found')}</h2>
-                            <p>{t('return_home')}</p>
-                        </div>
-                    } />
-                    </Routes>
-                  </Suspense>
+                <main className="app-content-root">
+                    <AppRoutes />
                 </main>
                 
                 <Footer />
-                
-                {/* PWA Install Prompt */}
                 <PWAInstall />
             </div>
         </BrowserRouter>
     );
 }
+
+// Компонент для ссылки на каталог с сбросом фильтров
+const CatalogLink = ({ children, closeMenus, className = '' }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    
+    const handleClick = (e) => {
+        e.preventDefault();
+        
+        // Если мы уже на странице каталога, сбрасываем все параметры
+        if (location.pathname === '/catalog') {
+            navigate('/catalog', { replace: true });
+        } else {
+            navigate('/catalog');
+        }
+        
+        if (closeMenus) {
+            closeMenus();
+        }
+    };
+    
+    return (
+        <a href="/catalog" onClick={handleClick} className={className}>
+            {children}
+        </a>
+    );
+};
 
 function App() {
     return (

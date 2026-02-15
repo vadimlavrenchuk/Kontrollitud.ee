@@ -21,13 +21,13 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: #667eea;
+        color: #4338ca;
         text-decoration: none;
         font-weight: 500;
         transition: color 0.3s;
 
         &:hover {
-            color: #764ba2;
+            color: #5b21b6;
         }
 
         i {
@@ -235,7 +235,7 @@
                 gap: 6px;
 
                 i {
-                    color: #667eea;
+                    color: #4338ca;
                 }
             }
         }
@@ -287,7 +287,7 @@
             color: #495057;
             
             i {
-                color: #667eea;
+                color: #4338ca;
                 font-size: 1.1em;
             }
         }
@@ -391,7 +391,7 @@
             font-weight: 600;
 
             i {
-                color: #667eea;
+                color: #4338ca;
                 font-size: 1.1em;
             }
         }
@@ -409,18 +409,18 @@
                 font-size: 0.95em;
 
                 i {
-                    color: #667eea;
+                    color: #4338ca;
                     width: 20px;
                     text-align: center;
                 }
 
                 a {
-                    color: #667eea;
+                    color: #4338ca;
                     text-decoration: none;
                     transition: color 0.3s;
 
                     &:hover {
-                        color: #764ba2;
+                        color: #3730a3;
                         text-decoration: underline;
                     }
                 }

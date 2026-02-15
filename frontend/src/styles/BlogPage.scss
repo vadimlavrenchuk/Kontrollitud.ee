@@ -72,7 +72,7 @@
     border-radius: 20px;
     font-size: 0.875rem;
     font-weight: 600;
-    color: #667eea;
+    color: #4338ca;
   }
   
   &-content {
@@ -84,7 +84,7 @@
     gap: 1.5rem;
     margin-bottom: 1rem;
     font-size: 0.875rem;
-    color: #6b7280;
+    color: #4b5563;
     
     .meta-item {
       display: flex;
@@ -106,7 +106,7 @@
   }
   
   &-excerpt {
-    color: #6b7280;
+    color: #4b5563;
     margin-bottom: 1.5rem;
     line-height: 1.6;
   }
@@ -115,13 +115,14 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    color: #667eea;
+    color: #4338ca;
     font-weight: 600;
     text-decoration: none;
     transition: gap 0.3s ease;
     
     &:hover {
       gap: 0.75rem;
+      color: #3730a3;
     }
     
     svg {

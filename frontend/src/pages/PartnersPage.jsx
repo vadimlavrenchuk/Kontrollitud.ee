@@ -182,59 +182,6 @@ function PartnersPage() {
     }
   ];
 
-  const pricingPlans = [
-    {
-      name: t('basic_plan'),
-      price: t('free'),
-      icon: faRocket,
-      features: [
-        t('feature_simple_listing'),
-        t('feature_basic_contact'),
-        t('feature_category_placement'),
-        t('feature_customer_reviews'),
-        t('feature_mobile_friendly')
-      ],
-      ctaText: t('get_started'),
-      ctaLink: '/add-business',
-      popular: false
-    },
-    {
-      name: t('pro_plan'),
-      price: '€29',
-      period: t('per_month'),
-      icon: faBolt,
-      features: [
-        t('feature_everything_basic'),
-        t('feature_verified_badge'),
-        t('feature_priority_search'),
-        t('feature_analytics_dashboard'),
-        t('feature_featured_category'),
-        t('feature_social_media'),
-        t('feature_premium_support')
-      ],
-      ctaText: t('upgrade_to_pro'),
-      ctaLink: '#contact',
-      popular: true
-    },
-    {
-      name: t('enterprise_plan'),
-      price: t('custom'),
-      icon: faCrown,
-      features: [
-        t('feature_everything_pro'),
-        t('feature_featured_homepage'),
-        t('feature_account_manager'),
-        t('feature_custom_branding'),
-        t('feature_api_access'),
-        t('feature_advanced_analytics'),
-        t('feature_priority_support')
-      ],
-      ctaText: t('contact_sales'),
-      ctaLink: '#contact',
-      popular: false
-    }
-  ];
-
   return (
     <>
       <Helmet>
@@ -256,7 +203,7 @@ function PartnersPage() {
               {t('get_started_free')}
             </Link>
             <a href="#pricing" className="btn-hero-secondary">
-              {t('view_pricing')}
+              {t('learn_more')}
             </a>
           </div>
         </div>
@@ -284,180 +231,20 @@ function PartnersPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Free Listing Section */}
       <section id="pricing" className="partners-pricing">
         <div className="partners-container">
-          <h2 className="section-title">{t('simple_transparent_pricing')}</h2>
-          <p className="section-subtitle">
-            {t('pricing_subtitle')}
-          </p>
-          
-          <div className="pricing-preview-grid">
-            {/* BASIC PLAN */}
-            <div className="pricing-preview-card basic-preview">
-              {/* Header */}
-              <div className="preview-header">
-                <span className="plan-badge">
-                  <FontAwesomeIcon icon={faRocket} /> {t('basic_plan')}
-                </span>
-                <span className="plan-price-tag">{t('free')}</span>
-              </div>
-
-              {/* Preview Card */}
-              <div className="business-card-preview">
-                <div className="preview-image basic-image">
-                  <i className="fas fa-building" style={{ fontSize: '4rem', color: '#9ca3af' }}></i>
-                </div>
-                <div className="preview-content">
-                  <h3 className="preview-business-name">{t('your_business') || t('business_name') || 'Ваш Бизнес'}</h3>
-                  <div className="preview-meta">
-                    <span>{t('category') || 'Категория'}</span>
-                    <span>{t('city') || 'Город'}</span>
-                  </div>
-                  <p className="preview-description">
-                    {t('feature_simple_listing')}
-                  </p>
-                </div>
-              </div>
-
-              {/* Features Footer */}
-              <div className="preview-footer">
-                <small>
-                  ✗ {t('no_photo') || 'Без фото'} • ✗ {t('no_rating') || 'Без рейтинга'} • ✗ {t('no_social') || 'Без соцсетей'}
-                </small>
-              </div>
-
-              {/* CTA */}
-              <button 
-                onClick={() => handlePlanClick('basic')}
-                className="pricing-cta"
-              >
-                <FontAwesomeIcon icon={faRocket} /> {t('get_started')}
-              </button>
-            </div>
-
-            {/* PRO PLAN */}
-            <div className="pricing-preview-card pro-preview popular">
-              
-              {/* Header */}
-              <div className="preview-header">
-                <span className="plan-badge pro-badge">
-                  <FontAwesomeIcon icon={faBolt} /> {t('pro_plan')}
-                </span>
-                <span className="plan-price-tag">€29/{t('per_month')}</span>
-              </div>
-
-              {/* Preview Card */}
-              <div className="business-card-preview verified-preview">
-                <div className="preview-image pro-image">
-                  <div className="preview-placeholder-text">
-                    {t('your_photo')}
-                  </div>
-                  <div className="preview-verified-badge">
-                    <FontAwesomeIcon icon={faShieldAlt} />
-                    <span>Verified</span>
-                  </div>
-                </div>
-                <div className="preview-content">
-                  <h3 className="preview-business-name">
-                    {t('your_business') || t('business_name') || 'Ваш Бизнес'} <span className="pro-checkmark">✔️</span>
-                  </h3>
-                  <div className="preview-meta">
-                    <span>{t('category') || 'Категория'}</span>
-                    <span>{t('city') || 'Город'}</span>
-                  </div>
-                  <div className="preview-rating">
-                    <span className="stars">★★★★★</span>
-                    <span className="rating-text">5.0 (10 {t('reviews') || 'отзывов'})</span>
-                  </div>
-                  <p className="preview-description">
-                    {t('feature_priority_search')}
-                  </p>
-                  <div className="preview-social">
-                    <span className="social-icon instagram"><i className="fab fa-instagram"></i></span>
-                    <span className="social-icon tiktok"><i className="fab fa-tiktok"></i></span>
-                    <span className="social-icon youtube"><i className="fab fa-youtube"></i></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Features Footer */}
-              <div className="preview-footer">
-                <small>
-                  ✓ {t('photo') || 'Фото'} • ✓ {t('rating') || 'Рейтинг'} • ✓ {t('social') || 'Соцсети'} • ✓ {t('blue_checkmark') || 'Синяя галочка'}
-                </small>
-              </div>
-
-              {/* CTA */}
-              <button 
-                onClick={() => handlePlanClick('pro')}
-                className="pricing-cta cta-popular"
-              >
-                <FontAwesomeIcon icon={faBolt} /> {t('upgrade_to_pro')}
-              </button>
-            </div>
-
-            {/* ENTERPRISE PLAN */}
-            <div className="pricing-preview-card enterprise-preview">
-              {/* Header */}
-              <div className="preview-header">
-                <span className="plan-badge enterprise-badge">
-                  <FontAwesomeIcon icon={faCrown} /> {t('enterprise_plan')}
-                </span>
-                <span className="plan-price-tag">€50/{t('per_month')}</span>
-              </div>
-
-              {/* Preview Card */}
-              <div className="business-card-preview enterprise-card">
-                <div className="preview-image enterprise-image">
-                  <div className="top-priority-badge">
-                    <FontAwesomeIcon icon={faCrown} /> TOP Priority
-                  </div>
-                  <div className="preview-placeholder-text enterprise-banner">
-                    {t('premium_banner')}
-                  </div>
-                </div>
-                <div className="preview-content">
-                  <h3 className="preview-business-name">
-                    {t('your_business') || t('business_name') || 'Ваш Бизнес'} <span className="enterprise-crown">🏆</span>
-                  </h3>
-                  <div className="preview-meta">
-                    <span>{t('category') || 'Категория'}</span>
-                    <span>{t('city') || 'Город'}</span>
-                  </div>
-                  <div className="preview-rating">
-                    <span className="stars gold-stars">★★★★★</span>
-                    <span className="rating-text">5.0 (50+ {t('reviews') || 'отзывов'})</span>
-                  </div>
-                  <p className="preview-description">
-                    {t('feature_featured_homepage')}
-                  </p>
-                  <div className="preview-social">
-                    <span className="social-icon instagram"><i className="fab fa-instagram"></i></span>
-                    <span className="social-icon tiktok"><i className="fab fa-tiktok"></i></span>
-                    <span className="social-icon youtube"><i className="fab fa-youtube"></i></span>
-                  </div>
-                  <button className="preview-blog-button" type="button">
-                    📰 {t('read_blog_review') || 'Читать обзор в блоге'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Features Footer */}
-              <div className="preview-footer">
-                <small>
-                  ✓ {t('all_from_pro') || 'Все из Pro'} • ✓ {t('gold_frame') || 'Золотая рамка'} • ✓ {t('blog') || 'Блог'} • ✓ {t('top_1') || 'ТОП-1'}
-                </small>
-              </div>
-
-              {/* CTA */}
-              <button 
-                onClick={() => handlePlanClick('enterprise')}
-                className="pricing-cta"
-              >
-                <FontAwesomeIcon icon={faCrown} /> {t('buy_luxury') || 'Купить Люкс'}
-              </button>
-            </div>
+          <div className="free-listing-block">
+            <h2 className="section-title">{t('simple_transparent_pricing')}</h2>
+            <p className="free-listing-text">
+              {t('pricing_subtitle')}
+            </p>
+            <button 
+              onClick={() => navigate('/add-business')}
+              className="create-profile-button"
+            >
+              {t('create_profile')}
+            </button>
           </div>
         </div>
       </section>
@@ -468,10 +255,10 @@ function PartnersPage() {
           <h2>{t('ready_to_grow')}</h2>
           <p>{t('join_verified_businesses')}</p>
           <button 
-            onClick={() => handlePlanClick('basic')}
+            onClick={() => navigate('/add-business')}
             className="cta-button-large"
           >
-            {t('get_started')}
+            {t('create_profile')}
           </button>
         </div>
       </section>

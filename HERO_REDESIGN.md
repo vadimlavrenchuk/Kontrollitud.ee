@@ -105,7 +105,7 @@ const handleCategoryClick = (category) => {
 - Category pills with icons and active states
 - Secondary controls bar moved below hero
 
-#### 2. **CompanyList.scss**
+#### 2. **App.jsx**
 **New Styles Added**:
 - `.hero-section`: Main container with gradient and pattern overlay
 - `.hero-content`: Centered content wrapper
@@ -505,7 +505,7 @@ npm install --save @fortawesome/fontawesome-svg-core @fortawesome/free-solid-svg
 
 **Lines Changed**: ~30 lines modified
 
-#### 2. **CompanyList.scss**
+#### 2. **App.jsx**
 **Major Style Updates**:
 
 1. **Card Container** (Lines ~345-365):

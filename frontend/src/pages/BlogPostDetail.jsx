@@ -226,7 +226,7 @@ function BlogPostDetail() {
 
             {/* Cover Image */}
             <div className="article-cover">
-              <img src={post.image} alt={post.title} />
+              <img src={post.image} alt={post.title} loading="lazy" referrerPolicy="no-referrer" />
             </div>
 
             {/* Article Body */}

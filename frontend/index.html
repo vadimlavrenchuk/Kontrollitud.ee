@@ -6,7 +6,7 @@
     <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
     <link rel="shortcut icon" href="/icons/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -43,8 +43,9 @@
     <!-- Critical CSS - загружается первым для предотвращения CLS -->
     <link rel="stylesheet" href="/critical.css">
     
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- Preload hero image (WebP with JPEG fallback) -->
+    <link rel="preload" as="image" href="/src/assets/tallinn-bg.jpg" type="image/jpeg" fetchpriority="high">
+    <link rel="preload" as="image" href="/src/assets/tallinn-bg.jpg?format=webp" type="image/webp" fetchpriority="high">
   </head>
   <body>
     <div id="root"></div>

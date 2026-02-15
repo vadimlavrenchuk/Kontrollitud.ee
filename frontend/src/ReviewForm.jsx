@@ -4,6 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext.jsx';
 import { toast } from 'react-toastify';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+    faStar, 
+    faCommentDots, 
+    faLock, 
+    faSignInAlt, 
+    faUser, 
+    faCheckCircle, 
+    faComment, 
+    faInfoCircle, 
+    faSpinner, 
+    faPaperPlane, 
+    faExclamationCircle 
+} from '@fortawesome/free-solid-svg-icons';
 import './styles/ReviewForm.scss';
 import { db } from './firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -228,10 +242,9 @@ function ReviewForm({ companyId, onReviewAdded }) {
                         disabled={loading || !isAuthenticated}
                         aria-label={`${star} ${t('stars')}`}
                     >
-                        <i 
-                            className={`fas fa-star ${
-                                star <= (hoveredRating || rating) ? 'star-filled' : 'star-empty'
-                            }`}
+                        <FontAwesomeIcon 
+                            icon={faStar}
+                            className={star <= (hoveredRating || rating) ? 'star-filled' : 'star-empty'}
                         />
                     </button>
                 ))}
@@ -243,15 +256,15 @@ function ReviewForm({ companyId, onReviewAdded }) {
     return (
         <div className="review-form-section">
             <h3 className="review-form-title">
-                <i className="fas fa-comment-dots"></i> {t('add_your_review')}
+                <FontAwesomeIcon icon={faCommentDots} /> {t('add_your_review')}
             </h3>
             
             {!isAuthenticated ? (
                 <div className="login-required-notice">
-                    <i className="fas fa-lock"></i>
+                    <FontAwesomeIcon icon={faLock} />
                     <p>{t('login_required_to_review') || 'Please login to leave a review'}</p>
                     <a href="/auth" className="login-link">
-                        <i className="fas fa-sign-in-alt"></i> {t('login') || 'Login'}
+                        <FontAwesomeIcon icon={faSignInAlt} /> {t('login') || 'Login'}
                     </a>
                 </div>
             ) : (
@@ -259,7 +272,7 @@ function ReviewForm({ companyId, onReviewAdded }) {
                     
                     <div className="form-group">
                         <label htmlFor="user-display">
-                            <i className="fas fa-user"></i> {t('reviewing_as')}:
+                            <FontAwesomeIcon icon={faUser} /> {t('reviewing_as')}:
                         </label>
                         <div className="user-display">
                             <span className="user-badge">
@@ -267,7 +280,7 @@ function ReviewForm({ companyId, onReviewAdded }) {
                             </span>
                             {isTrustedUser && (
                                 <span className="trusted-badge" title="Trusted user - auto-approved reviews">
-                                    <i className="fas fa-check-circle"></i> Trusted
+                                    <FontAwesomeIcon icon={faCheckCircle} /> Trusted
                                 </span>
                             )}
                         </div>
@@ -275,14 +288,14 @@ function ReviewForm({ companyId, onReviewAdded }) {
 
                     <div className="form-group">
                         <label>
-                            <i className="fas fa-star"></i> {t('rating')}:
+                            <FontAwesomeIcon icon={faStar} /> {t('rating')}:
                         </label>
                         <StarRatingSelector />
                     </div>
 
                     <div className="form-group">
                         <label htmlFor="comment">
-                            <i className="fas fa-comment"></i> {t('comment')}:
+                            <FontAwesomeIcon icon={faComment} /> {t('comment')}:
                         </label>
                         <textarea
                             id="comment"
@@ -300,7 +313,7 @@ function ReviewForm({ companyId, onReviewAdded }) {
                                 {charCount} / 2000 {charCount < 10 && '(минимум 10 символов)'}
                             </small>
                             <small className="moderation-hint">
-                                <i className="fas fa-info-circle"></i> Без ссылок, email, телефонов
+                                <FontAwesomeIcon icon={faInfoCircle} /> Без ссылок, email, телефонов
                             </small>
                         </div>
                     </div>
@@ -308,23 +321,23 @@ function ReviewForm({ companyId, onReviewAdded }) {
                     <button type="submit" className="submit-button" disabled={loading}>
                         {loading ? (
                             <>
-                                <i className="fas fa-spinner fa-spin"></i> {t('submitting') || 'Submitting...'}
+                                <FontAwesomeIcon icon={faSpinner} spin /> {t('submitting') || 'Submitting...'}
                             </>
                         ) : (
                             <>
-                                <i className="fas fa-paper-plane"></i> {t('submit_review') || 'Submit Review'}
+                                <FontAwesomeIcon icon={faPaperPlane} /> {t('submit_review') || 'Submit Review'}
                             </>
                         )}
                     </button>
 
                     {error && (
                         <div className="review-error-message">
-                            <i className="fas fa-exclamation-circle"></i> {error}
+                            <FontAwesomeIcon icon={faExclamationCircle} /> {error}
                         </div>
                     )}
                     {success && (
                         <div className="review-success-message">
-                            <i className="fas fa-check-circle"></i> {t('review_submitted_success') || 'Review submitted successfully!'}
+                            <FontAwesomeIcon icon={faCheckCircle} /> {t('review_submitted_success') || 'Review submitted successfully!'}
                         </div>
                     )}
 

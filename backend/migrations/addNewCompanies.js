@@ -297,6 +297,7 @@ const companies = [
     phone: '+372 447 9600',
     email: 'tervis@tervisegrupp.ee',
     website: 'https://www.tervisegrupp.ee',
+    image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80',
     description: {
       et: 'Üks suurimaid kuurortlikke spaa-keskusi Pärnus. Täielik lõõgastumine ja tervendamine.',
       en: 'One of the largest resort spa centers in Pärnu. Complete relaxation and wellness.',
@@ -305,7 +306,9 @@ const companies = [
     location: { lat: 58.3870, lng: 24.4970 },
     verified: true,
     isVerified: true,
-    priority: 5,
+    tier: 'Enterprise',
+    subscriptionLevel: 'enterprise',
+    priority: 10,
     rating: 4.6,
     reviewCount: 312,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),

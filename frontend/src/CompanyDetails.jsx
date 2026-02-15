@@ -8,8 +8,24 @@ import ReviewForm from './ReviewForm.jsx';
 import { getLocalizedContent, formatDate, formatRelativeTime, getLocaleFromLanguage } from './utils/localization';
 import { getCategoryIcon } from './constants/categories';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
+import { 
+    faUserCheck, 
+    faStar, 
+    faStarHalfAlt, 
+    faArrowLeft, 
+    faCheckCircle, 
+    faShareAlt, 
+    faMapMarkerAlt, 
+    faInfoCircle, 
+    faPhone, 
+    faEnvelope, 
+    faGlobe, 
+    faDirections, 
+    faClock, 
+    faChartBar 
+} from '@fortawesome/free-solid-svg-icons';
 import { faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
+import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import './styles/CompanyDetails.scss';
 import { db } from './firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
@@ -177,11 +193,11 @@ function CompanyDetails() {
         
         for (let i = 1; i <= 5; i++) {
             if (i <= fullStars) {
-                stars.push(<i key={i} className="fas fa-star" style={{ color: '#ffc107' }}></i>);
+                stars.push(<FontAwesomeIcon key={i} icon={faStar} style={{ color: '#ffc107' }} />);
             } else if (i === fullStars + 1 && hasHalfStar) {
-                stars.push(<i key={i} className="fas fa-star-half-alt" style={{ color: '#ffc107' }}></i>);
+                stars.push(<FontAwesomeIcon key={i} icon={faStarHalfAlt} style={{ color: '#ffc107' }} />);
             } else {
-                stars.push(<i key={i} className="far fa-star" style={{ color: '#ffc107' }}></i>);
+                stars.push(<FontAwesomeIcon key={i} icon={faStarRegular} style={{ color: '#ffc107' }} />);
             }
         }
         return <span className="rating-stars">{stars}</span>;
@@ -319,7 +335,7 @@ function CompanyDetails() {
             {/* Back Navigation */}
             <div className="back-navigation">
                 <Link to="/" className="back-link">
-                    <i className="fas fa-arrow-left"></i> {t('back_to_list')}
+                    <FontAwesomeIcon icon={faArrowLeft} /> {t('back_to_list')}
                 </Link>
             </div>
 

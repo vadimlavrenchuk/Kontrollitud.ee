@@ -162,7 +162,7 @@ useEffect(() => {
 
 ## 🎨 Стили карты
 
-Стили для popup уже существуют в [CompanyList.scss](frontend/src/styles/CompanyList.scss#L1104):
+Стили для popup уже существуют в [App.jsx](frontend/src/styles/App.jsx#L1104):
 - `.map-popup` - контейнер popup
 - `.popup-title` - название компании
 - `.popup-verified` - синий бейдж "Verified"

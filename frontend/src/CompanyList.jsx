@@ -1,280 +1,196 @@
-// Kontrollitud.ee/frontend/src/CompanyList.jsx
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import CompanyCard from './CompanyCard';
-import CategoryGrid from './components/CategoryGrid';
-import SearchBar from './components/SearchBar';
-import TrialPromoBanner from './components/TrialPromoBanner';
+import TypewriterSearchBar from './components/TypewriterSearchBar';
+import QuickAccessCategories from './components/QuickAccessCategories';
+import EventsSidebar from './components/EventsSidebar';
+import HeroImage from './components/HeroImage';
 import './styles/CompanyList.scss';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpa, faUtensils, faShoppingBag, faChild, faPlane, faCar, faCogs, faSearchLocation, faComments, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
-import tallinnBg from './assets/tallinn-bg.jpg.jpg';
+import tallinnBg from './assets/tallinn-bg.jpg';
+import tallinnBgWebp from './assets/tallinn-bg.jpg?format=webp';
 import { db } from './firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { getMainCategories, getCategoryIcon } from './constants/categories';
 
 function CompanyList() {
   const [allCompanies, setAllCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { t } = useTranslation(); 
+  const [searchQuery, setSearchQuery] = useState(''); // State для поиска
+  const { t } = useTranslation();
+  const navigate = useNavigate(); // Хук для навигации без перезагрузки
 
-  // Fetch companies from Firestore
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Check if db is initialized
-      if (!db) {
-        throw new Error('Firebase is not initialized');
-      }
+      if (!db) throw new Error('Firebase is not initialized');
       
       const companiesRef = collection(db, 'companies');
-      const q = query(companiesRef, orderBy('createdAt', 'desc'));
+      // Ограничиваем выборку для главной страницы, чтобы не грузить лишнее
+      const q = query(companiesRef, orderBy('createdAt', 'desc'), limit(20));
       const snapshot = await getDocs(q);
       
-      const companiesList = [];
-      snapshot.forEach((doc) => {
-        companiesList.push({
-          id: doc.id,
-          _id: doc.id, // Для обратной совместимости
-          ...doc.data()
-        });
-      });
+      const companiesList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        _id: doc.id,
+        ...doc.data()
+      }));
       
-      // Sort companies: verified first, then by priority (desc), then by newest
+      // Улучшенная сортировка
       const sortedData = companiesList.sort((a, b) => {
-        const isVerifiedA = a.verified || a.isVerified;
-        const isVerifiedB = b.verified || b.isVerified;
+        const isVerifiedA = a.isVerified || a.verified || false;
+        const isVerifiedB = b.isVerified || b.verified || false;
         
-        if (isVerifiedA !== isVerifiedB) {
-          return isVerifiedB ? 1 : -1;
-        }
+        if (isVerifiedA !== isVerifiedB) return isVerifiedB ? 1 : -1;
         
         const priorityA = a.priority || 0;
         const priorityB = b.priority || 0;
-        if (priorityA !== priorityB) {
-          return priorityB - priorityA;
-        }
+        if (priorityA !== priorityB) return priorityB - priorityA;
         
-        // Handle Firestore Timestamp
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        const dateA = a.createdAt?.seconds ? a.createdAt.toMillis() : 0;
+        const dateB = b.createdAt?.seconds ? b.createdAt.toMillis() : 0;
         return dateB - dateA;
       });
       
       setAllCompanies(sortedData);
     } catch (err) {
-      console.error('❌ Error fetching companies:', err);
+      console.error('❌ Error:', err);
       setError(err.message);
-      setAllCompanies([]);
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     fetchCompanies();
   }, [fetchCompanies]); 
 
-  // Get first 4 companies for preview
   const previewCompanies = useMemo(() => allCompanies.slice(0, 4), [allCompanies]);
-
-  // Get main categories from constants
   const mainCategories = useMemo(() => getMainCategories(), []);
 
-  // Handle category click - navigate to catalog with main category filter
-  const handleCategoryClick = useCallback((mainCategory) => {
-    window.location.href = `/catalog?mainCategory=${mainCategory}`;
+  // Навигация через роутер (без перезагрузки страницы)
+  const handleCategoryClick = (category) => {
+    navigate(`/catalog?mainCategory=${encodeURIComponent(category)}`);
+  };
+
+  // Обработчик поиска - переход в каталог с query
+  const handleSearch = useCallback(() => {
+    if (searchQuery && searchQuery.trim()) {
+      navigate(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      // Если пустой запрос - просто переходим в каталог
+      navigate('/catalog');
+    }
+  }, [searchQuery, navigate]);
+
+  // Очистка поиска
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
   }, []);
+
+  // Обработчик клика по адресу компании - переход в каталог с показом на карте
+  const handleAddressClick = useCallback((companyId) => {
+    // Переходим в каталог с параметром companyId для автоматического показа на карте
+    navigate(`/catalog?companyId=${companyId}`);
+  }, [navigate]);
 
   if (loading) {
     return (
       <div className="main-content-loader">
-        <section className="hero skeleton-hero" style={{ minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
-          <div className="container">
-            <div className="skeleton-text" style={{ height: '40px', width: '300px', background: '#e0e0e0', margin: '0 auto 20px' }}></div>
-            <div className="skeleton-text" style={{ height: '20px', width: '200px', background: '#e0e0e0', margin: '0 auto' }}></div>
-          </div>
-        </section>
-        <div className="container" style={{ minHeight: '500px' }}></div>
+        <div className="skeleton-hero" style={{ height: '600px', background: '#eee' }} />
       </div>
     );
   }
 
-  if (error) {
-    return <div className="container error-message">{t('error')} {error}</div>;
-  }
-
   return (
     <>
-      {/* SEO Meta Tags */}
       <Helmet>
         <title>{t('hero_title')} | Kontrollitud.ee</title>
         <meta name="description" content={t('hero_subtitle')} />
-        <meta name="keywords" content="Estonia, Eesti, business directory, kontrollitud, verified businesses, Tallinn, Tartu, Pärnu" />
-        <link rel="canonical" href="https://kontrollitud.ee/" />
       </Helmet>
       
-      {/* Trial Promo Banner */}
-      <TrialPromoBanner />
-      
-      {/* Hero Section */}
       <section className="hero">
-        <img 
-          src={tallinnBg}
-          alt="Tallinn cityscape"
-          className="hero__bg-image"
-          width="1920"
-          height="1080"
-          loading="eager"
-          fetchPriority="high"
-        />
-        
+        <HeroImage jpgSrc={tallinnBg} webpSrc={tallinnBgWebp} alt="Tallinn" />
         <div className="hero__overlay"></div>
         
         <div className="hero__content">
           <h1 className="hero__title">{t('hero_title')}</h1>
           <p className="hero__subtitle">{t('hero_subtitle')}</p>
           
-          {/* Search Bar - links to catalog */}
           <div className="hero__search-wrapper">
-            <Link to="/catalog" style={{ width: '100%', display: 'block' }}>
-              <SearchBar 
-                searchQuery=""
-                onSearchChange={() => {}}
-                onClearSearch={() => {}}
-              />
-            </Link>
+            <TypewriterSearchBar 
+              searchQuery={searchQuery}
+              onSearchChange={(e) => setSearchQuery(e.target.value)}
+              onClearSearch={handleClearSearch}
+              onSearch={handleSearch}
+              showButton={true}
+            />
           </div>
           
-          {/* Main Category Pills */}
-          <div className="category-pills fade-in-delay-3">
-            <p className="pills-label">{t('popular_categories')}</p>
-            <div className="pills-container">
-              {mainCategories.map(category => (
-                <button
-                  key={category}
-                  className="category-pill"
-                  onClick={() => handleCategoryClick(category)}
-                >
-                  <span style={{ fontSize: '1.5rem', marginRight: '0.5rem' }}>
-                    {getCategoryIcon(category)}
-                  </span>
-                  <span>{t(category) || category}</span>
-                </button>
-              ))}
+          {/* Быстрый доступ к категориям */}
+          <QuickAccessCategories />
+        </div>
+      </section>
+
+      {/* TRUST BAR - Компактная полоса доверия */}
+      <section className="trust-bar">
+        <div className="trust-items">
+          <div className="trust-item">
+            <div className="trust-icon">🛡</div>
+            <div className="trust-content">
+              <h3 className="trust-label">{t('trust_verification')}</h3>
+              <p className="trust-desc">{t('trust_verification_desc')}</p>
+            </div>
+          </div>
+          
+          <div className="trust-item">
+            <div className="trust-icon">📞</div>
+            <div className="trust-content">
+              <h3 className="trust-label">{t('trust_direct')}</h3>
+              <p className="trust-desc">{t('trust_direct_desc')}</p>
+            </div>
+          </div>
+          
+          <div className="trust-item">
+            <div className="trust-icon">🏛</div>
+            <div className="trust-content">
+              <h3 className="trust-label">{t('trust_order')}</h3>
+              <p className="trust-desc">{t('trust_order_desc')}</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <div className="how-it-works-section">
-        <div className="container">
-          <h2 className="how-it-works-title">{t('how_it_works_title')}</h2>
-          <div className="how-it-works-grid">
-            <div className="how-it-works-card">
-              <div className="how-it-works-icon">
-                <FontAwesomeIcon icon={faSearchLocation} />
-              </div>
-              <h3>{t('how_it_works_step1_title')}</h3>
-              <p>{t('how_it_works_step1_desc')}</p>
-            </div>
-            <div className="how-it-works-card">
-              <div className="how-it-works-icon">
-                <FontAwesomeIcon icon={faComments} />
-              </div>
-              <h3>{t('how_it_works_step2_title')}</h3>
-              <p>{t('how_it_works_step2_desc')}</p>
-            </div>
-            <div className="how-it-works-card">
-              <div className="how-it-works-icon">
-                <FontAwesomeIcon icon={faShieldAlt} />
-              </div>
-              <h3>{t('how_it_works_step3_title')}</h3>
-              <p>{t('how_it_works_step3_desc')}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Companies Preview */}
       <div className="container">
-        <div className="featured-section">
-          <div className="section-header">
-            <h2>{t('featured_businesses')}</h2>
-            <Link to="/catalog" className="view-all-button">
-              {t('view_all')} →
-            </Link>
-          </div>
-          
-          <div className="company-preview-grid">
-            {previewCompanies.map(company => (
-              <CompanyCard 
-                key={company._id} 
-                company={company}
-              />
-            ))}
-          </div>
-          
-          <div className="view-all-footer">
-            <Link to="/catalog" className="view-all-button-large">
-              {t('view_all_businesses')}
-            </Link>
-          </div>
-        </div>
-
-        {/* Latest News Section */}
-        <div className="latest-news-section">
-          <div className="section-header">
-            <h2>{t('latest_news')}</h2>
-            <Link to="/blog" className="view-all-button">
-              {t('read_more')} →
-            </Link>
-          </div>
-          
-          <div className="news-preview-grid">
-            <div className="news-card">
-              <div className="news-image">
-                <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&q=80" alt="News 1" />
+        <div className="main-content-with-sidebar">
+          <main className="main-content">
+            <section className="featured-section">
+              <div className="section-header">
+                <h2>{t('featured_businesses')}</h2>
+                <Link to="/catalog" className="view-all-link">{t('view_all')} →</Link>
               </div>
-              <div className="news-content">
-                <span className="news-date">15.01.2025</span>
-                <h3>{t('blog_post1_title')}</h3>
-                <p>{t('blog_post1_excerpt')}</p>
-                <Link to="/blog" className="news-link">{t('read_more')} →</Link>
+              
+              <div className="company-preview-grid">
+                {previewCompanies.map(company => (
+                  <CompanyCard 
+                    key={company.id} 
+                    company={company}
+                    onMapClick={handleAddressClick}
+                  />
+                ))}
               </div>
-            </div>
+            </section>
             
-            <div className="news-card">
-              <div className="news-image">
-                <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=400&q=80" alt="News 2" />
-              </div>
-              <div className="news-content">
-                <span className="news-date">10.01.2025</span>
-                <h3>{t('blog_post2_title')}</h3>
-                <p>{t('blog_post2_excerpt')}</p>
-                <Link to="/blog" className="news-link">{t('read_more')} →</Link>
-              </div>
-            </div>
-            
-            <div className="news-card">
-              <div className="news-image">
-                <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&q=80" alt="News 3" />
-              </div>
-              <div className="news-content">
-                <span className="news-date">05.01.2025</span>
-                <h3>{t('blog_post3_title')}</h3>
-                <p>{t('blog_post3_excerpt')}</p>
-                <Link to="/blog" className="news-link">{t('read_more')} →</Link>
-              </div>
-            </div>
-          </div>
+            {/* Сюда можно добавить NewsSection */}
+          </main>
+          
+          <aside>
+            <EventsSidebar />
+          </aside>
         </div>
       </div>
     </>

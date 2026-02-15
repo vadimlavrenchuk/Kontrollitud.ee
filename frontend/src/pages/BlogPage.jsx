@@ -74,7 +74,7 @@ function BlogPage() {
             {blogPosts.map((post) => (
               <article key={post.id} className="blog-card">
                 <div className="blog-card-image">
-                  <img src={post.image} alt={post.title} />
+                  <img src={post.image} alt={post.title} loading="lazy" referrerPolicy="no-referrer" />
                   <div className="blog-card-category">{post.category}</div>
                 </div>
                 
