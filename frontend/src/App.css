@@ -108,6 +108,8 @@ body {
 
 .logo-image {
   height: 40px;
+  width: 40px;
+  object-fit: contain;
   border-radius: 6px;
 }
 

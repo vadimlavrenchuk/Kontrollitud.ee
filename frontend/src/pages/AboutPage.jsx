@@ -33,7 +33,7 @@ function AboutPage() {
         {/* Hero Section */}
         <section className="about-hero">
           <div className="about-hero-content">
-            <img src={logo} alt="Kontrollitud.ee Logo" className="about-logo" />
+            <img src={logo} alt="Kontrollitud.ee Logo" className="about-logo" width="120" height="120" />
             <h1 className="about-hero-title">{t('about_hero_title')}</h1>
             <p className="about-hero-subtitle">{t('about_hero_subtitle')}</p>
           </div>

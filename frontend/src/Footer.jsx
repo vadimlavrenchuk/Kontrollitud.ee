@@ -16,7 +16,7 @@ function Footer() {
                     {/* Logo & About */}
                     <div className="footer-section">
                         <Link to="/" className="footer-logo">
-                            <img src={logo} alt="Kontrollitud.ee" />
+                            <img src={logo} alt="Kontrollitud.ee" width="40" height="40" />
                             <h3>Kontrollitud.ee</h3>
                         </Link>
                         <p className="footer-about">{t('footer_about')}</p>

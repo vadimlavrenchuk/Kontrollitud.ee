@@ -144,7 +144,7 @@ function AppContent() {
                     <div className="navbar-container">
                         <div className="navbar-brand">
                             <Link to="/" className="logo-link" onClick={closeMenus}>
-                                <img src={logo} alt="Logo" className="logo-image" />
+                                <img src={logo} alt="Kontrollitud.ee Logo" className="logo-image" width="40" height="40" />
                                 <h1 className="logo-text">{t('app_title')}</h1>
                             </Link>
                         </div>
