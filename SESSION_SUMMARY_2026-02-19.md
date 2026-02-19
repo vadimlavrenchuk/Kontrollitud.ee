@@ -376,7 +376,65 @@ ssh root@65.109.166.160 "docker exec proxy_app_1 nginx -s reload"
 
 ---
 
+## 🔄 Update: Cache Policy для .jsx файлов (Feb 19, 2026 - Late Evening)
+
+### Issue
+Lighthouse audit "Efficient cache policy" ожидаемая экономия **15 КiB**:
+- ❌ `/assets/App-C1hC5zrP.jsx` - 14.7 KB - **Cache: None**
+- ❌ `/assets/CompanyList-BLad78E0.jsx` - 7.6 KB - **Cache: None**
+
+**Причина**: Vite генерирует `.jsx` файлы в dist, но nginx кеширует только `.js` файлы.
+
+### Solution
+**Файл**: [nginx-proxy-host-1.conf](nginx-proxy-host-1.conf#L51)
+
+**До**:
+```nginx
+location ~* \.(js|css|woff|woff2|ttf|eot)$ {
+  expires 1y;
+  add_header Cache-Control "public, immutable, no-transform";
+}
+```
+
+**После**:
+```nginx
+location ~* \.(js|jsx|css|woff|woff2|ttf|eot)$ {
+  expires 1y;
+  add_header Cache-Control "public, immutable, no-transform";
+}
+```
+
+### Verification
+```bash
+curl -I https://kontrollitud.ee/assets/App-C1hC5zrP.jsx
+→ Cache-Control: max-age=31536000
+→ Cache-Control: public, immutable, no-transform
+```
+
+### Impact
+- ✅ **15 КiB экономии** на повторных визитах
+- 🚀 Быстрее загрузка для returning visitors
+- 🎯 Lighthouse: "Efficient cache policy" теперь clean
+
+### Known Issue: Blocking CSS
+Lighthouse показывает **blocking CSS** (11 KB + 13.8 KB), но это:
+- ✅ **Ожидаемое поведение** для Vite
+- ✅ **Критичный CSS** уже inline в [index.html](frontend/index.html#L52-L62)
+- ✅ **Файлы маленькие** и кешируются 1 год
+- 📊 **FCP/LCP** остаются хорошими
+
+### Deployment
+```bash
+scp nginx-proxy-host-1.conf root@65.109.166.160:/tmp/
+ssh root@65.109.166.160 "docker cp /tmp/nginx-proxy-host-1.conf proxy_app_1:/data/nginx/proxy_host/1.conf && docker exec proxy_app_1 nginx -s reload"
+```
+
+**Коммит**: `cddb370` - "perf: add .jsx files to nginx cache rules"  
+**Deployed**: Feb 19, 2026 21:35 GMT ✅
+
+---
+
 **Generated**: Feb 19, 2026 20:42 GMT  
-**Updated**: Feb 19, 2026 21:15 GMT  
-**Session Duration**: ~2.5 hours  
-**Tokens Used**: ~28k / 200k
+**Updated**: Feb 19, 2026 21:35 GMT  
+**Session Duration**: ~3 hours  
+**Tokens Used**: ~34k / 200k
