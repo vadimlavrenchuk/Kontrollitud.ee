@@ -101,13 +101,7 @@ export default defineConfig({
   },
   build: {
     // Дополнительные оптимизации для production
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    minify: 'esbuild', // Используем esbuild (быстрее и встроен в Vite)
     sourcemap: false, // Отключаем sourcemaps в продакшене
     // Настройки для оптимизации ассетов
     assetsInlineLimit: 4096, // Файлы < 4KB будут inline (base64)
@@ -149,6 +143,10 @@ export default defineConfig({
         },
         // Оптимизация имен файлов для кэширования
         assetFileNames: (assetInfo) => {
+          // Проверка на существование name для rolldown совместимости
+          if (!assetInfo.name) {
+            return `assets/[name]-[hash][extname]`;
+          }
           let extType = assetInfo.name.split('.').pop();
           // Изображения в отдельную папку
           if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp|avif/i.test(extType)) {
