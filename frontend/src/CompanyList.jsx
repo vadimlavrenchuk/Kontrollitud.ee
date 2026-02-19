@@ -8,8 +8,8 @@ import QuickAccessCategories from './components/QuickAccessCategories';
 import EventsSidebar from './components/EventsSidebar';
 import HeroImage from './components/HeroImage';
 import './styles/CompanyList.scss';
-import tallinnBg from './assets/tallinn-bg.jpg';
-import tallinnBgWebp from './assets/tallinn-bg.jpg?format=webp';
+import tallinnBg from './assets/tallinn-bg.webp';
+import tallinnBgWebp from './assets/tallinn-bg.webp?format=webp';
 import { db } from './firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { getMainCategories, getCategoryIcon } from './constants/categories';
@@ -69,7 +69,7 @@ function CompanyList() {
     fetchCompanies();
   }, [fetchCompanies]); 
 
-  const previewCompanies = useMemo(() => allCompanies.slice(0, 4), [allCompanies]);
+  const previewCompanies = useMemo(() => allCompanies.slice(0, 8), [allCompanies]);
   const mainCategories = useMemo(() => getMainCategories(), []);
 
   // Навигация через роутер (без перезагрузки страницы)

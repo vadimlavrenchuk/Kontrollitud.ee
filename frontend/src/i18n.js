@@ -7,6 +7,7 @@ const resources = {
   ru: { // Русский
     translation: {
       "app_title": "Kontrollitud.ee",
+      "announcement_text": "Новые компании добавляются каждый день!",
       "slogan": "Каталог проверенных компаний",
       "details_button": "Подробнее",
       "add_company": "+ Добавить компанию",
@@ -696,6 +697,7 @@ const resources = {
     translation: {
       // ... (переводы на эстонский)
       "app_title": "Kontrollitud.ee",
+      "announcement_text": "Uued ettevõtted lisatakse iga päev!",
       "slogan": "Kontrollitud ettevõtete kataloog", // 🟢 Убедись, что этот ключ есть
       "details_button": "Vaata lähemalt", // 🟢 Убедись, что этот ключ есть
       "add_company": "+ Lisa ettevõte",
@@ -1391,6 +1393,7 @@ const resources = {
   en: { // Английский
     translation: {
       "app_title": "Kontrollitud.ee",
+      "announcement_text": "New companies are added every day!",
       "slogan": "Verified companies directory",
       "details_button": "View details",
       "add_company": "+ Add company",

@@ -468,7 +468,7 @@
 // ========================================
 
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 8px 20px 40px;
     font-family: Arial, sans-serif;
@@ -747,19 +747,23 @@
 }
 
 .company-card {
-    background-color: white;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
+    background-color: #ffffff;
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     max-height: 320px;
     
     &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        
+        .card-image, .card-header-bg {
+            transform: scale(1.08);
+        }
     }
     
     // Special styling for verified companies
@@ -824,11 +828,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
-    
-    .company-card:hover & {
-        transform: scale(1.05); // subtle zoom on hover
-    }
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Image placeholder with category icon */
@@ -935,11 +935,11 @@
 
 .company-name {
     margin: 0;
-    color: #111827; // darker for better contrast
-    font-size: 1.25rem; // consistent sizing
-    font-weight: 700; // bold font
+    color: #1e293b;
+    font-size: 1.375rem;
+    font-weight: 700;
     line-height: 1.4;
-    letter-spacing: -0.01em; // slight tightening
+    letter-spacing: -0.02em;
 }
 
 /* Meta information (category, city) */
@@ -1603,10 +1603,12 @@
   grid-template-columns: 1fr 320px;
   gap: 2rem;
   margin: 3rem 0;
+  padding-block: 80px;
   
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
     gap: 3rem;
+    padding-block: 40px;
   }
   
   .main-content {
@@ -1652,11 +1654,19 @@
   
   .company-preview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     margin-bottom: 2rem;
     
-    @media (max-width: 768px) {
+    @media (min-width: 1024px) and (max-width: 1399px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    @media (min-width: 768px) and (max-width: 1023px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @media (max-width: 767px) {
       grid-template-columns: 1fr;
     }
   }

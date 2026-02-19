@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShieldAlt, faStar, faStarHalfAlt, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import { faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
+import OptimizedImage from './components/OptimizedImage';
 
 // Мемоизируем звезды, чтобы не пересчитывать их при каждом движении карты
 const StarRating = memo(({ rating }) => {
@@ -83,7 +84,16 @@ const CompanyCard = ({ company, isSelected, onClick, onHover, onLeave, onMapClic
         {/* Фото или градиент фон */}
         {hasImage ? (
           <>
-            <img src={company.image} alt={company.name} loading="lazy" className="card-header-bg" />
+            <OptimizedImage
+              src={company.image} 
+              alt={company.name} 
+              width={400}
+              height={225}
+              loading="lazy"
+              className="card-header-bg"
+              sizes="(max-width: 768px) 100vw, 400px"
+              objectFit="cover"
+            />
             <div className="card-header-overlay"></div>
           </>
         ) : (
@@ -123,7 +133,7 @@ const CompanyCard = ({ company, isSelected, onClick, onHover, onLeave, onMapClic
               📍 {company.city}
             </button>
           )}
-          <span className="tag-cat">{t(company.category || company.mainCategory)}</span>
+          <span className="tag-cat" data-category={company.category || company.mainCategory}>{t(company.category || company.mainCategory)}</span>
         </div>
 
         {/* Рейтинг */}

@@ -26,6 +26,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
+import OptimizedImage from './components/OptimizedImage';
 import './styles/CompanyDetails.scss';
 import { db } from './firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
@@ -343,10 +344,15 @@ function CompanyDetails() {
             <section className="hero-section">
                 <div className="hero-image-container">
                     {company.image ? (
-                        <img 
+                        <OptimizedImage
                             src={company.image} 
                             alt={company.name}
                             className="hero-image"
+                            width={1200}
+                            height={400}
+                            loading="eager"
+                            sizes="100vw"
+                            objectFit="cover"
                         />
                     ) : (
                         <div className="hero-image-placeholder">

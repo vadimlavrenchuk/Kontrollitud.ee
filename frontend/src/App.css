@@ -10,7 +10,7 @@ body {
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
-  background-color: #f9fafb;
+  background-color: #f8fafc;
   color: #111827;
 }
 
@@ -22,6 +22,52 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+/* ========================================
+   ANNOUNCEMENT BAR (GLASSMORPHISM)
+   ======================================== */
+.announcement-bar {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 0.95));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 16px;
+  text-align: center;
+  color: white;
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 1002;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .announcement-bar {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+}
+
+.pulse-icon {
+  animation: pulse 2s ease-in-out infinite;
+  font-size: 1rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.announcement-text {
+  font-weight: 500;
 }
 
 /* ========================================
@@ -310,6 +356,20 @@ body {
   background: #f9fafb;
 }
 
+/* Spinner для загрузки */
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
 /* ========================================
    AUTH CARD FIX
    ======================================== */
@@ -330,19 +390,23 @@ body {
   display: flex;
   flex-direction: column;
   background: #ffffff !important;
-  border-radius: 12px;
+  border-radius: 20px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: none !important;
   height: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
 .company-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.company-card:hover .card-header-bg {
+  transform: scale(1.08);
 }
 
 /* ========================================
@@ -350,12 +414,14 @@ body {
    ======================================== */
 .card-header {
   position: relative;
-  height: 200px;
+  width: 100%;
+  aspect-ratio: 16 / 9; /* Предотвращает CLS, резервируя место до загрузки изображения */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background-color: #f1f5f9;
 }
 
 /* Градиентный фон (по умолчанию) */
@@ -387,6 +453,7 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: 1;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Темный оверлей на фото для читаемости текста */
@@ -501,41 +568,92 @@ body {
   flex-wrap: wrap;
 }
 
-.tag-cat, .tag-city {
+.tag-cat {
   font-size: 0.75rem;
   padding: 4px 10px;
-  background: #f3f4f6;
-  border-radius: 6px;
-  color: #4b5563;
+  background: rgba(167, 139, 250, 0.15);
+  border-radius: 8px;
+  color: #6d28d9;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 4px;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+}
+
+/* Цветовые варианты для разных категорий */
+.tag-cat[data-category*="beauty"],
+.tag-cat[data-category*="Beauty"],
+.tag-cat[data-category*="Красота"] {
+  background: rgba(244, 114, 182, 0.15);
+  color: #be185d;
+  border-color: rgba(244, 114, 182, 0.3);
+}
+
+.tag-cat[data-category*="food"],
+.tag-cat[data-category*="Food"],
+.tag-cat[data-category*="Питание"] {
+  background: rgba(251, 146, 60, 0.15);
+  color: #c2410c;
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+.tag-cat[data-category*="auto"],
+.tag-cat[data-category*="Auto"],
+.tag-cat[data-category*="Автосервис"] {
+  background: rgba(52, 211, 153, 0.15);
+  color: #047857;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.tag-cat[data-category*="home"],
+.tag-cat[data-category*="Home"],
+.tag-cat[data-category*="Дом"] {
+  background: rgba(96, 165, 250, 0.15);
+  color: #1e40af;
+  border-color: rgba(96, 165, 250, 0.3);
+}
+
+.tag-cat[data-category*="leisure"],
+.tag-cat[data-category*="Leisure"],
+.tag-cat[data-category*="Отдых"] {
+  background: rgba(167, 139, 250, 0.15);
+  color: #6d28d9;
+  border-color: rgba(167, 139, 250, 0.3);
 }
 
 .tag-city {
-  background: #dbeafe;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 8px;
   color: #1e40af;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 /* Кликабельный адрес (показать на карте) */
 .tag-city.clickable {
   cursor: pointer;
   border: 1px solid #3b82f6;
-  transition: all 0.2s ease;
-  background: #dbeafe;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(59, 130, 246, 0.15);
 }
 
 .tag-city.clickable:hover {
   background: #3b82f6;
   color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  border-color: #3b82f6;
 }
 
 .tag-city.clickable:active {
   transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 .card-desc {
@@ -612,7 +730,7 @@ body {
    ======================================== */
 @media (max-width: 768px) {
   .card-header {
-    height: 160px;
+    aspect-ratio: 4 / 3;
   }
   
   .category-icon-large {

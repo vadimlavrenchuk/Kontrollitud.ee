@@ -15,9 +15,8 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
-// TODO: Replace with your actual Firebase config from Firebase Console
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "kontrollitud-ee.firebaseapp.com",
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "kontrollitud-ee",
     storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "kontrollitud-ee.appspot.com",
@@ -28,13 +27,9 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication and get a reference to the service
+// Initialize Firebase services
 export const auth = getAuth(app);
-
-// Initialize Firebase Storage
 export const storage = getStorage(app);
-
-// Initialize Firestore
 export const db = getFirestore(app);
 
 // Set up auth providers

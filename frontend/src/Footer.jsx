@@ -4,7 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './styles/Footer.scss';
-import logo from './assets/logokontroll.jpg';
+import logo from './assets/logokontroll.webp';
 
 function Footer() {
     const { t } = useTranslation();

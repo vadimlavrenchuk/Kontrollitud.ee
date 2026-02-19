@@ -10,12 +10,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import './App.css';
-import logo from './assets/logokontroll.jpg';
+import logo from './assets/logokontroll.webp';
 
 // Импорты страниц
-import CompanyList from './CompanyList.jsx';
-import CompanyDetails from './CompanyDetails.jsx';
-import AuthPage from './AuthPage.jsx';
+const CompanyList = lazy(() => import('./CompanyList.jsx'));
+const CompanyDetails = lazy(() => import('./CompanyDetails.jsx'));
+const AuthPage = lazy(() => import('./AuthPage.jsx'));
 
 const AddBusiness = lazy(() => import('./AddBusiness.jsx'));
 const EditCompany = lazy(() => import('./EditCompany.jsx'));
@@ -35,8 +35,12 @@ const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage.jsx'));
 import ProtectedRoute from './ProtectedRoute.jsx';
 import RequireAuth from './RequireAuth.jsx';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
-import Footer from './Footer.jsx';
-import PWAInstall, { PWAProvider, PWAInstallButton } from './components/PWAInstall.jsx';
+
+// Lazy load Footer и PWA для уменьшения critical path
+const Footer = lazy(() => import('./Footer.jsx'));
+const PWAInstall = lazy(() => import('./components/PWAInstall.jsx').then(m => ({ default: m.default })));
+const PWAInstallButton = lazy(() => import('./components/PWAInstall.jsx').then(m => ({ default: m.PWAInstallButton })));
+const PWAProvider = lazy(() => import('./components/PWAInstall.jsx').then(m => ({ default: m.PWAProvider })));
 
 // Вспомогательный компонент для прокрутки вверх при смене страницы
 const ScrollToTop = () => {
@@ -49,8 +53,20 @@ const ScrollToTop = () => {
 const AppRoutes = () => {
     const location = useLocation();
     
+    // Улучшенный loader компонент для предотвращения CLS
+    const SuspenseLoader = () => (
+        <div className="page-loader" style={{
+            minHeight: '60vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
+            <div className="spinner" />
+        </div>
+    );
+    
     return (
-        <Suspense fallback={<div className="page-loader" />}>
+        <Suspense fallback={<SuspenseLoader />}>
             <Routes>
                 <Route path="/" element={<CompanyList />} />
                 <Route 
@@ -118,6 +134,12 @@ function AppContent() {
                     <title>Kontrollitud.ee - {t('app_title')}</title>
                 </Helmet>
                 
+                {/* Announcement Bar */}
+                <div className="announcement-bar">
+                    <span className="pulse-icon">⚡</span>
+                    <span className="announcement-text">{t('announcement_text') || 'Новые компании добавляются каждый день!'}</span>
+                </div>
+                
                 <header className={`sticky-navbar ${isScrolled ? 'scrolled' : ''}`}>
                     <div className="navbar-container">
                         <div className="navbar-brand">
@@ -154,7 +176,9 @@ function AppContent() {
                                                 {isAdmin && <Link to="/admin" onClick={closeMenus}><FontAwesomeIcon icon={faShieldAlt} /> Admin</Link>}
                                                 <Link to="/dashboard" onClick={closeMenus}><FontAwesomeIcon icon={faClipboardList} /> {t('my_dashboard')}</Link>
                                                 <div className="dropdown-divider"></div>
-                                                <PWAInstallButton />
+                                                <Suspense fallback={<button className="install-pwa-button">📱 PWA</button>}>
+                                                    <PWAInstallButton />
+                                                </Suspense>
                                                 <button onClick={() => { logout(); closeMenus(); }} className="logout-item"><FontAwesomeIcon icon={faSignOutAlt} /> {t('logout')}</button>
                                             </div>
                                         )}
@@ -210,8 +234,12 @@ function AppContent() {
                     <AppRoutes />
                 </main>
                 
-                <Footer />
-                <PWAInstall />
+                <Suspense fallback={<div style={{ minHeight: '200px' }} />}>
+                    <Footer />
+                </Suspense>
+                <Suspense fallback={null}>
+                    <PWAInstall />
+                </Suspense>
             </div>
         </BrowserRouter>
     );
@@ -247,9 +275,11 @@ const CatalogLink = ({ children, closeMenus, className = '' }) => {
 function App() {
     return (
         <AuthProvider>
-            <PWAProvider>
-                <AppContent />
-            </PWAProvider>
+            <Suspense fallback={<div style={{ minHeight: '100vh' }} />}>
+                <PWAProvider>
+                    <AppContent />
+                </PWAProvider>
+            </Suspense>
         </AuthProvider>
     );
 }

@@ -16,7 +16,7 @@ import {
   faLock
 } from '@fortawesome/free-solid-svg-icons';
 import '../styles/AboutPage.scss';
-import logo from '../assets/logokontroll.jpg';
+import logo from '../assets/logokontroll.webp';
 
 function AboutPage() {
   const { t } = useTranslation();
