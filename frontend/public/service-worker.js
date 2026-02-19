@@ -1,12 +1,10 @@
 // Service Worker for Kontrollitud.ee PWA
-const CACHE_NAME = 'kontrollitud-v9';
-const STATIC_CACHE_NAME = 'kontrollitud-static-v9';
-const DYNAMIC_CACHE_NAME = 'kontrollitud-dynamic-v9';
+const CACHE_NAME = 'kontrollitud-v10';
+const STATIC_CACHE_NAME = 'kontrollitud-static-v10';
+const DYNAMIC_CACHE_NAME = 'kontrollitud-dynamic-v10';
 
-// Static assets to cache immediately
+// Static assets to cache immediately (NO HTML - use Network First for HTML)
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/robots.txt'
 ];
@@ -45,7 +43,7 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim(); // Take control immediately
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network First for HTML, Cache First for assets
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -66,39 +64,59 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
+    (async () => {
+      // NETWORK FIRST for HTML - always fetch fresh version
+      if (request.headers.get('accept')?.includes('text/html')) {
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse && networkResponse.status === 200) {
+            // Cache for offline fallback only
+            const responseClone = networkResponse.clone();
+            caches.open(STATIC_CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return networkResponse;
+        } catch (error) {
+          // Offline fallback
+          console.log('[SW] Network failed, using cache for HTML');
+          const cachedResponse = await caches.match(request);
+          if (cachedResponse) return cachedResponse;
+          return caches.match('/index.html');
+        }
+      }
+
+      // CACHE FIRST for static assets (JS, CSS, images, fonts)
+      const cachedResponse = await caches.match(request);
       if (cachedResponse) {
-        // Return cached version
         return cachedResponse;
       }
 
       // Fetch from network
-      return fetch(request)
-        .then((networkResponse) => {
-          // Don't cache non-successful responses
-          if (!networkResponse || networkResponse.status !== 200) {
-            return networkResponse;
-          }
-
-          // Cache static assets (JS, CSS, images, fonts)
-          if (
-            request.url.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$/)
-          ) {
-            const responseClone = networkResponse.clone();
-            caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-
+      try {
+        const networkResponse = await fetch(request);
+        
+        // Don't cache non-successful responses
+        if (!networkResponse || networkResponse.status !== 200) {
           return networkResponse;
-        })
-        .catch(() => {
-          // Offline fallback for HTML pages
-          if (request.headers.get('accept').includes('text/html')) {
-            return caches.match('/index.html');
-          }
-        });
-    })
+        }
+
+        // Cache static assets (JS, CSS, images, fonts)
+        if (
+          request.url.match(/\.(js|jsx|css|png|jpg|jpeg|gif|svg|webp|woff|woff2|ttf|eot|ico)$/)
+        ) {
+          const responseClone = networkResponse.clone();
+          caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+        }
+
+        return networkResponse;
+      } catch (error) {
+        console.log('[SW] Network failed for:', request.url);
+        return new Response('Network error', { status: 408 });
+      }
+    })()
   );
 });
 
