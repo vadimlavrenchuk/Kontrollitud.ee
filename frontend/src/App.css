@@ -151,21 +151,21 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Разноцветные кнопки навбара */
-.catalog-btn { background: #3b82f6 !important; } /* Синий */
-.catalog-btn:hover { background: #2563eb !important; }
+/* Разноцветные кнопки навбара (улучшенный контраст для WCAG AA) */
+.catalog-btn { background: #2563eb !important; } /* Синий - темнее для лучшего контраста */
+.catalog-btn:hover { background: #1d4ed8 !important; }
 
-.business-btn { background: #f97316 !important; } /* Оранжевый */
-.business-btn:hover { background: #ea580c !important; }
+.business-btn { background: #ea580c !important; } /* Оранжевый - темнее для лучшего контраста */
+.business-btn:hover { background: #c2410c !important; }
 
-.blog-btn { background: #9333ea !important; } /* Фиолетовый */
-.blog-btn:hover { background: #7c3aed !important; }
+.blog-btn { background: #7c3aed !important; } /* Фиолетовый - темнее для лучшего контраста */
+.blog-btn:hover { background: #6d28d9 !important; }
 
-.add-btn { background: #10b981 !important; } /* Зеленый */
-.add-btn:hover { background: #059669 !important; }
+.add-btn { background: #059669 !important; } /* Зеленый - темнее для лучшего контраста */
+.add-btn:hover { background: #047857 !important; }
 
-.login-link { background: #6366f1 !important; } /* Индиго */
-.login-link:hover { background: #4f46e5 !important; }
+.login-link { background: #4f46e5 !important; } /* Индиго - темнее для лучшего контраста */
+.login-link:hover { background: #4338ca !important; }
 
 /* Языки */
 .lang-selector {
@@ -680,8 +680,8 @@ body {
 }
 
 .star-icon.filled { color: #fbbf24; }
-.star-icon.empty { color: #d1d5db; }
-.rating-count { font-size: 0.85rem; color: #9ca3af; }
+.star-icon.empty { color: #9ca3af; } /* Улучшенный контраст */
+.rating-count { font-size: 0.85rem; color: #6b7280; } /* Улучшенный контраст WCAG AA */
 
 /* Футер */
 .card-footer {
@@ -702,7 +702,7 @@ body {
   background: none;
   border: none;
   font-size: 1.1rem;
-  color: #9ca3af;
+  color: #6b7280; /* Улучшенный контраст WCAG AA */
   cursor: pointer;
   transition: 0.2s;
   padding: 4px;
@@ -725,6 +725,20 @@ body {
 
 .card-more-btn:hover {
   color: #1e40af;
+}
+
+/* View all link - улучшенный контраст WCAG AA */
+.view-all-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e40af;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.view-all-link:hover {
+  color: #1e3a8a;
+  text-decoration: underline;
 }
 
 /* ========================================
