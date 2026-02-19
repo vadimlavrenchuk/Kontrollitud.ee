@@ -434,7 +434,97 @@ ssh root@65.109.166.160 "docker cp /tmp/nginx-proxy-host-1.conf proxy_app_1:/dat
 
 ---
 
+## 🔧 CRITICAL FIX: Service Worker кеширует старый HTML (Feb 19, 2026 - 22:00)
+
+### Problem (Root Cause!)
+**Lighthouse показывал Performance 90**, но всё ещё видел **старую версию HTML (4.41 KiB вместо 10.38 KiB)**!
+
+**Причина**: Service Worker использовал **Cache First** стратегию для **всех запросов**, включая HTML:
+```javascript
+// ПЛОХО: всегда возвращает закешированный HTML
+caches.match(request).then((cachedResponse) => {
+  if (cachedResponse) {
+    return cachedResponse; // ← Игнорирует Cache-Control: no-cache!
+  }
+});
+```
+
+Даже с правильными HTTP headers (`Cache-Control: no-cache`), Service Worker **переопределял** их!
+
+### Solution: Network First для HTML
+
+**Файл**: [service-worker.js](frontend/public/service-worker.js)
+
+**Изменения**:
+1. ✅ Bump cache version: `v9` → `v10` (очистит старые кеши)
+2. ✅ Удалён `/index.html` из `STATIC_ASSETS` (не кешируем сразу)
+3. ✅ **Network First для HTML** - всегда загружает свежую версию:
+```javascript
+// HTML: Network First (всегда свежий)
+if (request.headers.get('accept')?.includes('text/html')) {
+  try {
+    const networkResponse = await fetch(request);
+    // Cache только для offline fallback
+    return networkResponse;
+  } catch (error) {
+    return caches.match(request); // Offline fallback
+  }
+}
+```
+
+4. ✅ **Cache First для статики** (JS, CSS, images) - быстрая загрузка:
+```javascript
+// Static assets: Cache First (из кеша)
+const cachedResponse = await caches.match(request);
+if (cachedResponse) return cachedResponse;
+```
+
+5. ✅ Добавил `.jsx` в regex для кеширования статики
+
+### Impact
+- 🎯 **HTML всегда свежий** - respects `Cache-Control: no-cache`
+- ⚡ **Статика из кеша** - быстрая загрузка JS/CSS/images (1 год)
+- 📱 **PWA offline поддержка** - HTML кешируется как fallback
+- 🔄 **Auto-update** - Service Worker обновляется автоматически при refresh
+
+### Deployment
+```bash
+npm run build
+scp -r dist/* root@65.109.166.160:/var/www/kontrollitud.ee/frontend/
+```
+
+**Verified**:
+```bash
+curl -s https://kontrollitud.ee/service-worker.js | grep "CACHE_NAME"
+→ const CACHE_NAME = 'kontrollitud-v10'; ✅
+```
+
+**Коммит**: `650edb5` - "fix: Service Worker now uses Network First for HTML"  
+**Deployed**: Feb 19, 2026 22:05 GMT ✅
+
+### 📋 Инструкция для тестирования:
+
+**Для пользователей чтобы увидеть изменения**:
+1. **Hard refresh**: `Ctrl+Shift+R` (Windows) / `Cmd+Shift+R` (Mac)
+2. Service Worker автоматически обновится до v10
+3. При следующей загрузке HTML будет всегда свежим
+
+**Для Lighthouse теста**:
+1. **Откройте Incognito/Private window** (чтобы избежать старого кеша)
+2. Зайдите на https://kontrollitud.ee
+3. F12 → Lighthouse → Run audit
+4. **Expected**: HTML теперь 10.38 KiB, все preconnect hints правильные ✅
+
+**Или в обычном окне**:
+1. F12 → Application → Service Workers → **Unregister** старый SW
+2. Application → Clear storage → **Clear site data**
+3. `Ctrl+Shift+R` (hard refresh)
+4. Проверьте в Application → Service Workers → должен быть `v10`
+5. Запустите Lighthouse
+
+---
+
 **Generated**: Feb 19, 2026 20:42 GMT  
-**Updated**: Feb 19, 2026 21:35 GMT  
-**Session Duration**: ~3 hours  
-**Tokens Used**: ~34k / 200k
+**Updated**: Feb 19, 2026 22:10 GMT  
+**Session Duration**: ~3.5 hours  
+**Tokens Used**: ~48k / 200k
