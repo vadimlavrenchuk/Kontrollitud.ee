@@ -333,6 +333,50 @@ git status
 
 ---
 
+## 🔄 Update: Preconnect Optimization (Feb 19, 2026 - Evening)
+
+### Issue
+Lighthouse audit показал **неиспользуемые preconnect hints**, которые замедляют начальную загрузку:
+- ❌ `fonts.googleapis.com` - не используется (system fonts only)
+- ❌ `fonts.gstatic.com` - не используется
+- ❌ `firebasestorage.googleapis.com` - не используется при initial load
+- ❌ `www.gstatic.com` (dns-prefetch) - не используется
+
+### Solution
+**Файл**: [index.html](frontend/index.html#L6-L8)
+
+**Удалено** (6 строк):
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firebasestorage.googleapis.com">
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+```
+
+**Оставлено**:
+```html
+<link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+```
+
+### Impact
+- ⚡ Сократили критический путь (меньше DNS lookups)
+- 📉 Уменьшили overhead браузера для неиспользуемых соединений
+- 🎯 Lighthouse: "Preconnect" audit теперь clean
+
+### Deployment
+```bash
+npm run build
+scp -r dist/* root@65.109.166.160:/var/www/kontrollitud.ee/frontend/
+ssh root@65.109.166.160 "docker exec proxy_app_1 nginx -s reload"
+```
+
+**Коммит**: `83115b9` - "perf: remove unused preconnect hints (fonts, storage)"  
+**Deployed**: Feb 19, 2026 21:15 GMT ✅
+
+---
+
 **Generated**: Feb 19, 2026 20:42 GMT  
-**Session Duration**: ~2 hours  
-**Tokens Used**: ~77k / 200k
+**Updated**: Feb 19, 2026 21:15 GMT  
+**Session Duration**: ~2.5 hours  
+**Tokens Used**: ~28k / 200k
