@@ -30,12 +30,15 @@ export default defineConfig({
       'react-dom',
       'react-router-dom',
       'react-i18next',
-      'i18next'
+      'i18next',
+      'leaflet',
+      'react-leaflet',
+      'react-toastify'
     ],
     // Принудительная оптимизация для избежания waterfall
     force: false,
     // Исключаем уже оптимизированные модули
-    exclude: ['@fortawesome/fontawesome-svg-core', 'leaflet']
+    exclude: ['@fortawesome/fontawesome-svg-core']
   },
   plugins: [
     react(),
