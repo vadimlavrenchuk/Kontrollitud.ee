@@ -11,6 +11,7 @@ import {
 
 import './App.css';
 import logo from './assets/logokontroll.webp';
+import { trackVisit, trackUniqueVisitor } from './utils/analytics';
 
 // Импорты страниц
 const CompanyList = lazy(() => import('./CompanyList.jsx'));
@@ -119,6 +120,12 @@ function AppContent() {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, [i18n.language]);
+
+    // Track site visits for analytics
+    useEffect(() => {
+        trackVisit(); // Increment total visits counter
+        trackUniqueVisitor(); // Track unique visitor (once per browser)
+    }, []);
 
     // Закрытие меню при клике по ссылке (для мобилок)
     const closeMenus = () => {

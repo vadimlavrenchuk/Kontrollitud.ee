@@ -7,6 +7,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { getCategoryIcon } from './constants/categories';
 import { db } from './firebase';
 import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import StatsGrid from './components/StatsGrid';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AdminDashboard.scss';
 
@@ -512,6 +513,9 @@ function AdminDashboard() {
                         <i className="fas fa-sign-out-alt"></i> Logout
                     </button>
                 </div>
+
+                {/* Analytics Overview */}
+                <StatsGrid />
 
                 {/* Tab Navigation */}
                 <div className="admin-tabs">
