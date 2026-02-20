@@ -18,8 +18,10 @@ service cloud.firestore {
       // Anyone can read approved companies
       allow read: if true;
       
-      // Only authenticated users can create companies (they go to pending)
-      allow create: if isAuthenticated();
+      // Authenticated users can create approved companies (auto-moderation passed)
+      // Admins can create any company
+      allow create: if isAuthenticated() && 
+                       (request.resource.data.status == 'approved' || isAdmin());
       
       // Admins can update or delete companies
       // Also allow rating updates from review system
@@ -34,8 +36,8 @@ service cloud.firestore {
     // Pending companies - waiting for admin approval
     match /pending_companies/{companyId} {
       // Admins can read all, users can read their own
-      allow read: if isAuthenticated() && 
-                     (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow read: if isAdmin() || 
+                     (isAuthenticated() && resource.data.ownerId == request.auth.uid);
       
       // Any authenticated user can create pending companies
       allow create: if isAuthenticated();
@@ -104,6 +106,15 @@ service cloud.firestore {
       
       // Only admins can create, update, delete posts
       allow create, update, delete: if isAdmin();
+    }
+    
+    // Site statistics
+    match /stats/{document} {
+      // Anyone can read stats (for visit tracking)
+      allow read: if true;
+      
+      // Anyone can write (for visit tracking, but validate in app logic)
+      allow write: if true;
     }
     
     // Deny all other access by default

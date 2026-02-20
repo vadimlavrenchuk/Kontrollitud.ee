@@ -1,6 +1,6 @@
 // Kontrollitud.ee/frontend/src/AddBusiness.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
@@ -9,6 +9,7 @@ import { useAuth } from './AuthContext';
 import { db, uploadBusinessImage, auth } from './firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { CATEGORIES, getMainCategories, getSubcategories, getCategoryIcon } from './constants/categories';
+import { moderateCompany, validateHoneypot, validateFormTiming } from './utils/contentModeration';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AddBusiness.scss';
 
@@ -25,6 +26,10 @@ function AddBusiness() {
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [uploadingImage, setUploadingImage] = useState(false);
+    
+    // Anti-bot protection
+    const [honeypot, setHoneypot] = useState('');
+    const [formStartTime] = useState(Date.now());
     
     const [formData, setFormData] = useState({
         // Step 1: Basic Info
@@ -306,6 +311,25 @@ function AddBusiness() {
         try {
             console.log('✓ Step 1: Начало try блока');
             
+            // ========== ANTI-BOT PROTECTION ==========
+            // 1. Honeypot validation
+            if (!validateHoneypot(honeypot)) {
+                console.log('❌ Bot detected: honeypot filled');
+                toast.error('Spam detected. Please try again.');
+                setLoading(false);
+                return;
+            }
+            
+            // 2. Form timing validation
+            if (!validateFormTiming(formStartTime)) {
+                console.log('❌ Bot detected: form filled too fast');
+                toast.error('Please take time to fill the form properly.');
+                setLoading(false);
+                return;
+            }
+            
+            console.log('✓ Anti-bot checks passed');
+            
             // Validate that at least one description is provided
             if (!formData.descriptionEt && !formData.descriptionEn && !formData.descriptionRu) {
                 console.log('❌ Validation failed: no description');
@@ -315,6 +339,32 @@ function AddBusiness() {
             }
 
             console.log('✓ Step 2: Validation passed');
+            
+            // ========== CONTENT MODERATION ==========
+            // Get primary description for moderation
+            const primaryDescription = formData.descriptionEt || formData.descriptionEn || formData.descriptionRu;
+            
+            const moderationResult = moderateCompany({
+                name: formData.name,
+                description: primaryDescription,
+                website: formData.website,
+                category: formData.subCategory
+            });
+            
+            console.log('🔍 Moderation result:', moderationResult);
+            
+            // Determine if company should be auto-approved
+            const isAutoApproved = moderationResult.approved;
+            const targetCollection = isAutoApproved ? 'companies' : 'pending_companies';
+            const companyStatus = isAutoApproved ? 'approved' : 'pending';
+            
+            if (isAutoApproved) {
+                console.log('✅ Auto-approved: passing content moderation');
+                toast.success('Content approved! Publishing your business...');
+            } else {
+                console.log('⚠️ Pending review:', moderationResult.reason);
+                toast.warning('Your business will be reviewed by our team before publishing.');
+            }
 
             // Upload image to Cloudinary if file selected and plan is not basic
             let imageUrl = PLACEHOLDER_IMAGE;
@@ -384,20 +434,25 @@ function AddBusiness() {
                 subscriptionLevel: selectedPlan,
                 
                 // Status and tracking fields
-                status: 'pending',
-                verified: false,
+                status: companyStatus,  // 'approved' or 'pending' based on moderation
+                verified: isAutoApproved,  // Auto-verify if approved
                 ownerId: user?.uid || null,
                 ownerEmail: user?.email || formData.email,
                 createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                
+                // Moderation metadata
+                moderationScore: moderationResult.score,
+                moderationFlags: moderationResult.flags,
+                autoApproved: isAutoApproved
             };
             
             console.log('✓ Step 5: Submitting business to Firestore:', submissionData);
-            console.log('Collection path:', 'pending_companies');
+            console.log('Collection path:', targetCollection);
             console.log('About to call addDoc...');
             
-            // Add to pending_companies collection
-            const docRef = await addDoc(collection(db, 'pending_companies'), submissionData);
+            // Add to appropriate collection based on moderation result
+            const docRef = await addDoc(collection(db, targetCollection), submissionData);
             
             console.log('✓ Step 6: addDoc completed successfully!');
             
@@ -523,6 +578,20 @@ function AddBusiness() {
                         <option key={subCat} value={subCat}>{t(subCat)}</option>
                     ))}
                 </select>
+            </div>
+            
+            {/* Honeypot field - hidden from users, visible to bots */}
+            <div style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
+                <label htmlFor="website_url">Website URL (leave empty)</label>
+                <input
+                    type="text"
+                    id="website_url"
+                    name="website_url"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex="-1"
+                    autoComplete="off"
+                />
             </div>
         </div>
     );

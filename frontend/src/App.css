@@ -170,23 +170,36 @@ body {
 /* Языки */
 .lang-selector {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   margin-left: 10px;
 }
 
 .lang-selector button {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #6b7280;
+  border: 2px solid #6b7280;
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  min-width: 40px;
+  text-align: center;
+}
+
+.lang-selector button:hover {
+  background: #4b5563;
+  border-color: #4b5563;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .lang-selector button.active {
   background: #3b82f6;
   border-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
 }
 
 /* Пользователь */
@@ -342,7 +355,11 @@ body {
   .desktop-nav { display: none; }
   .hamburger { display: flex; }
   .logo-text { font-size: 1rem; }
-  .lang-selector { display: none; } /* Скрываем на мобильных/планшетах, используем в мобильном меню */
+  /* Language selector всегда видим */
+  .lang-selector { 
+    display: flex !important;
+    margin-left: 8px;
+  }
 }
 
 @media (max-width: 480px) {

@@ -111,7 +111,7 @@ function AppContent() {
     
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);
-        localStorage.setItem('language', lng);
+        // i18next automatically saves to localStorage as 'i18nextLng'
     };
 
     useEffect(() => {
@@ -125,6 +125,14 @@ function AppContent() {
     useEffect(() => {
         trackVisit(); // Increment total visits counter
         trackUniqueVisitor(); // Track unique visitor (once per browser)
+        
+        // Migrate old language key from 'language' to 'i18nextLng'
+        const oldLangKey = localStorage.getItem('language');
+        if (oldLangKey && !localStorage.getItem('i18nextLng')) {
+            localStorage.setItem('i18nextLng', oldLangKey);
+            localStorage.removeItem('language');
+            i18n.changeLanguage(oldLangKey);
+        }
     }, []);
 
     // Закрытие меню при клике по ссылке (для мобилок)
