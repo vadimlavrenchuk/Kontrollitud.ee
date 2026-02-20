@@ -43,14 +43,21 @@ function AdminDashboard() {
     // Companies list state
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('add'); // 'add' or 'requests'
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'companies', 'requests'
     const [pendingRequests, setPendingRequests] = useState([]);
+    
+    // Modal state
+    const [showAddModal, setShowAddModal] = useState(false);
     
     // Edit mode state
     const [editMode, setEditMode] = useState(false);
     const [editingCompanyId, setEditingCompanyId] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [uploadingCloudinary, setUploadingCloudinary] = useState(false);
+    
+    // Bulk delete state
+    const [selectedCompanies, setSelectedCompanies] = useState([]);
+    const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
 
     // Fetch all companies on component mount
     useEffect(() => {
@@ -110,6 +117,57 @@ function AdminDashboard() {
         
         toast.info('👋 Logged out successfully');
         navigate('/login');
+    };
+    
+    // Bulk delete functions
+    const toggleCompanySelection = (companyId) => {
+        setSelectedCompanies(prev => {
+            if (prev.includes(companyId)) {
+                return prev.filter(id => id !== companyId);
+            } else {
+                return [...prev, companyId];
+            }
+        });
+    };
+    
+    const toggleSelectAll = () => {
+        if (selectedCompanies.length === companies.length) {
+            setSelectedCompanies([]);
+        } else {
+            setSelectedCompanies(companies.map(c => c.id));
+        }
+    };
+    
+    const handleBulkDelete = async () => {
+        if (selectedCompanies.length === 0) {
+            toast.warning('No companies selected');
+            return;
+        }
+        
+        if (!confirm(`Delete ${selectedCompanies.length} companies? This cannot be undone.`)) {
+            return;
+        }
+        
+        try {
+            setLoading(true);
+            
+            // Delete all selected companies
+            const deletePromises = selectedCompanies.map(companyId => 
+                deleteDoc(doc(db, 'companies', companyId))
+            );
+            
+            await Promise.all(deletePromises);
+            
+            toast.success(`✅ Deleted ${selectedCompanies.length} companies`);
+            setSelectedCompanies([]);
+            setBulkDeleteMode(false);
+            fetchCompanies();
+        } catch (error) {
+            console.error('Error bulk deleting:', error);
+            toast.error('Failed to delete companies: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleImageChange = (e) => {
@@ -509,21 +567,30 @@ function AdminDashboard() {
                         <h1 className="admin-title">Admin Dashboard</h1>
                         <p className="admin-subtitle">Manage companies and businesses</p>
                     </div>
-                    <button onClick={handleLogout} className="btn-logout">
-                        <i className="fas fa-sign-out-alt"></i> Logout
-                    </button>
+                    <div className="header-actions">
+                        <button onClick={() => setShowAddModal(true)} className="btn-add-company">
+                            <i className="fas fa-plus-circle"></i> Add Company
+                        </button>
+                        <button onClick={handleLogout} className="btn-logout">
+                            <i className="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
                 </div>
-
-                {/* Analytics Overview */}
-                <StatsGrid />
 
                 {/* Tab Navigation */}
                 <div className="admin-tabs">
                     <button 
-                        className={`tab-button ${activeTab === 'add' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('add')}
+                        className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('overview')}
                     >
-                        <i className="fas fa-plus-circle"></i> Add Company
+                        <i className="fas fa-chart-line"></i> Overview
+                    </button>
+                    <button 
+                        className={`tab-button ${activeTab === 'companies' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('companies')}
+                    >
+                        <i className="fas fa-building"></i> Companies
+                        <span className="badge">{companies.length}</span>
                     </button>
                     <button 
                         className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
@@ -531,10 +598,138 @@ function AdminDashboard() {
                     >
                         <i className="fas fa-inbox"></i> Pending Requests
                         {pendingRequests.length > 0 && (
-                            <span className="badge">{pendingRequests.length}</span>
+                            <span className="badge badge-warning">{pendingRequests.length}</span>
                         )}
                     </button>
                 </div>
+
+                {/* Overview Tab - Analytics Grid */}
+                {activeTab === 'overview' && (
+                    <StatsGrid />
+                )}
+
+                {/* Companies Tab - List with bulk actions */}
+                {activeTab === 'companies' && (
+                    <div className="admin-card">
+                        <div className="card-header">
+                            <h2 className="section-title">All Companies ({companies.length})</h2>
+                            <div className="bulk-actions">
+                                {!bulkDeleteMode ? (
+                                    <button 
+                                        className="btn-bulk-actions"
+                                        onClick={() => setBulkDeleteMode(true)}
+                                    >
+                                        <i className="fas fa-check-square"></i> Bulk Actions
+                                    </button>
+                                ) : (
+                                    <>
+                                        <button 
+                                            className="btn-select-all"
+                                            onClick={toggleSelectAll}
+                                        >
+                                            {selectedCompanies.length === companies.length ? 
+                                                'Deselect All' : 'Select All'}
+                                        </button>
+                                        <button 
+                                            className="btn-bulk-delete"
+                                            onClick={handleBulkDelete}
+                                            disabled={selectedCompanies.length === 0}
+                                        >
+                                            <i className="fas fa-trash"></i> Delete ({selectedCompanies.length})
+                                        </button>
+                                        <button 
+                                            className="btn-cancel"
+                                            onClick={() => {
+                                                setBulkDeleteMode(false);
+                                                setSelectedCompanies([]);
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {loading ? (
+                            <div className="loading-spinner">Loading...</div>
+                        ) : companies.length === 0 ? (
+                            <p className="empty-state">No companies yet</p>
+                        ) : (
+                            <div className="companies-grid">
+                                {companies.map(company => (
+                                    <div 
+                                        key={company.id} 
+                                        className={`company-card ${company.subscriptionLevel === 'enterprise' ? 'enterprise' : ''} ${selectedCompanies.includes(company.id) ? 'selected' : ''}`}
+                                    >
+                                        {/* Enterprise Badge */}
+                                        {company.subscriptionLevel === 'enterprise' && (
+                                            <div className="enterprise-badge">
+                                                <i className="fas fa-crown"></i> Enterprise
+                                            </div>
+                                        )}
+                                        {company.subscriptionLevel === 'pro' && (
+                                            <div className="pro-badge">
+                                                <i className="fas fa-star"></i> Pro
+                                            </div>
+                                        )}
+                                        
+                                        {/* Checkbox for bulk select */}
+                                        {bulkDeleteMode && (
+                                            <div className="checkbox-overlay">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedCompanies.includes(company.id)}
+                                                    onChange={() => toggleCompanySelection(company.id)}
+                                                    className="bulk-checkbox"
+                                                />
+                                            </div>
+                                        )}
+                                        
+                                        <div className="company-image">
+                                            {company.image ? (
+                                                <img src={company.image} alt={company.name} />
+                                            ) : (
+                                                <div className="category-icon">
+                                                    <i className={getCategoryIcon(company.category)}></i>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="company-info">
+                                            <h3>{company.name}</h3>
+                                            <p className="company-meta">
+                                                <i className="fas fa-map-marker-alt"></i> {company.city} • {company.category}
+                                            </p>
+                                            {company.verified && (
+                                                <span className="verified-badge">
+                                                    <i className="fas fa-check-circle"></i> Verified
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        {!bulkDeleteMode && (
+                                            <div className="company-actions">
+                                                <button 
+                                                    className="btn-edit"
+                                                    onClick={() => handleEdit(company)}
+                                                >
+                                                    <i className="fas fa-edit"></i>
+                                                </button>
+                                                <button 
+                                                    className="btn-delete"
+                                                    onClick={() => handleDelete(company.id)}
+                                                >
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Add Company Form */}
                 {activeTab === 'add' && (
@@ -1008,6 +1203,123 @@ function AdminDashboard() {
                 </div>
                 )}
             </div>
+
+            {/* Add Company Modal */}
+            {showAddModal && (
+                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                    <div className="modal-content add-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2><i className="fas fa-plus-circle"></i> Add New Company</h2>
+                            <button onClick={() => setShowAddModal(false)} className="modal-close">
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={(e) => { handleSubmit(e); setShowAddModal(false); }} className="modal-form">
+                            <div className="form-grid-modal">
+                                {/* Name */}
+                                <div className="form-group full-width">
+                                    <label htmlFor="name">Company Name *</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-input"
+                                        placeholder="Enter company name"
+                                    />
+                                </div>
+
+                                {/* City and Category Row */}
+                                <div className="form-group">
+                                    <label htmlFor="city">City *</label>
+                                    <select
+                                        id="city"
+                                        name="city"
+                                        value={formData.city}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-select"
+                                    >
+                                        {cities.map(city => (
+                                            <option key={city} value={city}>{city}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="category">Category *</label>
+                                    <select
+                                        id="category"
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-select"
+                                    >
+                                        {categories.map(cat => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Image URL */}
+                                <div className="form-group full-width">
+                                    <label htmlFor="image">Image URL</label>
+                                    <input
+                                        type="url"
+                                        id="image"
+                                        name="image"
+                                        value={formData.image}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                </div>
+
+                                {/* Descriptions */}
+                                <div className="form-group full-width">
+                                    <label htmlFor="descriptionEt">Description (Estonian) *</label>
+                                    <textarea
+                                        id="descriptionEt"
+                                        name="descriptionEt"
+                                        value={formData.descriptionEt}
+                                        onChange={handleInputChange}
+                                        required
+                                        rows="3"
+                                        className="form-textarea"
+                                        placeholder="Enter description in Estonian"
+                                    ></textarea>
+                                </div>
+
+                                {/* Verified Checkbox */}
+                                <div className="form-group checkbox-group full-width">
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            name="isVerified"
+                                            checked={formData.isVerified}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, isVerified: e.target.checked }))}
+                                        />
+                                        <span>Verified Company</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div className="modal-footer">
+                                <button type="button" onClick={() => setShowAddModal(false)} className="btn-cancel">
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-submit" disabled={loading || uploading}>
+                                    {loading ? 'Adding...' : 'Add Company'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Edit Company Modal */}
             {showEditModal && (
