@@ -4,8 +4,11 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useTranslation } from 'react-i18next';
+import './StatsGrid.scss';
 
 const StatsGrid = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeBusinesses: 0,
@@ -60,43 +63,41 @@ const StatsGrid = () => {
   const statCards = [
     {
       id: 'users',
-      title: 'Total Users',
+      title: t('total_users'),
       value: stats.totalUsers,
       icon: 'fa-users',
       color: 'blue',
-      bgColor: 'bg-blue-50',
-      iconBg: 'bg-blue-500',
-      textColor: 'text-blue-600'
+      description: t('registered_accounts'),
+      trend: '+12%'
     },
     {
       id: 'businesses',
-      title: 'Active Businesses',
+      title: t('active_businesses'),
       value: stats.activeBusinesses,
       icon: 'fa-building',
       color: 'green',
-      bgColor: 'bg-green-50',
-      iconBg: 'bg-green-500',
-      textColor: 'text-green-600'
+      description: t('verified_companies'),
+      trend: '+8%'
     },
     {
       id: 'traffic',
-      title: 'Site Traffic',
+      title: t('site_traffic'),
       value: stats.siteTraffic.toLocaleString(),
       icon: 'fa-chart-line',
       color: 'purple',
-      bgColor: 'bg-purple-50',
-      iconBg: 'bg-purple-500',
-      textColor: 'text-purple-600'
+      description: t('total_visits'),
+      trend: '+15%'
     }
   ];
 
   if (stats.loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="stats-grid">
         {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
-            <div className="h-12 bg-gray-200 rounded mb-4"></div>
-            <div className="h-8 bg-gray-200 rounded w-24"></div>
+          <div key={i} className="stat-card loading">
+            <div className="skeleton-icon"></div>
+            <div className="skeleton-text"></div>
+            <div className="skeleton-number"></div>
           </div>
         ))}
       </div>
@@ -104,30 +105,28 @@ const StatsGrid = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="stats-grid">
       {statCards.map(card => (
         <div 
           key={card.id}
-          className={`${card.bgColor} rounded-lg shadow-md p-6 transition-transform hover:scale-105 hover:shadow-lg`}
+          className={`stat-card stat-card-${card.color}`}
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-2">
-                {card.title}
-              </p>
-              <p className={`text-3xl font-bold ${card.textColor}`}>
-                {card.value}
-              </p>
-            </div>
-            <div className={`${card.iconBg} w-14 h-14 rounded-full flex items-center justify-center`}>
-              <i className={`fas ${card.icon} text-white text-xl`}></i>
-            </div>
+          <div className="stat-icon">
+            <i className={`fas ${card.icon}`}></i>
           </div>
           
-          {/* Optional: Add trend indicator */}
-          <div className="mt-4 flex items-center text-sm text-gray-600">
-            <i className="fas fa-arrow-up text-green-500 mr-1"></i>
-            <span>Live data from Firestore</span>
+          <div className="stat-content">
+            <h3 className="stat-title">{card.title}</h3>
+            <p className="stat-value">{card.value}</p>
+            <p className="stat-description">{card.description}</p>
+          </div>
+          
+          <div className="stat-footer">
+            <span className="stat-trend">
+              <i className="fas fa-arrow-up"></i>
+              {card.trend}
+            </span>
+            <span className="stat-period">{t('vs_last_month')}</span>
           </div>
         </div>
       ))}

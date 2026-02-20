@@ -10,7 +10,9 @@ service cloud.firestore {
     // Helper function to check if user is admin
     function isAdmin() {
       return isAuthenticated() && 
-             request.auth.token.email == 'vadim5239@gmail.com';
+             (request.auth.token.email == 'vadim5239@gmail.com' ||
+              request.auth.token.email == 'vadimlavrenchuk@yahoo.com' ||
+              get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true);
     }
     
     // Public read access to approved companies
@@ -36,8 +38,10 @@ service cloud.firestore {
     // Pending companies - waiting for admin approval
     match /pending_companies/{companyId} {
       // Admins can read all, users can read their own
-      allow read: if isAdmin() || 
-                     (isAuthenticated() && resource.data.ownerId == request.auth.uid);
+      // For list queries, we need to allow if admin without checking resource
+      allow list: if isAdmin();
+      allow get: if isAdmin() || 
+                    (isAuthenticated() && resource.data.ownerId == request.auth.uid);
       
       // Any authenticated user can create pending companies
       allow create: if isAuthenticated();

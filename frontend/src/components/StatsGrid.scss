@@ -1,0 +1,250 @@
+// StatsGrid.scss - Beautiful analytics cards for Admin Dashboard
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 0 4px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  // Loading state
+  &.loading {
+    pointer-events: none;
+    
+    .skeleton-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+    }
+
+    .skeleton-text {
+      width: 120px;
+      height: 16px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      margin-top: 12px;
+    }
+
+    .skeleton-number {
+      width: 80px;
+      height: 32px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      margin-top: 8px;
+    }
+  }
+
+  // Color variants
+  &.stat-card-blue {
+    .stat-icon {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .stat-value {
+      color: #1e40af;
+    }
+    
+    &::before {
+      background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    }
+  }
+
+  &.stat-card-green {
+    .stat-icon {
+      background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .stat-value {
+      color: #065f46;
+    }
+    
+    &::before {
+      background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+    }
+  }
+
+  &.stat-card-purple {
+    .stat-icon {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+    
+    .stat-value {
+      color: #5b21b6;
+    }
+    
+    &::before {
+      background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+    }
+  }
+
+  // Background gradient overlay
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    pointer-events: none;
+  }
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  transition: transform 0.3s ease;
+  z-index: 1;
+
+  .stat-card:hover & {
+    transform: scale(1.05) rotate(-5deg);
+  }
+}
+
+.stat-content {
+  flex: 1;
+  z-index: 1;
+}
+
+.stat-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0 0 6px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-description {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+  font-weight: 500;
+}
+
+.stat-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  z-index: 1;
+}
+
+.stat-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #10b981;
+  
+  i {
+    font-size: 12px;
+  }
+}
+
+.stat-period {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+// Skeleton loading animation
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+}
+
+// Dark theme support (optional)
+@media (prefers-color-scheme: dark) {
+  .stat-card {
+    background: #1f2937;
+    border-color: rgba(255, 255, 255, 0.1);
+    
+    .stat-title {
+      color: #9ca3af;
+    }
+    
+    .stat-description {
+      color: #6b7280;
+    }
+    
+    .stat-period {
+      color: #6b7280;
+    }
+    
+    .stat-footer {
+      border-top-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}

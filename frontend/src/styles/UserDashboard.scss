@@ -352,13 +352,19 @@
     // Views Statistics (Счетчик кипиша)
     .views-stats {
         display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
         background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
         border-radius: 12px;
         margin-bottom: 16px;
         border: 2px solid #93c5fd;
+        
+        .views-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
         
         .views-icon {
             font-size: 2rem;
@@ -382,6 +388,51 @@
                 font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
+            }
+        }
+        
+        .views-chart-container {
+            margin-top: 8px;
+            
+            .chart-label {
+                text-align: center;
+                font-size: 0.75rem;
+                color: #6b7280;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-top: 8px;
+                margin-bottom: 0;
+            }
+        }
+        
+        // Custom tooltip styling
+        .custom-chart-tooltip {
+            background: white;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 10px 14px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            
+            .tooltip-date {
+                font-size: 0.75rem;
+                color: #6b7280;
+                font-weight: 500;
+                margin: 0 0 4px 0;
+            }
+            
+            .tooltip-value {
+                font-size: 0.95rem;
+                color: #1e40af;
+                font-weight: 700;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                
+                svg {
+                    color: #3b82f6;
+                }
             }
         }
     }
@@ -470,12 +521,12 @@
     }
     
     .pending-info {
-        flex: 1;
         padding: 12px;
         background: #fffbeb;
         border: 1px solid #fbbf24;
         border-radius: 8px;
         text-align: center;
+        margin-bottom: 16px;
         
         p {
             margin: 0;

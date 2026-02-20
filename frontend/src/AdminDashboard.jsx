@@ -58,6 +58,9 @@ function AdminDashboard() {
     // Bulk delete state
     const [selectedCompanies, setSelectedCompanies] = useState([]);
     const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
+    
+    // Moderation details accordion state
+    const [expandedModerationCards, setExpandedModerationCards] = useState(new Set());
 
     // Fetch all companies on component mount
     useEffect(() => {
@@ -117,6 +120,42 @@ function AdminDashboard() {
         
         toast.info('👋 Logged out successfully');
         navigate('/login');
+    };
+    
+    // Moderation helper functions
+    const getModerationSeverity = (score) => {
+        if (!score || score === 0) return 'clean';
+        if (score <= 2) return 'low';
+        if (score <= 5) return 'medium';
+        if (score <= 8) return 'high';
+        return 'critical';
+    };
+    
+    const getModerationBadgeClass = (severity) => {
+        const baseClass = 'moderation-badge';
+        return `${baseClass} ${baseClass}-${severity}`;
+    };
+    
+    const toggleModerationDetails = (requestId) => {
+        setExpandedModerationCards(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(requestId)) {
+                newSet.delete(requestId);
+            } else {
+                newSet.add(requestId);
+            }
+            return newSet;
+        });
+    };
+    
+    const getModerationIcon = (severity) => {
+        switch (severity) {
+            case 'critical': return 'fa-exclamation-circle';
+            case 'high': return 'fa-exclamation-triangle';
+            case 'medium': return 'fa-info-circle';
+            case 'low': return 'fa-check-circle';
+            default: return 'fa-shield-alt';
+        }
     };
     
     // Bulk delete functions
@@ -564,15 +603,15 @@ function AdminDashboard() {
             <div className="admin-container">
                 <div className="admin-header-bar">
                     <div>
-                        <h1 className="admin-title">Admin Dashboard</h1>
-                        <p className="admin-subtitle">Manage companies and businesses</p>
+                        <h1 className="admin-title">{t('admin_dashboard')}</h1>
+                        <p className="admin-subtitle">{t('manage_companies_subtitle')}</p>
                     </div>
                     <div className="header-actions">
                         <button onClick={() => setShowAddModal(true)} className="btn-add-company">
-                            <i className="fas fa-plus-circle"></i> Add Company
+                            <i className="fas fa-plus-circle"></i> {t('add_company')}
                         </button>
                         <button onClick={handleLogout} className="btn-logout">
-                            <i className="fas fa-sign-out-alt"></i> Logout
+                            <i className="fas fa-sign-out-alt"></i> {t('logout')}
                         </button>
                     </div>
                 </div>
@@ -583,20 +622,20 @@ function AdminDashboard() {
                         className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
                         onClick={() => setActiveTab('overview')}
                     >
-                        <i className="fas fa-chart-line"></i> Overview
+                        <i className="fas fa-chart-line"></i> {t('overview')}
                     </button>
                     <button 
                         className={`tab-button ${activeTab === 'companies' ? 'active' : ''}`}
                         onClick={() => setActiveTab('companies')}
                     >
-                        <i className="fas fa-building"></i> Companies
+                        <i className="fas fa-building"></i> {t('companies')}
                         <span className="badge">{companies.length}</span>
                     </button>
                     <button 
                         className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
                         onClick={() => setActiveTab('requests')}
                     >
-                        <i className="fas fa-inbox"></i> Pending Requests
+                        <i className="fas fa-inbox"></i> {t('pending_requests')}
                         {pendingRequests.length > 0 && (
                             <span className="badge badge-warning">{pendingRequests.length}</span>
                         )}
@@ -610,16 +649,16 @@ function AdminDashboard() {
 
                 {/* Companies Tab - List with bulk actions */}
                 {activeTab === 'companies' && (
-                    <div className="admin-card">
-                        <div className="card-header">
-                            <h2 className="section-title">All Companies ({companies.length})</h2>
+                    <>
+                        <div className="companies-header">
+                            <h2 className="section-title">{t('all_companies')} ({companies.length})</h2>
                             <div className="bulk-actions">
                                 {!bulkDeleteMode ? (
                                     <button 
                                         className="btn-bulk-actions"
                                         onClick={() => setBulkDeleteMode(true)}
                                     >
-                                        <i className="fas fa-check-square"></i> Bulk Actions
+                                        <i className="fas fa-check-square"></i> {t('bulk_actions')}
                                     </button>
                                 ) : (
                                     <>
@@ -628,14 +667,14 @@ function AdminDashboard() {
                                             onClick={toggleSelectAll}
                                         >
                                             {selectedCompanies.length === companies.length ? 
-                                                'Deselect All' : 'Select All'}
+                                                t('deselect_all') : t('select_all')}
                                         </button>
                                         <button 
                                             className="btn-bulk-delete"
                                             onClick={handleBulkDelete}
                                             disabled={selectedCompanies.length === 0}
                                         >
-                                            <i className="fas fa-trash"></i> Delete ({selectedCompanies.length})
+                                            <i className="fas fa-trash"></i> {t('delete_count')} ({selectedCompanies.length})
                                         </button>
                                         <button 
                                             className="btn-cancel"
@@ -644,7 +683,7 @@ function AdminDashboard() {
                                                 setSelectedCompanies([]);
                                             }}
                                         >
-                                            Cancel
+                                            {t('cancel')}
                                         </button>
                                     </>
                                 )}
@@ -652,28 +691,20 @@ function AdminDashboard() {
                         </div>
                         
                         {loading ? (
-                            <div className="loading-spinner">Loading...</div>
+                            <div className="loading-spinner">{t('loading')}</div>
                         ) : companies.length === 0 ? (
-                            <p className="empty-state">No companies yet</p>
+                            <p className="empty-state">{t('no_companies_yet')}</p>
                         ) : (
                             <div className="companies-grid">
-                                {companies.map(company => (
+                                {companies.map(company => {
+                                    const hasImage = company.image && company.image.trim() !== '';
+                                    const subLevel = company.subscriptionLevel || 'basic';
+                                    
+                                    return (
                                     <div 
                                         key={company.id} 
-                                        className={`company-card ${company.subscriptionLevel === 'enterprise' ? 'enterprise' : ''} ${selectedCompanies.includes(company.id) ? 'selected' : ''}`}
+                                        className={`company-card admin-card-item tier-${subLevel} ${selectedCompanies.includes(company.id) ? 'selected' : ''}`}
                                     >
-                                        {/* Enterprise Badge */}
-                                        {company.subscriptionLevel === 'enterprise' && (
-                                            <div className="enterprise-badge">
-                                                <i className="fas fa-crown"></i> Enterprise
-                                            </div>
-                                        )}
-                                        {company.subscriptionLevel === 'pro' && (
-                                            <div className="pro-badge">
-                                                <i className="fas fa-star"></i> Pro
-                                            </div>
-                                        )}
-                                        
                                         {/* Checkbox for bulk select */}
                                         {bulkDeleteMode && (
                                             <div className="checkbox-overlay">
@@ -686,49 +717,86 @@ function AdminDashboard() {
                                             </div>
                                         )}
                                         
-                                        <div className="company-image">
-                                            {company.image ? (
-                                                <img src={company.image} alt={company.name} />
+                                        {/* HEADER with gradient or photo */}
+                                        <div className={`card-header ${hasImage ? 'has-image' : 'gradient'}`}>
+                                            {hasImage ? (
+                                                <>
+                                                    <img 
+                                                        src={company.image} 
+                                                        alt={company.name}
+                                                        className="card-header-bg"
+                                                    />
+                                                    <div className="card-header-overlay"></div>
+                                                </>
                                             ) : (
-                                                <div className="category-icon">
-                                                    <i className={getCategoryIcon(company.category)}></i>
+                                                <div className="card-header-gradient"></div>
+                                            )}
+                                            
+                                            {/* Verified badge */}
+                                            {company.verified && (
+                                                <div className="verified-badge">
+                                                    <i className="fas fa-shield-alt"></i>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Header content: icon + name */}
+                                            <div className="card-header-content">
+                                                <div className="category-icon-large">
+                                                    {getCategoryIcon(company.mainCategory || company.category || 'Teenused')}
+                                                </div>
+                                                <h3 className="card-title">
+                                                    {company.name}
+                                                    {subLevel === 'pro' && <span className="badge-pro">★</span>}
+                                                    {subLevel === 'enterprise' && <span className="badge-ent">👑</span>}
+                                                </h3>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* CARD BODY (white section) */}
+                                        <div className="card-body">
+                                            {/* Tags */}
+                                            <div className="card-tags">
+                                                {company.city && (
+                                                    <span className="tag-city">
+                                                        📍 {company.city}
+                                                    </span>
+                                                )}
+                                                <span className="tag-cat">{company.category}</span>
+                                            </div>
+                                            
+                                            {/* Description snippet */}
+                                            {(company.descriptionEt || company.descriptionEn) && (
+                                                <p className="card-desc">
+                                                    {(company.descriptionEt || company.descriptionEn || '').substring(0, 80)}...
+                                                </p>
+                                            )}
+                                            
+                                            {/* Footer: actions */}
+                                            {!bulkDeleteMode && (
+                                                <div className="card-footer admin-actions">
+                                                    <button 
+                                                        className="btn-admin-edit"
+                                                        onClick={() => handleEdit(company)}
+                                                        title={t('edit')}
+                                                    >
+                                                        <i className="fas fa-edit"></i> {t('edit')}
+                                                    </button>
+                                                    <button 
+                                                        className="btn-admin-delete"
+                                                        onClick={() => handleDelete(company.id)}
+                                                        title={t('delete')}
+                                                    >
+                                                        <i className="fas fa-trash"></i> {t('delete')}
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>
-                                        
-                                        <div className="company-info">
-                                            <h3>{company.name}</h3>
-                                            <p className="company-meta">
-                                                <i className="fas fa-map-marker-alt"></i> {company.city} • {company.category}
-                                            </p>
-                                            {company.verified && (
-                                                <span className="verified-badge">
-                                                    <i className="fas fa-check-circle"></i> Verified
-                                                </span>
-                                            )}
-                                        </div>
-                                        
-                                        {!bulkDeleteMode && (
-                                            <div className="company-actions">
-                                                <button 
-                                                    className="btn-edit"
-                                                    onClick={() => handleEdit(company)}
-                                                >
-                                                    <i className="fas fa-edit"></i>
-                                                </button>
-                                                <button 
-                                                    className="btn-delete"
-                                                    onClick={() => handleDelete(company.id)}
-                                                >
-                                                    <i className="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
-                    </div>
+                    </>
                 )}
 
                 {/* Add Company Form */}
@@ -1105,9 +1173,57 @@ function AdminDashboard() {
                                             <div className="request-meta">
                                                 <span className="badge category-badge">{request.subCategory || request.category}</span>
                                                 <span className="badge city-badge">{request.city}</span>
+                                                
+                                                {/* Moderation Score Badge */}
+                                                {request.moderationScore !== undefined && (
+                                                    <span 
+                                                        className={getModerationBadgeClass(getModerationSeverity(request.moderationScore))}
+                                                        title={`${t('moderation_score')}: ${request.moderationScore}`}
+                                                    >
+                                                        <i className={`fas ${getModerationIcon(getModerationSeverity(request.moderationScore))}`}></i>
+                                                        {t('moderation_score')}: {request.moderationScore}
+                                                    </span>
+                                                )}
                                             </div>
+                                            
+                                            {/* Moderation Details Toggle */}
+                                            {request.moderationFlags && request.moderationFlags.length > 0 && (
+                                                <button 
+                                                    className="moderation-toggle"
+                                                    onClick={() => toggleModerationDetails(request.id)}
+                                                    title={t('moderation_details')}
+                                                >
+                                                    <i className={`fas fa-chevron-${expandedModerationCards.has(request.id) ? 'up' : 'down'}`}></i>
+                                                    {expandedModerationCards.has(request.id) ? t('hide_moderation_details') : t('show_moderation_details')}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
+                                    
+                                    {/* Moderation Flags Accordion Panel */}
+                                    {request.moderationFlags && request.moderationFlags.length > 0 && expandedModerationCards.has(request.id) && (
+                                        <div className="moderation-details-panel">
+                                            <h4>
+                                                <i className="fas fa-flag"></i> {t('moderation_flags')} ({request.moderationFlags.length})
+                                            </h4>
+                                            <ul className="moderation-flags-list">
+                                                {request.moderationFlags.map((flag, index) => (
+                                                    <li key={index} className="moderation-flag-item">
+                                                        <i className="fas fa-exclamation-triangle"></i>
+                                                        <span className="flag-text">{flag}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            {request.moderationDetails && (
+                                                <div className="moderation-meta">
+                                                    <small>
+                                                        <i className="fas fa-info-circle"></i>
+                                                        {request.moderationDetails}
+                                                    </small>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                     
                                     <div className="request-details">
                                         {request.email && (
@@ -1326,7 +1442,7 @@ function AdminDashboard() {
                 <div className="modal-overlay" onClick={handleCloseEditModal}>
                     <div className="modal-content edit-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2><i className="fas fa-edit"></i> Edit Company</h2>
+                            <h2><i className="fas fa-edit"></i> {t('edit_company')}</h2>
                             <button onClick={handleCloseEditModal} className="modal-close">
                                 <i className="fas fa-times"></i>
                             </button>
@@ -1336,7 +1452,7 @@ function AdminDashboard() {
                             <div className="form-grid">
                                 {/* Company Name */}
                                 <div className="form-group">
-                                    <label htmlFor="name">Company Name *</label>
+                                    <label htmlFor="name">{t('company_name')} *</label>
                                     <input
                                         type="text"
                                         id="name"
@@ -1350,7 +1466,7 @@ function AdminDashboard() {
 
                                 {/* City */}
                                 <div className="form-group">
-                                    <label htmlFor="city">City *</label>
+                                    <label htmlFor="city">{t('city')} *</label>
                                     <input
                                         type="text"
                                         id="city"
@@ -1364,7 +1480,7 @@ function AdminDashboard() {
 
                                 {/* Category */}
                                 <div className="form-group">
-                                    <label htmlFor="category">Category *</label>
+                                    <label htmlFor="category">{t('category')} *</label>
                                     <input
                                         type="text"
                                         id="category"
@@ -1386,14 +1502,14 @@ function AdminDashboard() {
                                             onChange={handleInputChange}
                                             className="form-checkbox"
                                         />
-                                        <span>Verified Business</span>
+                                        <span>{t('verified_business')}</span>
                                     </label>
                                 </div>
                             </div>
 
                             {/* Image Upload */}
                             <div className="form-group">
-                                <label htmlFor="imageFile">Upload New Image (Cloudinary)</label>
+                                <label htmlFor="imageFile">{t('upload_new_image')}</label>
                                 <input
                                     type="file"
                                     id="imageFile"
@@ -1413,7 +1529,7 @@ function AdminDashboard() {
                                     }}
                                     className="form-input"
                                 />
-                                <small className="form-hint">Max 5MB. New image will replace current one.</small>
+                                <small className="form-hint">{t('max_5mb_hint')}</small>
                                 
                                 {imagePreview && (
                                     <div className="image-preview" style={{ marginTop: '10px' }}>
@@ -1432,7 +1548,7 @@ function AdminDashboard() {
 
                             {/* Descriptions */}
                             <div className="form-group">
-                                <label htmlFor="descriptionEt">Description (Estonian)</label>
+                                <label htmlFor="descriptionEt">{t('description_estonian')}</label>
                                 <textarea
                                     id="descriptionEt"
                                     name="descriptionEt"
@@ -1444,7 +1560,7 @@ function AdminDashboard() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="descriptionEn">Description (English)</label>
+                                <label htmlFor="descriptionEn">{t('description_english')}</label>
                                 <textarea
                                     id="descriptionEn"
                                     name="descriptionEn"
@@ -1456,7 +1572,7 @@ function AdminDashboard() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="descriptionRu">Description (Russian)</label>
+                                <label htmlFor="descriptionRu">{t('description_russian')}</label>
                                 <textarea
                                     id="descriptionRu"
                                     name="descriptionRu"
@@ -1469,7 +1585,7 @@ function AdminDashboard() {
 
                             {/* Social Media */}
                             <div className="form-group">
-                                <label htmlFor="instagramUrl">Instagram URL</label>
+                                <label htmlFor="instagramUrl">{t('instagram_url')}</label>
                                 <input
                                     type="url"
                                     id="instagramUrl"
@@ -1482,7 +1598,7 @@ function AdminDashboard() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="tiktokUrl">TikTok URL</label>
+                                <label htmlFor="tiktokUrl">{t('tiktok_url')}</label>
                                 <input
                                     type="url"
                                     id="tiktokUrl"
@@ -1495,7 +1611,7 @@ function AdminDashboard() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="youtubeUrl">YouTube URL</label>
+                                <label htmlFor="youtubeUrl">{t('youtube_url')}</label>
                                 <input
                                     type="url"
                                     id="youtubeUrl"
@@ -1515,7 +1631,7 @@ function AdminDashboard() {
                                     className="btn-secondary"
                                     disabled={loading || uploadingCloudinary}
                                 >
-                                    Cancel
+                                    {t('cancel')}
                                 </button>
                                 <button 
                                     type="submit" 
