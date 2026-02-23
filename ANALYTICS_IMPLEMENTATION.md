@@ -161,11 +161,8 @@ function App() {
 cd frontend
 npm run build
 
-# Deploy to server
-scp -r dist/* root@65.109.166.160:/var/www/kontrollitud.ee/frontend/
-
-# Reload Nginx
-ssh root@65.109.166.160 "docker exec proxy_app_1 nginx -s reload"
+# Deploy to server (use your deployment script)
+# See deploy*.local.ps1 files for actual deployment commands
 ```
 
 ---

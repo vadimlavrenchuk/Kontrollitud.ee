@@ -21,3 +21,44 @@ ssl/
 *.pem
 *.key
 *.crt
+
+# ============================================
+# КОНФИДЕНЦИАЛЬНЫЕ ФАЙЛЫ (НЕ ДЛЯ GITHUB!)
+# ============================================
+
+# Локальные файлы с приватной информацией
+*.local.*
+*.local
+
+# Deployment scripts (содержат IP, SSH команды)
+deploy*.ps1
+deploy*.sh
+deploy*.bat
+!deploy.example.ps1
+
+# Server setup files (содержат IP, пароли, SSH)
+*SETUP*.md
+*SERVER*.md
+*NGINX*.md
+*INFRASTRUCTURE*.md
+
+# Admin files (содержат email, пароли)
+*ADMIN*.md
+ADD_ADMIN_EMAIL.md
+
+# Private context files
+copy_me_for_kapilot.md
+SESSION_CONTEXT.md
+
+# SSH and certificates
+*.ppk
+*.pub
+id_rsa*
+known_hosts
+
+# Logs с возможной конфиденциальной информацией
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -28,8 +28,8 @@ Fields:
 ```bash
 cd frontend
 npm run build
-scp -r dist/* root@65.109.166.160:/var/www/kontrollitud.ee/frontend/
-ssh root@65.109.166.160 "docker exec proxy_app_1 nginx -s reload"
+# Use your deployment script
+# See deploy*.local.ps1 files for actual deployment commands
 ```
 
 ### 3. Test

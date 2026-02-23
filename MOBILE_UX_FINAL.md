@@ -176,7 +176,8 @@ npm run build
 
 ### 2. Загрузка на сервер:
 ```bash
-scp -r dist/* root@65.109.166.160:/var/www/kontrollitud.ee/frontend/
+# Use your deployment script
+# See deploy*.local.ps1 files for actual deployment commands
 ```
 
 ### 3. Проверка на продакшене:

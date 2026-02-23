@@ -278,7 +278,7 @@ caches.keys().then(console.log);
 
 ```powershell
 # Перейдите в корень проекта
-cd c:\Users\vadim\Kontrollitud.ee
+cd /path/to/your/project
 
 # Запустите один из скриптов деплоя
 .\deploy-stable.ps1

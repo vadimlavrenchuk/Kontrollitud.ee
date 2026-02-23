@@ -96,7 +96,7 @@ const heroUrl = getOptimizedUrl(company.image, 'companyHero');
 firebase login
 
 # Перейдите в проект
-cd c:/Users/vadim/Kontrollitud.ee
+cd /path/to/your/project
 
 # Установите расширение
 firebase ext:install storage-resize-images --project kontrollitud-ee

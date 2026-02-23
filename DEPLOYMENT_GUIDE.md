@@ -85,10 +85,10 @@ docker-compose up -d   # Потом создаем новые контейнер
 
 ```powershell
 # Подключение к серверу
-ssh root@kontrollitud.ee
+ssh root@YOUR_SERVER
 
 # Переход в папку
-cd /root/Kontrollitud.ee
+cd /path/to/project
 
 # Получение кода
 git pull
@@ -110,32 +110,32 @@ docker ps
 
 ```powershell
 # Все логи
-ssh root@kontrollitud.ee "docker-compose logs"
+ssh root@YOUR_SERVER "docker-compose logs"
 
 # Только frontend
-ssh root@kontrollitud.ee "docker-compose logs frontend"
+ssh root@YOUR_SERVER "docker-compose logs frontend"
 
 # Только backend
-ssh root@kontrollitud.ee "docker-compose logs backend"
+ssh root@YOUR_SERVER "docker-compose logs backend"
 
 # Live logs (следить в реальном времени)
-ssh root@kontrollitud.ee "docker-compose logs -f"
+ssh root@YOUR_SERVER "docker-compose logs -f"
 ```
 
 ## Полезные команды
 
 ```powershell
 # Статус контейнеров
-ssh root@kontrollitud.ee "docker ps"
+ssh root@YOUR_SERVER "docker ps"
 
 # Перезапуск одного контейнера
-ssh root@kontrollitud.ee "docker-compose restart frontend"
+ssh root@YOUR_SERVER "docker-compose restart frontend"
 
 # Остановка всего
-ssh root@kontrollitud.ee "docker-compose down"
+ssh root@YOUR_SERVER "docker-compose down"
 
 # Очистка всех старых образов
-ssh root@kontrollitud.ee "docker system prune -a"
+ssh root@YOUR_SERVER "docker system prune -a"
 ```
 
 ## Troubleshooting
@@ -143,7 +143,7 @@ ssh root@kontrollitud.ee "docker system prune -a"
 ### Контейнер не запускается
 ```powershell
 # Смотрим логи
-ssh root@kontrollitud.ee "docker-compose logs frontend"
+ssh root@YOUR_SERVER "docker-compose logs frontend"
 
 # Пересобираем без кеша
 .\deploy-stable.ps1

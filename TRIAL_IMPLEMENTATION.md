@@ -267,7 +267,7 @@ cron.schedule('* * * * *', checkTrialPeriods);
 
 ```powershell
 # Из корня проекта
-cd c:\Users\vadim\Kontrollitud.ee
+cd /path/to/your/project
 .\deploy-stable.ps1
 ```
 
