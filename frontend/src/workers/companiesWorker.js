@@ -5,21 +5,24 @@ self.onmessage = function(e) {
   const { type, data } = e.data;
   
   switch(type) {
-    case 'SORT_COMPANIES':
+    case 'SORT_COMPANIES': {
       const sorted = sortCompanies(data);
       self.postMessage({ type: 'SORTED', data: sorted });
       break;
+    }
       
-    case 'FILTER_COMPANIES':
+    case 'FILTER_COMPANIES': {
       const filtered = filterCompanies(data.companies, data.filters);
       self.postMessage({ type: 'FILTERED', data: filtered });
       break;
+    }
       
-    case 'PROCESS_FIRESTORE_DATA':
+    case 'PROCESS_FIRESTORE_DATA': {
       // Обработка сырых данных из Firestore
       const processed = processFirestoreData(data);
       self.postMessage({ type: 'PROCESSED', data: processed });
       break;
+    }
       
     default:
       console.warn('Unknown worker message type:', type);

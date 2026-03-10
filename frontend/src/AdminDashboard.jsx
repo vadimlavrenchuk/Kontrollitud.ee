@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { toast, ToastContainer } from 'react-toastify';
 import { getCategoryIcon } from './constants/categories';
 import { db } from './firebase';
-import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import StatsGrid from './components/StatsGrid';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/AdminDashboard.scss';
@@ -50,7 +50,6 @@ function AdminDashboard() {
     const [showAddModal, setShowAddModal] = useState(false);
     
     // Edit mode state
-    const [editMode, setEditMode] = useState(false);
     const [editingCompanyId, setEditingCompanyId] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [uploadingCloudinary, setUploadingCloudinary] = useState(false);
@@ -346,7 +345,7 @@ function AdminDashboard() {
                 throw new Error('Failed to add company');
             }
 
-            const newCompany = await response.json();
+            await response.json();
             toast.success('✅ Company added successfully!');
             
             // Reset form
@@ -400,7 +399,6 @@ function AdminDashboard() {
 
     // Open edit modal with company data
     const handleEdit = (company) => {
-        setEditMode(true);
         setEditingCompanyId(company.id);
         setFormData({
             name: company.name || '',
@@ -475,7 +473,6 @@ function AdminDashboard() {
             
             // Reset and close modal
             setShowEditModal(false);
-            setEditMode(false);
             setEditingCompanyId(null);
             setImageFile(null);
             setImagePreview(null);
@@ -494,7 +491,6 @@ function AdminDashboard() {
     // Close edit modal
     const handleCloseEditModal = () => {
         setShowEditModal(false);
-        setEditMode(false);
         setEditingCompanyId(null);
         setImageFile(null);
         setImagePreview(null);

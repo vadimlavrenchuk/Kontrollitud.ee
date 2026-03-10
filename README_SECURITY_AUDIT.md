@@ -80,7 +80,7 @@ git ls-files | grep ".local"
 ## 🔐 Что защищено
 
 Теперь в GitHub **НЕ попадут**:
-- ❌ IP адрес сервера (65.109.166.160)
+- ❌ IP адрес сервера (YOUR_SERVER_IP)
 - ❌ SSH команды (root@kontrollitud.ee)
 - ❌ Email администраторов
 - ❌ Пути на сервере

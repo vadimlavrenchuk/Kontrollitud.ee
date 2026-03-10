@@ -200,7 +200,7 @@ VITE_GA_MEASUREMENT_ID=...
    - ✅ `VITE_FIREBASE_API_KEY=...` (use placeholder)
    
 2. **Server Information**
-   - ❌ `ssh root@65.109.166.160`
+   - ❌ `ssh root@YOUR_SERVER_IP`
    - ❌ `root@kontrollitud.ee`
    - ✅ `ssh root@YOUR_SERVER` (use placeholder)
    

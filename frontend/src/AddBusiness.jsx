@@ -1,13 +1,13 @@
 // Kontrollitud.ee/frontend/src/AddBusiness.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { toast, ToastContainer } from 'react-toastify';
 import { useAuth } from './AuthContext';
-import { db, uploadBusinessImage, auth } from './firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { db, auth } from './firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { CATEGORIES, getMainCategories, getSubcategories, getCategoryIcon } from './constants/categories';
 import { moderateCompany, validateHoneypot, validateFormTiming } from './utils/contentModeration';
 import 'react-toastify/dist/ReactToastify.css';
@@ -25,7 +25,6 @@ function AddBusiness() {
     const [submitted, setSubmitted] = useState(false);
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    const [uploadingImage, setUploadingImage] = useState(false);
     
     // Anti-bot protection
     const [honeypot, setHoneypot] = useState('');
@@ -205,101 +204,7 @@ function AddBusiness() {
             setCurrentStep(currentStep - 1);
         }
     };
-    // Create company with pending_payment status and redirect to payment
-    const createPendingCompanyAndRedirectToPayment = async () => {
-        setLoading(true);
-        
-        try {
-            const token = await auth.currentUser.getIdToken();
-            
-            // Prepare minimal company data for pending payment
-            const companyData = {
-                name: formData.name,
-                mainCategory: formData.mainCategory,
-                subCategory: formData.subCategory,
-                category: formData.subCategory,
-                city: formData.city,
-                email: formData.email,
-                phone: formData.phone || '',
-                website: formData.website || '',
-                description: {
-                    et: formData.descriptionEt || '',
-                    en: formData.descriptionEn || '',
-                    ru: formData.descriptionRu || ''
-                },
-                subscriptionLevel: formData.plan,
-                approvalStatus: 'pending_payment',
-                userId: user.uid,
-                userEmail: user.email
-            };
-            
-            console.log('🔵 Creating company with pending_payment status...', companyData);
-            
-            // Send to backend
-            const apiUrl = import.meta.env.VITE_API_URL || '';
-            const response = await fetch(`${apiUrl}/api/companies`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(companyData)
-            });
-            
-            console.log('🔵 Response status:', response.status);
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('❌ Failed to create company:', errorData);
-                throw new Error(errorData.error || 'Failed to create company');
-            }
-            
-            const result = await response.json();
-            console.log('✅ Backend response:', result);
-            
-            const companyId = result.company?._id || result.company?.id || result._id || result.id;
-            
-            if (!companyId) {
-                console.error('❌ No company ID in response:', result);
-                throw new Error('Company ID not found in response');
-            }
-            
-            console.log('✅ Company created with ID:', companyId);
-            console.log('🔵 Creating Stripe checkout session...');
-            
-            // Сразу создаем Stripe checkout session
-            const checkoutResponse = await fetch(`${apiUrl}/api/create-checkout-session`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    companyId: companyId,
-                    subscriptionLevel: formData.plan
-                })
-            });
-            
-            if (!checkoutResponse.ok) {
-                const errorData = await checkoutResponse.json();
-                console.error('❌ Failed to create checkout session:', errorData);
-                throw new Error(errorData.error || 'Failed to create payment session');
-            }
-            
-            const { url } = await checkoutResponse.json();
-            console.log('✅ Stripe checkout URL:', url);
-            
-            // Редирект на Stripe Checkout
-            console.log('🔵 Redirecting to Stripe...');
-            window.location.href = url;
-            
-        } catch (error) {
-            console.error('❌ Error:', error);
-            toast.error(error.message || 'Не удалось создать сессию оплаты. Попробуйте еще раз.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Note: createPendingCompanyAndRedirectToPayment was removed as unused to satisfy linter.
     const handleSubmit = async () => {
         console.log('🚀 Начинаю отправку формы...');
         console.log('FormData:', formData);

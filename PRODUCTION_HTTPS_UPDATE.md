@@ -32,7 +32,7 @@ docker-compose up --build
 
 ```bash
 # 1. Подключитесь к серверу
-ssh root@65.109.166.160
+ssh root@YOUR_SERVER_IP
 
 # 2. Перейдите в директорию проекта
 cd /root/Kontrollitud.ee

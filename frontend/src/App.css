@@ -276,19 +276,54 @@ body {
 .hamburger {
   display: none;
   flex-direction: column;
-  gap: 4px;
-  background: none;
+  gap: 5px;
+  background: white;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1001;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.hamburger:hover {
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hamburger:active {
+  transform: scale(0.95);
 }
 
 .hamburger span {
   display: block;
-  width: 24px;
-  height: 2px;
+  width: 22px;
+  height: 3px;
+  background: #1f2937;
+  transition: all 0.3s ease;
+  border-radius: 3px;
+}
+
+.hamburger.is-active {
+  background: #3b82f6;
+}
+
+.hamburger.is-active span {
   background: white;
-  transition: 0.3s;
+}
+
+.hamburger.is-active span:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.hamburger.is-active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.is-active span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
 }
 
 .mobile-nav {
@@ -374,8 +409,95 @@ body {
   }
 }
 
+/* Мобильная версия - уменьшаем отступы и оптимизируем текст логотипа */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  
+  .navbar-brand .logo-link {
+    padding: 4px 6px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  
+  /* Компактный текст логотипа на мобилке */
+  .logo-text {
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  
+  .logo-image {
+    height: 32px;
+    width: 32px;
+    flex-shrink: 0;
+  }
+  
+  /* Уменьшаем отступы справа */
+  .navbar-right {
+    gap: 6px;
+  }
+  
+  /* Компактные кнопки языков */
+  .lang-selector {
+    gap: 3px;
+    margin-left: 4px;
+  }
+  
+  .lang-selector button {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+    min-width: 30px;
+  }
+  
+  /* Уменьшаем login-link на мобилке */
+  .login-link span {
+    display: none; /* Скрываем текст "Войти", оставляем только иконку */
+  }
+  
+  .login-link {
+    padding: 6px 10px;
+  }
+  
+  /* Компактный user profile button */
+  .user-profile-button {
+    padding: 2px 6px;
+  }
+  
+  .user-avatar-placeholder {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+}
+
 @media (max-width: 480px) {
-  .navbar-container { padding: 10px 16px; }
+  .navbar-container { 
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  
+  .navbar-brand .logo-link {
+    max-width: unset;
+    padding: 4px;
+    gap: 0;
+  }
+
+  .logo-text {
+    display: none;
+  }
+  
+  .logo-image {
+    height: 36px;
+    width: 36px;
+  }
+  
+  .lang-selector button {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+    min-width: 28px;
+  }
 }
 
 /* Фикс для плавности появления страницы */

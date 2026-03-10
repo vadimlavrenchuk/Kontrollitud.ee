@@ -8,7 +8,7 @@
 .hero {
   position: relative;
   min-height: 420px;
-  max-height: 65vh; // Компактная высота для лучшей видимости категорий
+  max-height: 65vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,6 +16,14 @@
   overflow: hidden;
   padding: 1.25rem 0;
   z-index: 1; // Ensure hero is below navbar
+
+  @media (max-width: 750px) {
+    max-height: none;
+    overflow: visible;
+    min-height: unset;
+    padding: 1.5rem 0 2rem;
+    align-items: flex-start;
+  }
   
   // HeroImage component handles image rendering
   .hero-image-wrapper {

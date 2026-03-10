@@ -15,7 +15,7 @@ Added comprehensive protection for sensitive files:
 
 #### Markdown Documentation (.local.md)
 - `copy_me_for_kapilot.md` → `copy_me_for_kapilot.local.md`
-- `SETUP_65.109.166.160.md` → `SETUP_SERVER.local.md`
+- `SETUP_YOUR_SERVER_IP.md` → `SETUP_SERVER.local.md`
 - `SERVER_SETUP_GUIDE.md` → `SERVER_SETUP_GUIDE.local.md`
 - `ADMIN_ACCESS.md` → `ADMIN_ACCESS.local.md`
 - `ADD_ADMIN_EMAIL.md` → `ADD_ADMIN_EMAIL.local.md`
@@ -84,7 +84,7 @@ Removed old "COMPLETE" documentation files:
 ## 🔐 What's Protected
 
 ### Sensitive Data Now Hidden
-- ❌ Server IP addresses (65.109.166.160)
+- ❌ Server IP addresses (YOUR_SERVER_IP)
 - ❌ SSH connection strings (root@kontrollitud.ee)
 - ❌ Admin email addresses
 - ❌ Server paths and directory structure

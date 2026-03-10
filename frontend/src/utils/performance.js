@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Performance utilities for preventing Long Tasks and CLS
 // Implements yielding, chunked rendering, and idle callbacks
 
@@ -207,18 +209,22 @@ export async function measurePerformance(name, func) {
  */
 export async function splitTask(taskFunc, data, maxTime = 50) {
   const start = performance.now();
-  
-  return new Promise(async (resolve) => {
-    const result = await taskFunc(data);
-    
-    const elapsed = performance.now() - start;
-    
-    // If task took too long, warn
-    if (elapsed > maxTime) {
-      console.warn(`⚠️ Task took ${elapsed.toFixed(2)}ms (max: ${maxTime}ms)`);
-    }
-    
-    resolve(result);
+  return new Promise((resolve, reject) => {
+    (async () => {
+      try {
+        const result = await taskFunc(data);
+        const elapsed = performance.now() - start;
+
+        // If task took too long, warn
+        if (elapsed > maxTime) {
+          console.warn(`⚠️ Task took ${elapsed.toFixed(2)}ms (max: ${maxTime}ms)`);
+        }
+
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    })();
   });
 }
 

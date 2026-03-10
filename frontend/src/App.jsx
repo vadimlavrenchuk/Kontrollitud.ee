@@ -50,21 +50,21 @@ const ScrollToTop = () => {
     return null;
 };
 
+// Улучшенный loader компонент для предотвращения CLS
+const SuspenseLoader = () => (
+    <div className="page-loader" style={{
+        minHeight: '60vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    }}>
+        <div className="spinner" />
+    </div>
+);
+
 // Компонент для роутов с доступом к location
 const AppRoutes = () => {
     const location = useLocation();
-    
-    // Улучшенный loader компонент для предотвращения CLS
-    const SuspenseLoader = () => (
-        <div className="page-loader" style={{
-            minHeight: '60vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-        }}>
-            <div className="spinner" />
-        </div>
-    );
     
     return (
         <Suspense fallback={<SuspenseLoader />}>

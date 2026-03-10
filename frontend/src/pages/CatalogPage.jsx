@@ -441,16 +441,16 @@ function CatalogPage() {
     // Сначала ищем компании с isGoldenDay: true
     const goldenDayCompany = filteredCompanies.find(c => c.isGoldenDay === true);
     if (goldenDayCompany) return goldenDayCompany;
-    
-    // Если нет, ищем компании с tier: "Enterprise"
-    const enterpriseCompany = filteredCompanies.find(c => 
-      c.tier === 'Enterprise' || c.tier === 'enterprise'
+
+    // Если нет, ищем Enterprise по subscriptionLevel
+    const enterpriseCompany = filteredCompanies.find(c =>
+      c.subscriptionLevel === 'enterprise'
     );
     if (enterpriseCompany) return enterpriseCompany;
-    
+
     // Если нет Enterprise, берем первую Pro
-    const proCompany = filteredCompanies.find(c => 
-      c.tier === 'Pro' || c.tier === 'pro'
+    const proCompany = filteredCompanies.find(c =>
+      c.subscriptionLevel === 'pro'
     );
     return proCompany || null;
   }, [filteredCompanies]);
@@ -627,15 +627,6 @@ function CatalogPage() {
             className="mobile-show-map-btn" 
             onClick={() => {
               setIsMapVisible(!isMapVisible);
-              if (!isMapVisible) {
-                // Если показываем карту, прокручиваем к ней
-                setTimeout(() => {
-                  const mapPanel = document.getElementById('catalog-map');
-                  if (mapPanel) {
-                    mapPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }
-                }, 150);
-              }
             }}
           >
             <FontAwesomeIcon icon={faMapMarkedAlt} />

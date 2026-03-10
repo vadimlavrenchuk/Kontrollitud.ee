@@ -20,10 +20,17 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
-    
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
+
+    // Планшет: 2 колонки
+    @media (max-width: 750px) and (min-width: 481px) {
+      grid-template-columns: repeat(2, 1fr);
       gap: 0.75rem;
+    }
+
+    // Телефон: 1 колонка
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+      gap: 0.6rem;
     }
   }
 }

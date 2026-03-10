@@ -125,6 +125,24 @@ const CompanyMap = ({ companies, selectedCompanyId, hoveredCompanyId, onMarkerCl
         return () => window.removeEventListener('resize', handleResize);
     }, []);
     
+    // Отслеживаем изменение размеров контейнера (когда карта появляется из display:none)
+    const wrapperRef = useRef(null);
+    
+    useEffect(() => {
+        const wrapper = wrapperRef.current;
+        if (!wrapper) return;
+        
+        const observer = new ResizeObserver(() => {
+            // Когда контейнер меняет размер, пересчитываем карту Leaflet
+            if (mapRef.current) {
+                mapRef.current.invalidateSize();
+            }
+        });
+        
+        observer.observe(wrapper);
+        return () => observer.disconnect();
+    }, []);
+    
     // Create verified icon once
     if (!verifiedIconRef.current) {
         verifiedIconRef.current = createVerifiedIcon();
@@ -182,7 +200,7 @@ const CompanyMap = ({ companies, selectedCompanyId, hoveredCompanyId, onMarkerCl
     };
 
     return (
-        <div className={`company-map-wrapper ${isExpanded ? 'expanded' : ''}`}>
+        <div ref={wrapperRef} className={`company-map-wrapper ${isExpanded ? 'expanded' : ''}`}>
             {/* Кнопка развернуть/свернуть (только на мобилке) */}
             {isMobile && (
                 <button className="map-expand-btn" onClick={toggleExpanded}>

@@ -128,7 +128,7 @@ Safe to push to GitHub.
 Checking: IP addresses...
 ❌ WARNING: Found 3 potential secrets!
    📄 ./DEPLOYMENT_GUIDE.md
-      Line 45: ssh root@65.109.166.160
+      Line 45: ssh root@YOUR_SERVER_IP
 ...
 ======================================
 ❌ SECURITY CHECK FAILED!

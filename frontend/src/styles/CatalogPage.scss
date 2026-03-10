@@ -320,7 +320,7 @@
       // Скрытие карты ТОЛЬКО на мобилке когда пользователь нажал "Скрыть"
       &.map-hidden {
         @media (max-width: 768px) {
-          display: none !important;
+          display: none;
         }
       }
       
@@ -395,17 +395,28 @@
           flex-shrink: 0;
         }
         
-        // CompanyMap контейнер
+        // CompanyMap контейнер (создаётся внутри CompanyMap.jsx)
         .company-map-wrapper {
           flex: 1;
-          height: 100%;
+          min-height: 0; // Критично для правильной работы flex
           display: flex;
           flex-direction: column;
+          position: relative;
           
           .company-map-container {
             flex: 1;
-            height: 100%;
+            min-height: 0; // Критично
             position: relative;
+            
+            // Leaflet контейнер нуждается в явной высоте
+            .leaflet-container {
+              height: 100% !important;
+              width: 100% !important;
+            }
+          }
+          
+          .map-expand-btn {
+            flex-shrink: 0;
           }
         }
       }
@@ -546,20 +557,32 @@
       }
       
       .catalog-top-flex {
-        position: static; // Отключаем sticky на мобильных
+        position: static;
         gap: 1rem;
         margin-bottom: 1rem;
         
+        // Карта на всю ширину экрана (внутри вложенности для правильной специфичности)
         .catalog-map-container {
-          height: 200px; // Компактная карта по умолчанию
+          height: 350px;
+          min-height: 350px;
+          margin-left: -1rem;
+          margin-right: -1rem;
+          width: calc(100% + 2rem);
+          border-radius: 0;
           
           .map-title {
             padding: 0.5rem 0.75rem;
             font-size: 0.85rem;
           }
           
-          .map-wrapper {
-            height: calc(100% - 35px);
+          .company-map-wrapper {
+            flex: 1;
+            min-height: 0;
+            
+            .company-map-container {
+              flex: 1;
+              min-height: 0;
+            }
           }
         }
       }
@@ -571,14 +594,44 @@
     position: relative;
     
     &.expanded {
-      .company-map-container {
+      .catalog-map-container {
         height: 500px !important;
+        min-height: 500px !important;
+        // В развернутом состоянии также на всю ширину
+        margin-left: -1rem;
+        margin-right: -1rem;
+        width: calc(100% + 2rem);
+        border-radius: 0;
       }
       
       .map-expand-btn {
         background: #3b82f6;
         color: white;
         border-color: #3b82f6;
+      }
+    }
+    
+    .map-expand-btn {
+      display: none;
+      width: 100%;
+      padding: 0.75rem;
+      background: #f3f4f6;
+      color: #374151;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+      transition: all 0.2s;
+      
+      @media (max-width: 768px) {
+        display: block;
+      }
+      
+      &:active {
+        background: #e5e7eb;
+        transform: scale(0.98);
       }
     }
     
@@ -629,4 +682,35 @@
     }
   }
 }
+
+// Очень маленькие экраны (мобильные телефоны в портретной ориентации)
+@media (max-width: 480px) {
+  .catalog-page {
+    padding: 0.5rem;
+    
+    .catalog-main {
+      .catalog-top-flex {
+        margin-bottom: 0.75rem;
+        
+        .catalog-map-container {
+          height: 280px;
+          min-height: 280px;
+          margin-left: -0.5rem;
+          margin-right: -0.5rem;
+          width: calc(100% + 1rem);
+          
+          .map-title {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+          }
+        }
+      }
+      
+      .company-grid {
+        gap: 1rem;
+      }
+    }
+  }
+}
+
 

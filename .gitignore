@@ -41,6 +41,7 @@ deploy*.bat
 *SERVER*.md
 *NGINX*.md
 *INFRASTRUCTURE*.md
+*PRODUCTION*.md
 
 # Admin files (содержат email, пароли)
 *ADMIN*.md

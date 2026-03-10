@@ -41,7 +41,7 @@ All sensitive files are protected by `.gitignore`:
 
 3. **Use Placeholders in Public Docs**
    - ✅ `ssh root@YOUR_SERVER`
-   - ❌ `ssh root@65.109.166.160`
+   - ❌ `ssh root@YOUR_SERVER_IP`
    - ✅ `VITE_API_KEY=...`
    - ❌ `VITE_API_KEY=abc123real-key`
 
