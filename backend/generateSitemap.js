@@ -42,36 +42,34 @@ async function generateSitemap() {
         const baseUrl = 'https://kontrollitud.ee';
         const today = new Date().toISOString().split('T')[0];
 
+        const staticPages = [
+            { loc: '/',              changefreq: 'daily',   priority: '1.0' },
+            { loc: '/catalog',       changefreq: 'daily',   priority: '0.9' },
+            { loc: '/partners',      changefreq: 'weekly',  priority: '0.8' },
+            { loc: '/add-business',  changefreq: 'monthly', priority: '0.7' },
+            { loc: '/about',         changefreq: 'monthly', priority: '0.6' },
+            { loc: '/privacy',       changefreq: 'yearly',  priority: '0.3' },
+            { loc: '/terms',         changefreq: 'yearly',  priority: '0.3' },
+        ];
+
         let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-  
-  <!-- Homepage -->
-  <url>
-    <loc>${baseUrl}/</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  
-  <!-- Static Pages -->
-  <url>
-    <loc>${baseUrl}/add-business</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>${baseUrl}/auth</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
+
 `;
+        staticPages.forEach(page => {
+            xml += `  <url>
+    <loc>${baseUrl}${page.loc}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>
+
+`;
+        });
+
 
         // Add all approved companies
         companies.forEach(company => {
@@ -91,14 +89,16 @@ async function generateSitemap() {
 
         xml += `</urlset>`;
 
-        // Write to file
+        // Write to file — в папку деплоя или локально
         const fs = require('fs');
         const path = require('path');
-        const sitemapPath = path.join(__dirname, '..', 'frontend', 'public', 'sitemap.xml');
-        
+        const deployPath = '/var/www/kontrollitud.ee/frontend/sitemap.xml';
+        const localPath = path.join(__dirname, '..', 'frontend', 'public', 'sitemap.xml');
+        const sitemapPath = fs.existsSync('/var/www/kontrollitud.ee/frontend') ? deployPath : localPath;
+
         fs.writeFileSync(sitemapPath, xml, 'utf8');
-        console.log(`✅ Sitemap generated successfully at: ${sitemapPath}`);
-        console.log(`📊 Total URLs: ${companies.length + 3}`);
+        console.log(`✅ Sitemap generated: ${sitemapPath}`);
+        console.log(`📊 Total URLs: ${companies.length + staticPages.length}`);
 
         await mongoose.disconnect();
         console.log('👋 Disconnected from MongoDB');
