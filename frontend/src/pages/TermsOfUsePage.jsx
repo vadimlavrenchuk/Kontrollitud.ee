@@ -8,6 +8,7 @@ export default function TermsOfUsePage() {
       <Helmet>
         <title>Kasutustingimused | Kontrollitud.ee</title>
         <meta name="description" content="Kontrollitud.ee kasutustingimused ja reeglid. Условия использования сервиса Kontrollitud.ee." />
+        <link rel="canonical" href="https://kontrollitud.ee/terms" />
       </Helmet>
       <div className="legal-page">
         <h1>Kasutustingimused</h1>

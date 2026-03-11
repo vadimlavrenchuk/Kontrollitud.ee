@@ -8,6 +8,7 @@ export default function PrivacyPolicyPage() {
       <Helmet>
         <title>Privaatsuspoliitika | Kontrollitud.ee</title>
         <meta name="description" content="Kontrollitud.ee privaatsuspoliitika ja GDPR õigused. Политика конфиденциальности и права пользователей." />
+        <link rel="canonical" href="https://kontrollitud.ee/privacy" />
       </Helmet>
       <div className="legal-page">
         <h1>Privaatsuspoliitika</h1>

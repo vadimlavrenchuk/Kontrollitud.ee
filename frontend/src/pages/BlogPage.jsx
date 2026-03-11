@@ -57,6 +57,7 @@ function BlogPage() {
         <title>{t('blog_page_title')} | Kontrollitud.ee</title>
         <meta name="description" content={t('blog_page_description')} />
         <meta name="keywords" content="blog, news, articles, Estonia, business tips, verified companies" />
+        <link rel="canonical" href="https://kontrollitud.ee/blog" />
       </Helmet>
 
       {/* Hero Section */}

@@ -188,6 +188,7 @@ function PartnersPage() {
         <title>{t('partners_title')} - {t('app_title')}</title>
         <meta name="description" content={t('partners_new_hero_subtitle')} />
         <meta name="keywords" content="business partners, Estonia, verified companies, trust badge, SEO, business growth" />
+        <link rel="canonical" href="https://kontrollitud.ee/partners" />
       </Helmet>
 
       {/* Hero Section */}

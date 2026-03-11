@@ -480,6 +480,7 @@ function CatalogPage() {
       <Helmet>
         <title>{t('catalog')} | Kontrollitud.ee</title>
         <meta name="description" content={t('catalog_description')} />
+        <link rel="canonical" href="https://kontrollitud.ee/catalog" />
       </Helmet>
       
       <div className="catalog-page">

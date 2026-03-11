@@ -170,6 +170,7 @@ function BlogPostDetail() {
       <Helmet>
         <title>{post.title} | Kontrollitud.ee</title>
         <meta name="description" content={post.excerpt} />
+        <link rel="canonical" href={`https://kontrollitud.ee/blog/${id}`} />
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:image" content={post.image} />

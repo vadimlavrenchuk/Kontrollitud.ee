@@ -111,6 +111,7 @@ function CompanyList() {
       <Helmet>
         <title>{t('hero_title')} | Kontrollitud.ee</title>
         <meta name="description" content={t('hero_subtitle')} />
+        <link rel="canonical" href="https://kontrollitud.ee/" />
       </Helmet>
       
       <section className="hero">
