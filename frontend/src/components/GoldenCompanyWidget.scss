@@ -5,6 +5,9 @@
   position: relative;
   width: 100%;
   height: 100%;
+  // Если родитель не задал высоту — aspect-ratio как запасной вариант
+  // Это гарантирует резервирование места ДО загрузки контента (CLS prevention)
+  min-height: 0; // Не позволяем flex-контексту растягивать бесконечно
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
@@ -281,6 +284,10 @@
 @media (max-width: 576px) {
   .golden-widget {
     border-radius: 12px;
+    // Если родитель задал высоту — height: 100% возьмёт её.
+    // Если нет (например, standalone использование) — aspect-ratio защитит от CLS
+    // Это соответствует спецификации 600x600 (1:1)
+    aspect-ratio: 1 / 1;
     
     .golden-content {
       padding: 16px;

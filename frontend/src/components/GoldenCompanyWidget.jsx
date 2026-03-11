@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrown, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { getCategoryIcon } from '../constants/categories';
 import { getLocalizedContent } from '../utils/localization';
+import { optimizeCloudinary } from '../utils/cloudinary';
 import './GoldenCompanyWidget.scss';
 
 const GoldenCompanyWidget = ({ company, onCompanyClick }) => {
@@ -34,7 +35,14 @@ const GoldenCompanyWidget = ({ company, onCompanyClick }) => {
       {/* Фоновое изображение или градиент */}
       {hasImage ? (
         <>
-          <img src={company.image} alt={company.name} className="golden-bg-image" />
+          <img
+            src={optimizeCloudinary(company.image, 600)}
+            alt={company.name}
+            className="golden-bg-image"
+            loading="lazy"
+            width="600"
+            height="600"
+          />
           <div className="golden-overlay"></div>
         </>
       ) : (
@@ -53,7 +61,13 @@ const GoldenCompanyWidget = ({ company, onCompanyClick }) => {
         <div className="golden-icon">
           {hasImage ? (
             <div className="golden-logo-circle">
-              <img src={company.image} alt={company.name} />
+              <img
+                src={optimizeCloudinary(company.image, 120)}
+                alt={company.name}
+                loading="lazy"
+                width="120"
+                height="120"
+              />
             </div>
           ) : (
             <div className="category-icon-huge">

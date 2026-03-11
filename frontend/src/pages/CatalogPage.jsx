@@ -481,6 +481,36 @@ function CatalogPage() {
         <title>{t('catalog')} | Kontrollitud.ee</title>
         <meta name="description" content={t('catalog_description')} />
         <link rel="canonical" href="https://kontrollitud.ee/catalog" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://kontrollitud.ee/catalog" />
+        <meta property="og:site_name" content="Kontrollitud.ee" />
+        <meta property="og:title" content={`${t('catalog')} | Kontrollitud.ee`} />
+        <meta property="og:description" content={t('catalog_description')} />
+        <meta property="og:image" content="https://kontrollitud.ee/og-default.jpg" />
+        <meta property="og:locale" content="et_EE" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${t('catalog')} | Kontrollitud.ee`} />
+        <meta name="twitter:description" content={t('catalog_description')} />
+        <meta name="twitter:image" content="https://kontrollitud.ee/og-default.jpg" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "@id": "https://kontrollitud.ee/catalog",
+          "url": "https://kontrollitud.ee/catalog",
+          "name": `${t('catalog')} | Kontrollitud.ee`,
+          "description": t('catalog_description'),
+          "isPartOf": {
+            "@type": "WebSite",
+            "@id": "https://kontrollitud.ee/#website"
+          },
+          "hasPart": filteredCompanies.slice(0, 20).map(c => ({
+            "@type": "LocalBusiness",
+            "@id": `https://kontrollitud.ee/companies/${c.slug || c._id || c.id}`,
+            "name": c.name,
+            "url": `https://kontrollitud.ee/companies/${c.slug || c._id || c.id}`,
+            ...(c.city && { "address": { "@type": "PostalAddress", "addressLocality": c.city, "addressCountry": "EE" } })
+          }))
+        })}</script>
       </Helmet>
       
       <div className="catalog-page">

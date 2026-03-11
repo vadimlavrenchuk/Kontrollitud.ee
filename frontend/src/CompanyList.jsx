@@ -112,6 +112,47 @@ function CompanyList() {
         <title>{t('hero_title')} | Kontrollitud.ee</title>
         <meta name="description" content={t('hero_subtitle')} />
         <link rel="canonical" href="https://kontrollitud.ee/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://kontrollitud.ee/" />
+        <meta property="og:title" content={`${t('hero_title')} | Kontrollitud.ee`} />
+        <meta property="og:description" content={t('hero_subtitle')} />
+        <meta property="og:image" content="https://kontrollitud.ee/og-default.jpg" />
+        <meta property="og:locale" content="et_EE" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${t('hero_title')} | Kontrollitud.ee`} />
+        <meta name="twitter:description" content={t('hero_subtitle')} />
+        <meta name="twitter:image" content="https://kontrollitud.ee/og-default.jpg" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "@id": "https://kontrollitud.ee/#website",
+          "url": "https://kontrollitud.ee/",
+          "name": "Kontrollitud.ee",
+          "description": "Eesti ettevõtete kontrollitud kataloog — Find and review verified businesses in Estonia",
+          "inLanguage": ["et", "ru", "en"],
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://kontrollitud.ee/catalog?search={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "@id": "https://kontrollitud.ee/#organization",
+          "name": "Kontrollitud.ee",
+          "url": "https://kontrollitud.ee/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://kontrollitud.ee/logokontroll.jpg",
+            "width": 200,
+            "height": 60
+          },
+          "sameAs": []
+        })}</script>
       </Helmet>
       
       <section className="hero">

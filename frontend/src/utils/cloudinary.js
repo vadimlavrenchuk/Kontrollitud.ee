@@ -37,8 +37,20 @@ export const getCloudinaryUrl = (imageUrl, options = {}) => {
     gravity = 'auto',
   } = options;
 
-  // Если уже Cloudinary URL, возвращаем как есть
+  // Если уже Cloudinary URL — инжектируем трансформации напрямую
   if (imageUrl?.includes('cloudinary.com')) {
+    const parts = imageUrl.split('/upload/');
+    if (parts.length === 2) {
+      const transforms = [
+        width ? `w_${width}` : null,
+        height ? `h_${height}` : null,
+        `c_${crop}`,
+        `g_${gravity}`,
+        `f_${format}`,
+        `q_${quality}`,
+      ].filter(Boolean).join(',');
+      return `${parts[0]}/upload/${transforms}/${parts[1]}`;
+    }
     return imageUrl;
   }
 
@@ -234,6 +246,37 @@ export const getOptimizedUrl = (imageUrl, presetName) => {
   }
   
   return getCloudinaryUrl(imageUrl, preset);
+};
+
+/**
+ * Инжектирует трансформации в существующий Cloudinary URL
+ * Работает с любыми Cloudinary URL (уже загруженными или нет)
+ *
+ * @param {string} url - Cloudinary URL
+ * @param {number} width - Целевая ширина
+ * @returns {string} Оптимизированный URL
+ *
+ * @example
+ * optimizeCloudinary('https://res.cloudinary.com/dvkj0ica9/image/upload/v123/companies/photo.jpg', 400)
+ * // => '...upload/f_auto,q_auto,w_400/v123/companies/photo.jpg'
+ */
+export const optimizeCloudinary = (url, width) => {
+  if (!url) return url;
+
+  // Не трогаем не-Cloudinary URL
+  if (!url.includes('cloudinary.com')) return url;
+
+  const parts = url.split('/upload/');
+  if (parts.length !== 2) return url;
+
+  // Убираем существующие трансформации если они уже есть
+  const imagePath = parts[1].replace(/^[^/]+\//, (match) => {
+    // Если это трансформации (содержат _ или , или буквы без /) — убираем
+    return /[_,]/.test(match) ? '' : match;
+  });
+
+  const transforms = width ? `f_auto,q_auto,w_${width}` : 'f_auto,q_auto';
+  return `${parts[0]}/upload/${transforms}/${imagePath}`;
 };
 
 /**

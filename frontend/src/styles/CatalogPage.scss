@@ -243,9 +243,16 @@
     .golden-widget-mobile {
       display: none;
       margin-bottom: 1.5rem;
-      
+      // Явная высота ОБЯЗАТЕЛЬНА — дочерний .golden-widget использует height: 100%
+      // Без неё браузер не может зарезервировать место до рендера (CLS)
       @media (max-width: 768px) {
         display: block;
+        height: 300px;
+        contain: layout; // Изолируем от layout-shifts соседних элементов
+      }
+      
+      @media (max-width: 480px) {
+        height: 260px;
       }
     }
     
@@ -465,7 +472,12 @@
       padding: 3rem;
       color: #6b7280;
       font-size: 1.1rem;
+      // Отступ чтобы результат появлялся ниже sticky карты+виджета
       margin-top: 480px;
+      
+      @media (max-width: 1024px) {
+        margin-top: 0; // На планшетах sticky отключён
+      }
     }
   }
 }
@@ -520,6 +532,7 @@
         position: static; // Отключаем sticky на планшетах
         flex-direction: column;
         display: flex !important; // Явно показываем на планшетах
+        min-height: unset; // Сбрасываем десктопный min-height: 470px
         
         .catalog-map-container {
           width: 100%;
@@ -560,6 +573,7 @@
         position: static;
         gap: 1rem;
         margin-bottom: 1rem;
+        min-height: unset; // Сбрасываем десктопный min-height: 470px
         
         // Карта на всю ширину экрана (внутри вложенности для правильной специфичности)
         .catalog-map-container {
@@ -612,31 +626,7 @@
     }
     
     .map-expand-btn {
-      display: none;
-      width: 100%;
-      padding: 0.75rem;
-      background: #f3f4f6;
-      color: #374151;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-bottom: 0.5rem;
-      transition: all 0.2s;
-      
-      @media (max-width: 768px) {
-        display: block;
-      }
-      
-      &:active {
-        background: #e5e7eb;
-        transform: scale(0.98);
-      }
-    }
-    
-    .map-expand-btn {
-      display: none; /* Скрыта на десктопе */
+      display: none; // Скрыта на десктопе
       width: 100%;
       padding: 0.75rem;
       background: #f3f4f6;
@@ -691,6 +681,7 @@
     .catalog-main {
       .catalog-top-flex {
         margin-bottom: 0.75rem;
+        min-height: unset; // Сбрасываем десктопный min-height: 470px
         
         .catalog-map-container {
           height: 280px;

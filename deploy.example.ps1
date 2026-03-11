@@ -1,68 +1,76 @@
-# Deploy Script Example for Kontrollitud.ee
-# Copy this file to deploy.local.ps1 and customize for your server
+# deploy.example.ps1 — Шаблон деплоя для Kontrollitud.ee
+# Скопируй в deploy.local.ps1 и настрой под свой сервер
+# deploy.local.ps1 НЕ попадёт в git (deploy*.ps1 в .gitignore)
 
 $ErrorActionPreference = "Stop"
+$StartTime = Get-Date
 
-Write-Host "🚀 Starting deployment..." -ForegroundColor Green
+# ── НАСТРОЙКИ ───────────────────────────────────────────────────────────────
+$SERVER          = "root@YOUR_DOMAIN_OR_IP"        # ssh root@kontrollitud.ee
+$SERVER_FRONTEND = "/var/www/your-site/frontend/"   # путь к статике на сервере
+$BACKEND_NAME    = "your-backend-container-name"    # имя Docker-контейнера бэкенда
 
-# ============================================
-# CONFIGURATION - EDIT THESE VALUES
-# ============================================
+function Step($n, $total, $msg) {
+    Write-Host "`n[$n/$total] $msg" -ForegroundColor Yellow
+}
+function OK($msg)   { Write-Host "  OK: $msg" -ForegroundColor Green }
+function FAIL($msg) { Write-Host "  FAIL: $msg" -ForegroundColor Red; exit 1 }
+function WARN($msg) { Write-Host "  WARN: $msg" -ForegroundColor DarkYellow }
 
-$SERVER = "root@YOUR_SERVER_IP_OR_DOMAIN"
-$SERVER_PATH = "/var/www/yoursite/frontend/"
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "  DEPLOY: your-site.com" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
 
-# ============================================
-# BUILD FRONTEND
-# ============================================
+# Убеждаемся что запущен из корня проекта
+if (-not (Test-Path "frontend\package.json")) {
+    FAIL "Run this script from the project root (where frontend/ folder is)"
+}
 
-Write-Host "`n🔨 Building frontend..." -ForegroundColor Yellow
+# ── 1. BUILD ────────────────────────────────────────────────────────────────
+# Собирает фронтенд: минификация, code-splitting, оптимизация изображений
+Step 1 4 "Building frontend (production)..."
 Set-Location frontend
 npm run build
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Frontend build failed!" -ForegroundColor Red
-    exit 1
-}
+if ($LASTEXITCODE -ne 0) { Set-Location ..; FAIL "npm run build failed" }
 Set-Location ..
-Write-Host "✅ Frontend built successfully" -ForegroundColor Green
+OK "Build complete"
 
-# ============================================
-# DEPLOY TO SERVER
-# ============================================
+# ── 2. UPLOAD ────────────────────────────────────────────────────────────────
+# Загружает dist/ на сервер через SCP
+Step 2 4 "Uploading dist/ to server..."
+scp -r "frontend\dist\*" "${SERVER}:${SERVER_FRONTEND}"
+if ($LASTEXITCODE -ne 0) { FAIL "scp upload failed" }
+OK "Files uploaded"
 
-Write-Host "`n📤 Uploading files to server..." -ForegroundColor Yellow
-scp -r "frontend\dist\*" "$SERVER`:$SERVER_PATH"
-
+# ── 3. SITEMAP ────────────────────────────────────────────────────────────────
+# Запускает генерацию sitemap.xml на сервере (с динамическими URL компаний)
+# Требует: backend/gen-sitemap-server.js
+Step 3 4 "Regenerating sitemap.xml on server..."
+scp "backend\gen-sitemap-server.js" "${SERVER}:/tmp/gen-sitemap.js" 2>$null
+ssh $SERVER @"
+docker cp /tmp/gen-sitemap.js ${BACKEND_NAME}:/app/gen-sitemap.js 2>/dev/null
+docker exec ${BACKEND_NAME} node /app/gen-sitemap.js
+docker cp ${BACKEND_NAME}:/tmp/sitemap.xml ${SERVER_FRONTEND}sitemap.xml
+"@
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Upload failed!" -ForegroundColor Red
-    exit 1
-}
-
-# ============================================
-# RELOAD SERVER (if using Nginx)
-# ============================================
-
-Write-Host "`n🔄 Reloading server..." -ForegroundColor Yellow
-ssh $SERVER "docker exec YOUR_CONTAINER_NAME nginx -s reload"
-
-# Or if not using Docker:
-# ssh $SERVER "sudo systemctl reload nginx"
-
-# ============================================
-# COMMIT AND PUSH (optional)
-# ============================================
-
-Write-Host "`n📝 Committing changes..." -ForegroundColor Yellow
-$commitMessage = Read-Host "Enter commit message (or press Enter to skip)"
-
-if (-not [string]::IsNullOrWhiteSpace($commitMessage)) {
-    git add .
-    git commit -m $commitMessage
-    git push
-    Write-Host "✅ Changes committed and pushed" -ForegroundColor Green
+    WARN "Sitemap generation failed (non-critical)"
 } else {
-    Write-Host "⚠️  Skipping git commit" -ForegroundColor Yellow
+    OK "sitemap.xml updated"
 }
 
-Write-Host "`n✅ Deployment completed successfully!" -ForegroundColor Green
-Write-Host "🌐 Check: https://yoursite.com" -ForegroundColor Cyan
+# ── 4. GIT PUSH ────────────────────────────────────────────────────────────────
+Step 4 4 "Git push..."
+$doPush = Read-Host "  Push to GitHub? (y/N)"
+if ($doPush -eq "y" -or $doPush -eq "Y") {
+    git push origin master
+    if ($LASTEXITCODE -ne 0) { WARN "git push failed" } else { OK "Pushed to GitHub" }
+} else {
+    WARN "Skipped git push"
+}
+
+$Elapsed = [math]::Round(((Get-Date) - $StartTime).TotalSeconds, 1)
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "  DEPLOY COMPLETE in ${Elapsed}s" -ForegroundColor Green
+Write-Host "  Site:    https://your-site.com" -ForegroundColor Cyan
+Write-Host "  Sitemap: https://your-site.com/sitemap.xml" -ForegroundColor Cyan
+Write-Host "========================================`n" -ForegroundColor Cyan

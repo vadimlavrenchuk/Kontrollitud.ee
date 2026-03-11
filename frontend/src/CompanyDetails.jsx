@@ -302,33 +302,41 @@ function CompanyDetails() {
                     {JSON.stringify({
                         "@context": "https://schema.org",
                         "@type": "LocalBusiness",
+                        "@id": `https://kontrollitud.ee/companies/${company.slug || company.id}`,
                         "name": company.name,
                         "description": description !== t('description_not_available') ? description : company.name,
                         "image": ogImage,
-                        "url": currentUrl,
-                        "telephone": company.phone,
-                        "email": company.email,
+                        "url": `https://kontrollitud.ee/companies/${company.slug || company.id}`,
+                        ...(company.phone && { "telephone": company.phone }),
+                        ...(company.email && { "email": company.email }),
+                        ...(company.website && { "sameAs": company.website }),
                         "address": {
                             "@type": "PostalAddress",
-                            "addressLocality": company.city,
+                            "addressLocality": company.city || "Tallinn",
                             "addressCountry": "EE"
                         },
-                        "aggregateRating": company.reviewsCount > 0 ? {
-                            "@type": "AggregateRating",
-                            "ratingValue": company.rating || 0,
-                            "reviewCount": company.reviewsCount || 0,
-                            "bestRating": 5,
-                            "worstRating": 1
-                        } : undefined,
-                        "url": `https://kontrollitud.ee/companies/${company.slug || company.id}`,
-                        "telephone": company.phone || undefined,
-                        "email": company.email || undefined,
-                        "openingHoursSpecification": company.workingHours ? Object.entries(company.workingHours).map(([day, time]) => ({
-                            "@type": "OpeningHoursSpecification",
-                            "dayOfWeek": day.charAt(0).toUpperCase() + day.slice(1),
-                            "opens": time.split('-')[0]?.trim(),
-                            "closes": time.split('-')[1]?.trim()
-                        })) : undefined
+                        "inDirectoryOf": {
+                            "@type": "WebSite",
+                            "@id": "https://kontrollitud.ee/#website",
+                            "name": "Kontrollitud.ee"
+                        },
+                        ...(company.reviewsCount > 0 && {
+                            "aggregateRating": {
+                                "@type": "AggregateRating",
+                                "ratingValue": company.rating || 0,
+                                "reviewCount": company.reviewsCount,
+                                "bestRating": 5,
+                                "worstRating": 1
+                            }
+                        }),
+                        ...(company.workingHours && {
+                            "openingHoursSpecification": Object.entries(company.workingHours).map(([day, time]) => ({
+                                "@type": "OpeningHoursSpecification",
+                                "dayOfWeek": `https://schema.org/${day.charAt(0).toUpperCase() + day.slice(1)}`,
+                                "opens": time.split('-')[0]?.trim(),
+                                "closes": time.split('-')[1]?.trim()
+                            }))
+                        })
                     }, null, 2)}
                 </script>
             </Helmet>

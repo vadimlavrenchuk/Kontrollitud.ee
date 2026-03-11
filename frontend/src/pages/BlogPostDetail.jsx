@@ -257,7 +257,7 @@ function BlogPostDetail() {
                   {recommendedPosts.map(recPost => (
                     <Link key={recPost.id} to={`/blog/${recPost.id}`} className="recommended-card">
                       <div className="recommended-image">
-                        <img src={recPost.image} alt={recPost.title} />
+                        <img src={recPost.image} alt={recPost.title} loading="lazy" width="400" height="225" />
                       </div>
                       <div className="recommended-content">
                         <span className="recommended-category">{recPost.category}</span>
