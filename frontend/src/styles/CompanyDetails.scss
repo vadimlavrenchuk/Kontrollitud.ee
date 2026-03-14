@@ -11,11 +11,31 @@
     min-height: 100vh;
 }
 
-/* Back Navigation */
+/* Breadcrumb Navigation */
 .back-navigation {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 0.875rem;
+
+    .breadcrumb-sep {
+        color: #9ca3af;
+        margin: 0 2px;
+        user-select: none;
+    }
+
+    .breadcrumb-current {
+        color: #6b7280;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
 
     .back-link {
         display: inline-flex;
@@ -25,9 +45,15 @@
         text-decoration: none;
         font-weight: 500;
         transition: color 0.3s;
+        white-space: nowrap;
 
         &:hover {
             color: #5b21b6;
+            text-decoration: underline;
+        }
+
+        &.breadcrumb-item {
+            font-weight: 400;
         }
 
         i {

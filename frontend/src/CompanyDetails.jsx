@@ -339,14 +339,48 @@ function CompanyDetails() {
                         })
                     }, null, 2)}
                 </script>
+                {/* BreadcrumbList для Google rich results */}
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": 1,
+                            "name": "Kontrollitud.ee",
+                            "item": "https://kontrollitud.ee/"
+                        },
+                        {
+                            "@type": "ListItem",
+                            "position": 2,
+                            "name": company.mainCategory ? company.mainCategory : "Kataloog",
+                            "item": `https://kontrollitud.ee/catalog${company.mainCategory ? `?mainCategory=${encodeURIComponent(company.mainCategory)}` : ''}`
+                        },
+                        {
+                            "@type": "ListItem",
+                            "position": 3,
+                            "name": company.name,
+                            "item": `https://kontrollitud.ee/companies/${company.slug || company.id}`
+                        }
+                    ]
+                })}</script>
             </Helmet>
 
-            {/* Back Navigation */}
-            <div className="back-navigation">
-                <Link to="/" className="back-link">
-                    <FontAwesomeIcon icon={faArrowLeft} /> {t('back_to_list')}
+            {/* Breadcrumb Navigation — внутренняя перелинковка + SEO */}
+            <nav className="back-navigation" aria-label="breadcrumb">
+                <Link to="/" className="back-link breadcrumb-item">
+                    Kontrollitud.ee
                 </Link>
-            </div>
+                <span className="breadcrumb-sep">›</span>
+                <Link
+                    to={`/catalog${company.mainCategory && company.mainCategory !== 'Все' ? `?mainCategory=${encodeURIComponent(company.mainCategory)}` : ''}`}
+                    className="back-link breadcrumb-item"
+                >
+                    {company.mainCategory ? t(company.mainCategory) : t('catalog')}
+                </Link>
+                <span className="breadcrumb-sep">›</span>
+                <span className="breadcrumb-current">{company.name}</span>
+            </nav>
 
             {/* Hero Section with Large Image */}
             <section className="hero-section">
