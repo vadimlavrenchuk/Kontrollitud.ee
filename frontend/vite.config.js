@@ -52,7 +52,7 @@ export default defineConfig({
         optimizationLevel: 7,
       },
       mozjpeg: {
-        quality: 80, // Качество JPEG 80% - оптимальный баланс качества и размера
+        quality: 80,
       },
       pngquant: {
         quality: [0.70, 0.90], // Улучшенное качество PNG
@@ -81,13 +81,13 @@ export default defineConfig({
       // WebP конверсия - отличная поддержка браузерами, экономия ~30%
       webp: {
         quality: 80,
-        lossless: false, // Lossy для лучшего сжатия
-        method: 6, // Максимальное сжатие (0-6)
+        lossless: false,
+        method: 6,
       },
       // AVIF конверсия - самый современный формат, экономия ~50%
       avif: {
         quality: 75,
-        speed: 4, // Баланс скорости конвертации и качества (0-10)
+        speed: 4,
         lossless: false,
       },
     }),

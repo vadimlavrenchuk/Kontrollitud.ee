@@ -9,8 +9,8 @@
  * Базовая конфигурация Cloudinary
  */
 export const CLOUDINARY_CONFIG = {
-  cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'kontrollitud',
-  uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'kontrollitud_preset',
+  cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dvkj0ica9',
+  uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'web_optimized',
   folder: 'companies',
 };
 

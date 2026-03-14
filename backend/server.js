@@ -1784,7 +1784,12 @@ app.put('/api/user/companies/:id', verifyToken, upload.single('logo'), async (re
                 
                 const uploadResult = await cloudinary.uploader.upload(dataURI, {
                     folder: 'kontrollitud',
-                    resource_type: 'auto'
+                    resource_type: 'auto',
+                    format: 'webp',
+                    transformation: [
+                        { width: 400, height: 400, crop: 'limit', quality: 'auto:good' },
+                        { fetch_format: 'auto' }
+                    ]
                 });
                 
                 updateData.image = uploadResult.secure_url;
@@ -1954,8 +1959,8 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             {
                 folder: 'kontrollitud',
                 transformation: [
-                    { width: 800, height: 500, crop: 'limit' },
-                    { quality: 'auto' }
+                    { width: 1200, height: 800, crop: 'limit', quality: 'auto:good' },
+                    { fetch_format: 'auto' }
                 ]
             },
             (error, result) => {

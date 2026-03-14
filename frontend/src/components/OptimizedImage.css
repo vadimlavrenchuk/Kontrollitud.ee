@@ -2,62 +2,72 @@
 
 .optimized-image-wrapper {
   position: relative;
-  display: inline-block;
+  /* block вместо inline-block — корректно работает в flex/grid контейнерах */
+  display: block;
   width: 100%;
   overflow: hidden;
-  /* aspect-ratio задается inline через style для динамических значений */
-  /* Это резервирует пространство до загрузки изображения, предотвращая CLS */
+  /* contain: layout изолирует этот блок от layout-shifts соседей (CLS защита) */
+  contain: layout;
+  /*
+   * aspect-ratio задаётся через inline style для динамических значений (width/height props).
+   * Резервирует пространство ДО загрузки изображения → CLS = 0.
+   * Например: style="aspect-ratio: 400/225"
+   */
+}
+
+/* Когда aspect-ratio задан — wrapper не должен иметь фиксированную высоту */
+.optimized-image-wrapper[style*="aspect-ratio"] {
+  height: auto;
 }
 
 .optimized-image {
   width: 100%;
   height: 100%;
   display: block;
-  transition: opacity 0.3s ease;
-  opacity: 0;
-  /* aspect-ratio наследуется от wrapper или задается inline */
+  /* aspect-ratio наследуется или задаётся inline — не переопределяем здесь */
   object-position: center;
+  /* Плавное появление после загрузки */
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .optimized-image.loaded {
   opacity: 1;
 }
 
-/* Loading placeholder с shimmer эффектом */
+/* Loading placeholder — shimmer эффект пока изображение грузится */
 .optimized-image-loading {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0; /* top/right/bottom/left: 0 — современный синтаксис */
   background: linear-gradient(
     90deg,
     #f0f0f0 25%,
-    #e0e0e0 50%,
+    #e8e8e8 50%,
     #f0f0f0 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   z-index: 1;
+  /* Не блокируем клики на изображение */
+  pointer-events: none;
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-/* Placeholder для ошибок загрузки */
+/* Заглушка при ошибке загрузки */
 .optimized-image-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   background-color: #f1f5f9;
   color: #94a3b8;
   border-radius: 8px;
+  /* Если aspect-ratio задан через style — высота определяется им */
+  min-height: 60px;
 }
 
 .optimized-image-placeholder svg {
@@ -66,26 +76,25 @@
   opacity: 0.5;
 }
 
-/* Поддержка темной темы */
+/* Тёмная тема */
 @media (prefers-color-scheme: dark) {
   .optimized-image-loading {
     background: linear-gradient(
       90deg,
       #2a2a2a 25%,
-      #1a1a1a 50%,
+      #222222 50%,
       #2a2a2a 75%
     );
     background-size: 200% 100%;
   }
-  
+
   .optimized-image-placeholder {
     background-color: #1e293b;
     color: #64748b;
   }
 }
 
-/* Responsive behavior */
+/* Гарантируем что изображения внутри wrapper не выходят за его границы */
 .optimized-image-wrapper img {
   max-width: 100%;
-  height: auto;
 }
