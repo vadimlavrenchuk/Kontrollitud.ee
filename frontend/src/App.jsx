@@ -33,6 +33,7 @@ const PaymentPage = lazy(() => import('./pages/PaymentPage.jsx'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage.jsx'));
 const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage.jsx'));
 
+// v2 — admin route secured
 import ProtectedRoute from './ProtectedRoute.jsx';
 import RequireAuth from './RequireAuth.jsx';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
