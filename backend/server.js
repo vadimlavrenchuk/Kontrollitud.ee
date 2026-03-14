@@ -9,7 +9,8 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
-const { verifyToken, optionalAuth } = require('./middleware/authMiddleware');
+const { verifyToken, optionalAuth, requireAdmin } = require('./middleware/authMiddleware');
+const { securityLogger, apiLimiter, adminLimiter, authLimiter } = require('./middleware/security');
 const app = express();
 const PORT = 5000;
 
@@ -30,6 +31,11 @@ const upload = multer({
 // 2. MIDDLEWARE (Настройки приложения)
 app.use(cors()); 
 app.use(express.json());
+
+// Security: rate limiting + 401/403 alert logging
+app.use('/api/', apiLimiter);
+app.use('/api/admin/', adminLimiter);
+app.use(securityLogger);
 
 app.get('/test', (req, res) => {
     res.send('Бэкенд работает!');
@@ -1262,7 +1268,7 @@ app.get('/api/reviews/:companyId', async (req, res) => {
 
 // POST /api/companies - Добавить новую компанию
 // 🟢 AUTOMATED MODERATION: Validation + Blacklist check + auto-approval
-app.post('/api/companies', async (req, res) => {
+app.post('/api/companies', authLimiter, async (req, res) => {
     try {
         // 🟢 SECURITY: Не позволяем пользователю устанавливать статус вручную
         const { status, approvalStatus, ...safeData } = req.body;
@@ -1460,8 +1466,13 @@ app.post('/api/business-submission', verifyToken, async (req, res) => {
     }
 });
 
+// GET /api/admin/verify - Check if the current Firebase user is an admin
+app.get('/api/admin/verify', requireAdmin, (req, res) => {
+    res.json({ isAdmin: true, email: req.user.email });
+});
+
 // GET /api/admin/pending-requests - Get all pending business submissions
-app.get('/api/admin/pending-requests', async (req, res) => {
+app.get('/api/admin/pending-requests', requireAdmin, async (req, res) => {
     try {
         const pendingBusinesses = await Company.find({ approvalStatus: 'pending' })
             .sort({ createdAt: -1 });
@@ -1473,7 +1484,7 @@ app.get('/api/admin/pending-requests', async (req, res) => {
 });
 
 // PUT /api/admin/approve/:id - Approve a business submission
-app.put('/api/admin/approve/:id', async (req, res) => {
+app.put('/api/admin/approve/:id', requireAdmin, async (req, res) => {
     try {
         const { subscriptionLevel } = req.body;
         const companyId = req.params.id;
@@ -1510,7 +1521,7 @@ app.put('/api/admin/approve/:id', async (req, res) => {
 });
 
 // DELETE /api/admin/reject/:id - Reject/delete a business submission
-app.delete('/api/admin/reject/:id', async (req, res) => {
+app.delete('/api/admin/reject/:id', requireAdmin, async (req, res) => {
     try {
         const companyId = req.params.id;
         const deletedCompany = await Company.findByIdAndDelete(companyId);
@@ -1587,7 +1598,7 @@ app.patch('/api/companies/:id/extend-subscription', async (req, res) => {
 });
 
 // 🧪 TEST ENDPOINT: Set expired date for testing (for testing only)
-app.patch('/api/admin/test-set-expired/:id', async (req, res) => {
+app.patch('/api/admin/test-set-expired/:id', requireAdmin, async (req, res) => {
     try {
         const { daysAgo, plan } = req.body;
         const companyId = req.params.id;
@@ -1628,7 +1639,7 @@ app.patch('/api/admin/test-set-expired/:id', async (req, res) => {
 });
 
 // 🧪 TEST ENDPOINT: Manual subscription check (for testing only)
-app.get('/api/admin/test-subscription-check', async (req, res) => {
+app.get('/api/admin/test-subscription-check', requireAdmin, async (req, res) => {
     try {
         console.log('🧪 Manual subscription check triggered via API');
         await checkSubscriptions();
@@ -1847,31 +1858,9 @@ app.delete('/api/user/companies/:id', verifyToken, async (req, res) => {
 });
 
 // POST /api/admin/login - Simple admin authentication
-app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    
-    if (!adminPassword) {
-        return res.status(500).json({ 
-            success: false, 
-            message: 'Admin password not configured. Set ADMIN_PASSWORD in .env file.' 
-        });
-    }
-    
-    if (password === adminPassword) {
-        // Generate a simple token (in production, use JWT)
-        const token = Buffer.from(`admin:${Date.now()}`).toString('base64');
-        res.json({ 
-            success: true, 
-            token,
-            message: 'Login successful' 
-        });
-    } else {
-        res.status(401).json({ 
-            error: 'Invalid password' 
-        });
-    }
-});
+// Removed legacy password-based admin login.
+// Admin access is now controlled via Firebase token + ADMIN_EMAILS env var.
+// Use GET /api/admin/verify with a valid Firebase Bearer token.
 
 // 🔔 POST /api/webhooks/payment - Webhook for payment confirmation
 // This endpoint will be called by your payment provider (Stripe, PayPal, etc.)

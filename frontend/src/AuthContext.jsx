@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, subscribeToAuthChanges, logOut } from './firebase';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 const AuthContext = createContext({});
 
 export const useAuth = () => {
@@ -16,6 +18,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         // Subscribe to auth state changes
@@ -33,13 +36,25 @@ export const AuthProvider = ({ children }) => {
                     email: firebaseUser.email,
                     displayName: firebaseUser.displayName,
                     photoURL: firebaseUser.photoURL,
-                    emailVerified: firebaseUser.emailVerified
+                    emailVerified: firebaseUser.emailVerified,
+                    getIdToken: () => firebaseUser.getIdToken(),
                 });
+
+                // Check admin status via backend (no emails in frontend code)
+                try {
+                    const res = await fetch(`${API_BASE}/api/admin/verify`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    setIsAdmin(res.ok);
+                } catch {
+                    setIsAdmin(false);
+                }
             } else {
                 // User is signed out
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('userEmail');
                 setUser(null);
+                setIsAdmin(false);
             }
             setLoading(false);
         });
@@ -53,6 +68,7 @@ export const AuthProvider = ({ children }) => {
         try {
             await logOut();
             setUser(null);
+            setIsAdmin(false);
             setError(null);
         } catch (err) {
             setError(err.message);
@@ -76,7 +92,8 @@ export const AuthProvider = ({ children }) => {
         error,
         logout,
         refreshToken,
-        isAuthenticated: !!user
+        isAuthenticated: !!user,
+        isAdmin,
     };
 
     return (

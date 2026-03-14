@@ -112,13 +112,9 @@ function AdminDashboard() {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('adminToken');
-        
-        // Dispatch custom event to notify App component
-        window.dispatchEvent(new Event('authChange'));
-        
-        toast.info('👋 Logged out successfully');
-        navigate('/login');
+        // Sign out via Firebase (AuthContext will reset isAdmin automatically)
+        import('./firebase').then(({ logOut }) => logOut());
+        navigate('/');
     };
     
     // Moderation helper functions

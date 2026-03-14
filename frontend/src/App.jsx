@@ -89,7 +89,7 @@ const AppRoutes = () => {
                 <Route path="/add-business" element={<RequireAuth><AddBusiness /></RequireAuth>} />
                 <Route path="/dashboard" element={<RequireAuth><UserDashboard /></RequireAuth>} />
                 <Route path="/edit-business/:id" element={<RequireAuth><EditCompany /></RequireAuth>} />
-                <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                <Route path="/ctrl-panel-kntrl26" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
                 
                 <Route path="/companies/:slugOrId" element={<CompanyDetails />} />
                 <Route path="/company/:slugOrId" element={<CompanyDetails />} />
@@ -101,13 +101,11 @@ const AppRoutes = () => {
 
 function AppContent() {
     const { t, i18n } = useTranslation();
-    const { user, logout, isAuthenticated } = useAuth();
+    const { user, logout, isAuthenticated, isAdmin } = useAuth();
     const [isScrolled, setIsScrolled] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     
-    const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@kontrollitud.ee';
-    const isAdmin = user && user.email === ADMIN_EMAIL;
     
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);
@@ -188,7 +186,7 @@ function AppContent() {
                                         
                                         {showUserMenu && (
                                             <div className="user-dropdown">
-                                                {isAdmin && <Link to="/admin" onClick={closeMenus}><FontAwesomeIcon icon={faShieldAlt} /> Admin</Link>}
+                                                {isAdmin && <Link to="/ctrl-panel-kntrl26" onClick={closeMenus}><FontAwesomeIcon icon={faShieldAlt} /> Admin</Link>}
                                                 <Link to="/dashboard" onClick={closeMenus}><FontAwesomeIcon icon={faClipboardList} /> {t('my_dashboard')}</Link>
                                                 <div className="dropdown-divider"></div>
                                                 <Suspense fallback={<button className="install-pwa-button">📱 PWA</button>}>
