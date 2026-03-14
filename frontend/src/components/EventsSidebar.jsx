@@ -14,21 +14,27 @@ const EventsSidebar = () => {
   const events = [
     {
       id: 1,
-      date: new Date(2026, 1, 15), // February 15, 2026 (месяц 0-indexed)
-      nameKey: 'event_tallinn_farmers_market',
-      city: 'Tallinn'
+      date: new Date(2026, 2, 28), // March 28-29, 2026
+      dateRange: '28–29',
+      nameKey: 'event_tallinn_beauty_festival',
+      city: 'Tallinn',
+      url: 'https://tallinnbeautyfestival.ee'
     },
     {
       id: 2,
-      date: new Date(2026, 1, 18), // February 18, 2026
-      nameKey: 'event_tartu_local_market',
-      city: 'Tartu'
+      date: new Date(2026, 3, 9), // April 9-12, 2026
+      dateRange: '9–12',
+      nameKey: 'event_tallinn_music_week',
+      city: 'Tallinn',
+      url: 'https://tmw.ee'
     },
     {
       id: 3,
-      date: new Date(2026, 1, 22), // February 22, 2026
-      nameKey: 'event_parnu_craft_fair',
-      city: 'Pärnu'
+      date: new Date(2026, 3, 10), // April 10-12, 2026
+      dateRange: '10–12',
+      nameKey: 'event_estbuild',
+      city: 'Tallinn',
+      url: 'https://estbuild.ee'
     }
   ];
 
@@ -50,7 +56,7 @@ const EventsSidebar = () => {
 
   // Форматирование события
   const formatEvent = (event) => {
-    const day = event.date.getDate();
+    const day = event.dateRange || event.date.getDate();
     const monthKey = getMonthKey(event.date.getMonth());
     const dayOfWeekKey = getDayOfWeekKey(event.date.getDay());
 
@@ -74,7 +80,14 @@ const EventsSidebar = () => {
 
       <div className="events-sidebar__list">
         {formattedEvents.map((event) => (
-          <div key={event.id} className="event-card">
+          <a
+            key={event.id}
+            className="event-card"
+            href={event.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+          >
             <div className="event-card__date">
               <FontAwesomeIcon icon={faCalendar} className="event-card__icon" />
               <div className="event-card__date-info">
@@ -90,7 +103,7 @@ const EventsSidebar = () => {
                 <span>{event.city}</span>
               </div>
             </div>
-          </div>
+          </a>
         ))}
       </div>
 

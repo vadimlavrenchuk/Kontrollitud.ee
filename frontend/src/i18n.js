@@ -674,8 +674,8 @@ const resources = {
       "Sunday": "Воскресенье",
       
       // Events Sidebar
-      "events_sidebar_title": "Ближайшие ярмарки 🇪🇪",
-      "events_sidebar_hint": "💡 Поддержите местных производителей на ярмарках вашего города",
+      "events_sidebar_title": "Ближайшие события 🇪🇪",
+      "events_sidebar_hint": "💡 Мероприятия Эстонии — весна 2026",
       "month_jan": "янв",
       "month_feb": "фев",
       "month_mar": "мар",
@@ -690,9 +690,9 @@ const resources = {
       "month_dec": "дек",
       
       // Event names (keys for translation)
-      "event_tallinn_farmers_market": "Таллиннская фермерская ярмарка",
-      "event_tartu_local_market": "Тартуский рынок местных производителей",
-      "event_parnu_craft_fair": "Пярнуская ярмарка ремесел",
+      "event_tallinn_beauty_festival": "Tallinn Beauty Festival",
+      "event_tallinn_music_week": "Tallinn Music Week 2026",
+      "event_estbuild": "Estbuild 2026 — строительная выставка",
       
       // Admin Dashboard
       "admin_dashboard": "Панель администратора",
@@ -1415,8 +1415,8 @@ const resources = {
       "Sunday": "Pühapäev",
       
       // Events Sidebar
-      "events_sidebar_title": "Lähimad laadad 🇪🇪",
-      "events_sidebar_hint": "💡 Toeta kohalikke tootjaid oma linna laadal",
+      "events_sidebar_title": "Lähimad üritused 🇪🇪",
+      "events_sidebar_hint": "💡 Eesti üritused — kevad 2026",
       "month_jan": "jaan",
       "month_feb": "veebr",
       "month_mar": "märts",
@@ -1431,9 +1431,9 @@ const resources = {
       "month_dec": "dets",
       
       // Event names (keys for translation)
-      "event_tallinn_farmers_market": "Tallinna taluturu",
-      "event_tartu_local_market": "Tartu kohalike tootjate turg",
-      "event_parnu_craft_fair": "Pärnu käsitöölaat",
+      "event_tallinn_beauty_festival": "Tallinn Beauty Festival",
+      "event_tallinn_music_week": "Tallinn Music Week 2026",
+      "event_estbuild": "Estbuild 2026 — ehitusnäitus",
       
       // Admin Dashboard
       "admin_dashboard": "Administraatori töölaud",
@@ -2141,8 +2141,8 @@ const resources = {
       "Sunday": "Sunday",
       
       // Events Sidebar
-      "events_sidebar_title": "Upcoming Fairs 🇪🇪",
-      "events_sidebar_hint": "💡 Support local producers at fairs in your city",
+      "events_sidebar_title": "Upcoming Events 🇪🇪",
+      "events_sidebar_hint": "💡 Estonia events — Spring 2026",
       "month_jan": "Jan",
       "month_feb": "Feb",
       "month_mar": "Mar",
@@ -2157,9 +2157,9 @@ const resources = {
       "month_dec": "Dec",
       
       // Event names (keys for translation)
-      "event_tallinn_farmers_market": "Tallinn Farmers Market",
-      "event_tartu_local_market": "Tartu Local Producers Market",
-      "event_parnu_craft_fair": "Pärnu Craft Fair",
+      "event_tallinn_beauty_festival": "Tallinn Beauty Festival",
+      "event_tallinn_music_week": "Tallinn Music Week 2026",
+      "event_estbuild": "Estbuild 2026 — Building & Construction Expo",
       
       // Admin Dashboard
       "admin_dashboard": "Admin Dashboard",
